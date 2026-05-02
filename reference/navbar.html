@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RateMap — Nav</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN SYSTEM TOKENS ── */
+:root {
+  --n-0:#FFFFFF; --n-25:#FAFAF8; --n-50:#F5F4F1; --n-100:#EEEDEA;
+  --n-200:#D4D3CE; --n-300:#B8B7B1; --n-400:#9A998F; --n-500:#7C7B72;
+  --n-600:#5E5D56; --n-700:#43423D; --n-800:#2C2B27; --n-900:#1A1917;
+  --p-50:#EEEFFA; --p-200:#B0B4E6; --p-500:#4A50B0; --p-600:#3A3F8F; --p-700:#2D3170;
+  --pos-50:#EDF7F0; --pos-600:#1F6132;
+  --font:'Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono','SF Mono',monospace;
+  --r-full:9999px; --r-lg:14px; --r-md:10px;
+  --sh-xs:0 1px 2px rgba(26,25,23,.04);
+  --sh-sm:0 1px 3px rgba(26,25,23,.06),0 1px 2px rgba(26,25,23,.04);
+  --sh-md:0 4px 12px rgba(26,25,23,.06),0 1px 3px rgba(26,25,23,.04);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--n-50);-webkit-font-smoothing:antialiased;min-height:100vh}
+
+/* ══════════════════════════════════
+   NAV — transparent, floats over map
+══════════════════════════════════ */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:transparent;
+  pointer-events:none; /* children re-enable individually */
+}
+
+.nav-inner{
+  padding:16px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+/* ── BRAND ── */
+.brand{
+  pointer-events:all;
+  text-decoration:none;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  flex-shrink:0;
+}
+.brand-name{
+  font-family:var(--font);
+  font-variation-settings:'opsz' 32;
+  font-size:18px;
+  font-weight:600;
+  letter-spacing:-0.03em;
+  color:var(--n-900);
+  line-height:1.1;
+}
+.brand-sub{
+  font-size:12px;
+  font-weight:400;
+  color:var(--n-400);
+  letter-spacing:0.005em;
+  line-height:1;
+  transition:opacity .2s ease;
+}
+
+/* ── SINGLE CTA ──
+   Three states driven by localStorage.
+   State is set on the element via data-state attribute
+   so CSS can reflect changes without JS touching styles directly. */
+.nav-cta{
+  pointer-events:all;
+  font-family:var(--font);
+  font-size:13px;
+  font-weight:500;
+  letter-spacing:-0.01em;
+  line-height:1;
+  padding:9px 18px;
+  border-radius:var(--r-full);
+  border:none;
+  cursor:pointer;
+  white-space:nowrap;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  transition:opacity .15s ease, transform .1s ease, background .2s ease;
+  box-shadow:var(--sh-sm);
+}
+.nav-cta:active{transform:scale(.97)}
+
+/* State: new — filled indigo */
+.nav-cta[data-state="new"]{
+  background:var(--p-600);
+  color:var(--n-0);
+}
+.nav-cta[data-state="new"]:hover{background:var(--p-700)}
+
+/* State: unverified — outlined with amber dot signal */
+.nav-cta[data-state="unverified"]{
+  background:var(--n-0);
+  color:var(--n-800);
+  border:1px solid var(--n-200);
+}
+.nav-cta[data-state="unverified"]:hover{background:var(--n-25);border-color:var(--n-300)}
+
+/* Pulsing amber dot — draws eye without shouting */
+.nav-cta .dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#D49316;
+  flex-shrink:0;
+  animation:dotPulse 2.4s ease-in-out infinite;
+}
+@keyframes dotPulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.55;transform:scale(.75)}
+}
+
+/* State: verified — subtle positive green */
+.nav-cta[data-state="verified"]{
+  background:var(--pos-50);
+  color:var(--pos-600);
+  border:1px solid rgba(58,155,85,.2);
+}
+.nav-cta[data-state="verified"]:hover{background:#e0f2e6}
+
+/* ── HAMBURGER (mobile) ── */
+.nav-burger{
+  pointer-events:all;
+  display:none;
+  width:36px;height:36px;
+  border:1px solid var(--n-200);
+  background:var(--n-0);
+  cursor:pointer;
+  border-radius:var(--r-full);
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:5px;
+  box-shadow:var(--sh-xs);
+  flex-shrink:0;
+  transition:background .15s;
+}
+.nav-burger:hover{background:var(--n-25)}
+.nav-burger span{
+  display:block;width:14px;height:1.5px;
+  background:var(--n-900);border-radius:2px;
+  transition:transform .25s cubic-bezier(.16,1,.3,1),opacity .2s ease;
+  transform-origin:center;
+}
+.nav-burger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.nav-burger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.nav-burger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+
+/* ── MOBILE DRAWER ── */
+.nav-drawer{
+  pointer-events:all;
+  display:none;
+  overflow:hidden;max-height:0;opacity:0;
+  margin:0 16px;
+  background:var(--n-0);
+  border:1px solid var(--n-200);
+  border-radius:var(--r-lg);
+  box-shadow:var(--sh-md);
+  transition:max-height .38s cubic-bezier(.16,1,.3,1),opacity .28s ease;
+}
+.nav-drawer.open{max-height:200px;opacity:1}
+.drawer-inner{padding:12px}
+
+/* Drawer CTA mirrors nav-cta state */
+.drawer-cta{
+  font-family:var(--font);
+  font-size:15px;font-weight:500;
+  letter-spacing:-0.01em;
+  width:100%;padding:13px 16px;
+  border-radius:var(--r-md);
+  border:none;cursor:pointer;
+  text-align:center;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:opacity .15s,background .2s;
+}
+.drawer-cta[data-state="new"]{background:var(--p-600);color:var(--n-0)}
+.drawer-cta[data-state="new"]:hover{background:var(--p-700)}
+.drawer-cta[data-state="unverified"]{background:var(--n-50);color:var(--n-800);border:1px solid var(--n-200)}
+.drawer-cta[data-state="verified"]{background:var(--pos-50);color:var(--pos-600)}
+.drawer-cta .dot{width:7px;height:7px;border-radius:50%;background:#D49316;flex-shrink:0;animation:dotPulse 2.4s ease-in-out infinite}
+
+/* Drawer status note — shown for unverified/verified states */
+.drawer-status{
+  font-size:12px;color:var(--n-400);text-align:center;
+  padding:10px 0 4px;line-height:1.5;
+}
+
+/* ══════════════════════════════════
+   MAP FILTER — anchored to map canvas
+   bottom-left, not part of the nav layer
+══════════════════════════════════ */
+.map-filter{
+  position:fixed;bottom:28px;left:24px;z-index:99;
+  display:flex;align-items:center;gap:8px;
+}
+.filter-btn{
+  font-family:var(--font);
+  font-size:13px;font-weight:500;
+  letter-spacing:-0.01em;
+  color:var(--n-800);
+  background:var(--n-0);
+  border:1px solid var(--n-200);
+  border-radius:var(--r-full);
+  padding:8px 14px;
+  cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;
+  line-height:1;
+  box-shadow:var(--sh-sm);
+  transition:background .15s,border-color .15s,transform .1s;
+}
+.filter-btn:hover{background:var(--n-25);border-color:var(--n-300)}
+.filter-btn:active{transform:scale(.97)}
+/* Active filter state — indigo tint */
+.filter-btn.active{
+  background:var(--p-50);
+  border-color:var(--p-200);
+  color:var(--p-600);
+}
+.filter-count{
+  font-family:var(--mono);
+  font-size:10px;font-weight:500;
+  background:var(--p-600);color:var(--n-0);
+  padding:2px 6px;border-radius:999px;
+  line-height:1.4;
+  display:none;
+}
+.filter-btn.active .filter-count{display:inline}
+
+/* ══════════════════════════════════
+   STATE SWITCHER (demo only)
+══════════════════════════════════ */
+.demo-switcher{
+  position:fixed;bottom:28px;right:24px;z-index:200;
+  background:var(--n-0);
+  border:1px solid var(--n-200);
+  border-radius:var(--r-lg);
+  box-shadow:var(--sh-md);
+  padding:14px 16px;
+  width:260px;
+}
+.demo-title{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--n-400);margin-bottom:10px;
+}
+.demo-btn{
+  font-family:var(--font);font-size:13px;font-weight:500;
+  width:100%;padding:9px 12px;border-radius:8px;
+  border:1px solid var(--n-200);background:var(--n-0);
+  color:var(--n-700);cursor:pointer;text-align:left;
+  margin-bottom:6px;transition:background .12s,border-color .12s;
+  display:flex;align-items:center;justify-content:space-between;
+  white-space:nowrap;
+}
+.demo-btn:last-child{margin-bottom:0}
+.demo-btn:hover{background:var(--n-50);border-color:var(--n-300)}
+.demo-btn.on{border-color:var(--p-500);background:var(--p-50);color:var(--p-700)}
+.demo-tag{font-family:var(--mono);font-size:10px;color:var(--n-400)}
+.demo-btn.on .demo-tag{color:var(--p-500)}
+
+/* ══════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════ */
+@media(max-width:600px){
+  .nav-cta{display:none}
+  .nav-burger{display:flex}
+  .nav-drawer{display:block}
+  .brand-sub{display:none}
+  .nav-inner{padding:14px 16px}
+  .map-filter{left:16px;bottom:20px}
+  .demo-switcher{right:16px;bottom:20px;width:240px}
+}
+@media(min-width:601px){
+  .nav-burger{display:none}
+  .nav-drawer{display:none !important}
+}
+
+/* ══════════════════════════════════
+   DEMO BACKDROP
+══════════════════════════════════ */
+.map-bg{
+  position:fixed;inset:0;z-index:0;
+  background:var(--n-50);
+}
+.map-bg::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(26,25,23,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(26,25,23,.03) 1px,transparent 1px);
+  background-size:44px 44px;
+}
+.map-bg::after{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 360px 200px at 28% 58%,rgba(212,211,206,.6) 0%,transparent 70%),
+    radial-gradient(ellipse 300px 160px at 70% 40%,rgba(212,211,206,.5) 0%,transparent 70%),
+    radial-gradient(ellipse 200px 100px at 52% 72%,rgba(200,199,193,.45) 0%,transparent 70%);
+}
+
+/* ── URGENCY COUNTDOWN — inside unverified CTA ── */
+.cta-urgency{
+  font-family:var(--mono);
+  font-size:10px;font-weight:500;
+  letter-spacing:.02em;
+  background:rgba(212,147,22,.14);
+  color:#92600A;
+  padding:2px 7px;
+  border-radius:999px;
+  white-space:nowrap;
+  line-height:1.4;
+  flex-shrink:0;
+  transition:opacity .2s ease;
+}
+/* Urgent variant — 7 days or fewer */
+.cta-urgency.urgent{
+  background:rgba(212,147,22,.22);
+  color:#7A4E08;
+}
+/* Hidden by default, shown only in unverified state with days set */
+.cta-urgency[hidden]{display:none}
+
+/* ── PIONEER SHARE NUDGE — secondary ghost link ── */
+.nav-nudge{
+  pointer-events:all;
+  font-family:var(--font);
+  font-size:13px;font-weight:500;
+  letter-spacing:-0.01em;
+  color:var(--n-500);
+  background:none;border:none;
+  cursor:pointer;
+  padding:6px 10px;
+  border-radius:8px;
+  white-space:nowrap;
+  display:none; /* hidden until pioneer state active */
+  align-items:center;gap:6px;
+  transition:color .15s ease, background .15s ease, opacity .2s ease;
+  line-height:1;
+}
+.nav-nudge.visible{display:flex}
+.nav-nudge:hover{color:var(--n-800);background:rgba(26,25,23,.05)}
+.nav-nudge:active{transform:scale(.97)}
+/* Subtle separator dot between text segments */
+.nudge-sep{
+  width:3px;height:3px;border-radius:50%;
+  background:var(--n-300);flex-shrink:0;
+}
+
+/* Drawer nudge — mobile equivalent */
+.drawer-nudge{
+  font-family:var(--font);
+  font-size:14px;font-weight:500;
+  color:var(--n-600);
+  background:var(--n-50);
+  border:none;cursor:pointer;
+  padding:11px 12px;
+  border-radius:var(--r-md);
+  text-align:left;
+  display:none; /* shown only in pioneer state */
+  align-items:center;gap:8px;
+  letter-spacing:-0.01em;
+  margin-bottom:6px;
+  transition:background .15s;
+}
+.drawer-nudge.visible{display:flex}
+.drawer-nudge:hover{background:var(--n-100)}
+
+/* Demo: urgency days slider */
+.demo-range-row{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--n-100)}
+.demo-range-lbl{font-family:var(--mono);font-size:10px;color:var(--n-400);white-space:nowrap;flex-shrink:0}
+.demo-range-row input[type=range]{flex:1;height:3px;accent-color:var(--p-500);min-width:0}
+.demo-days-val{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--n-700);width:28px;text-align:right;flex-shrink:0}
+/* Demo: pioneer toggle */
+.demo-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--n-100)}
+.demo-toggle-lbl{font-family:var(--mono);font-size:10px;color:var(--n-400)}
+.toggle-pill{
+  width:34px;height:18px;border-radius:999px;
+  background:var(--n-200);border:none;cursor:pointer;
+  position:relative;transition:background .2s;flex-shrink:0;
+}
+.toggle-pill.on{background:var(--p-500)}
+.toggle-pill::after{
+  content:'';position:absolute;
+  width:12px;height:12px;border-radius:50%;
+  background:#fff;top:3px;left:3px;
+  transition:left .2s cubic-bezier(.16,1,.3,1);
+}
+.toggle-pill.on::after{left:19px}
+
+/* ══════════════════════════════════
+   FILTER SHEET
+══════════════════════════════════ */
+
+/* Backdrop — dims map when sheet is open */
+.filter-backdrop{
+  position:fixed;inset:0;z-index:149;
+  background:rgba(26,25,23,0);
+  pointer-events:none;
+  transition:background .3s ease;
+}
+.filter-backdrop.open{
+  background:rgba(26,25,23,.28);
+  pointer-events:all;
+}
+
+/* Sheet — slides up from bottom */
+.filter-sheet{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  z-index:150;
+  background:var(--n-0);
+  border-radius:20px 20px 0 0;
+  box-shadow:0 -4px 32px rgba(26,25,23,.1),0 -1px 4px rgba(26,25,23,.05);
+  transform:translateY(100%);
+  transition:transform .42s cubic-bezier(.16,1,.3,1);
+  max-height:72vh;
+  display:flex;
+  flex-direction:column;
+}
+.filter-sheet.open{
+  transform:translateY(0);
+}
+
+/* Drag handle */
+.sheet-handle{
+  width:36px;height:4px;
+  border-radius:2px;
+  background:var(--n-200);
+  margin:12px auto 0;
+  flex-shrink:0;
+  cursor:grab;
+}
+
+/* Sheet header */
+.sheet-hd{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 20px 12px;
+  flex-shrink:0;
+  border-bottom:1px solid var(--n-100);
+}
+.sheet-title{
+  font-size:15px;font-weight:500;
+  color:var(--n-900);
+  letter-spacing:-.01em;
+}
+.sheet-clear{
+  font-family:var(--font);
+  font-size:13px;font-weight:500;
+  color:var(--n-300);
+  background:none;border:none;cursor:pointer;
+  padding:4px;
+  transition:color .15s;
+  letter-spacing:-.01em;
+  pointer-events:none;
+}
+.sheet-clear.active{
+  color:var(--p-600);
+  pointer-events:all;
+}
+.sheet-clear.active:hover{color:var(--p-700)}
+
+/* Scrollable body */
+.sheet-body{
+  overflow-y:auto;
+  padding:0 20px 32px;
+  flex:1;
+}
+.sheet-body::-webkit-scrollbar{width:3px}
+.sheet-body::-webkit-scrollbar-thumb{background:var(--n-200);border-radius:2px}
+
+/* Section label */
+.sheet-sec{
+  font-family:var(--mono);
+  font-size:10px;font-weight:500;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--n-400);
+  margin:18px 0 10px;
+  display:block;
+}
+
+/* ── INSURANCE TYPE — two-pill toggle ── */
+.type-toggle{
+  display:flex;gap:8px;
+}
+.type-pill{
+  flex:1;
+  font-family:var(--font);
+  font-size:13px;font-weight:500;
+  padding:10px 8px;
+  border-radius:10px;
+  border:1.5px solid var(--n-200);
+  background:var(--n-0);
+  color:var(--n-600);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all .18s cubic-bezier(.16,1,.3,1);
+  letter-spacing:-.01em;
+}
+.type-pill:active{transform:scale(.97)}
+.type-pill.on{
+  background:var(--n-900);
+  color:var(--n-0);
+  border-color:var(--n-900);
+}
+
+/* ── PROVIDER PILLS — multi-select grid ── */
+.prov-wrap{
+  display:flex;flex-wrap:wrap;gap:6px;
+}
+.fprov-pill{
+  font-family:var(--font);
+  font-size:12px;font-weight:500;
+  padding:6px 13px;
+  border-radius:var(--r-full);
+  border:1px solid var(--n-200);
+  background:var(--n-0);
+  color:var(--n-600);
+  cursor:pointer;
+  transition:all .18s cubic-bezier(.16,1,.3,1);
+  letter-spacing:-.01em;
+  white-space:nowrap;
+  line-height:1;
+}
+.fprov-pill:active{transform:scale(.95)}
+.fprov-pill.on{
+  background:var(--n-900);
+  color:var(--n-0);
+  border-color:var(--n-900);
+}
+
+/* ── RATE INCREASE RANGE — dual handle slider ── */
+.range-wrap{position:relative;padding:0 0 4px}
+.range-vals{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+}
+.range-val{
+  font-size:22px;font-weight:600;
+  color:var(--n-900);
+  letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+.range-sep{font-size:13px;color:var(--n-400)}
+
+/* Distribution bar behind the range */
+.range-track-wrap{
+  position:relative;
+  height:28px;
+  display:flex;align-items:center;
+}
+.range-dist{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  height:20px;
+  display:flex;align-items:flex-end;gap:1px;
+}
+.dist-bar{
+  flex:1;
+  border-radius:2px 2px 0 0;
+  background:var(--n-100);
+  transition:background .2s;
+}
+.dist-bar.in-range{background:var(--p-200)}
+
+/* Actual range track */
+.dual-range{
+  position:relative;
+  width:100%;height:4px;
+  margin-top:4px;
+}
+.range-track{
+  position:absolute;
+  top:0;left:0;right:0;
+  height:4px;border-radius:2px;
+  background:var(--n-150,#E2E1DD);
+}
+.range-fill{
+  position:absolute;
+  top:0;height:4px;
+  border-radius:2px;
+  background:var(--n-900);
+  transition:left .05s,right .05s;
+}
+input.rh{
+  position:absolute;
+  width:100%;
+  top:-7px;
+  height:18px;
+  -webkit-appearance:none;
+  appearance:none;
+  background:transparent;
+  pointer-events:none;
+  margin:0;padding:0;
+}
+input.rh::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--n-0);
+  border:1.5px solid var(--n-300);
+  box-shadow:0 1px 3px rgba(26,25,23,.12);
+  cursor:pointer;
+  pointer-events:all;
+  transition:border-color .15s,transform .1s;
+}
+input.rh::-webkit-slider-thumb:hover{border-color:var(--n-600)}
+input.rh:active::-webkit-slider-thumb{transform:scale(1.18)}
+.range-labels{
+  display:flex;justify-content:space-between;
+  margin-top:8px;
+}
+.range-lbl{
+  font-family:var(--mono);
+  font-size:10px;color:var(--n-400);
+}
+
+/* ── VERIFIED ONLY — toggle row ── */
+.verify-row{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:12px 0;
+}
+.verify-info{}
+.verify-label{
+  font-size:14px;font-weight:500;
+  color:var(--n-800);letter-spacing:-.01em;
+}
+.verify-sub{
+  font-size:12px;color:var(--n-400);
+  margin-top:2px;line-height:1.4;
+}
+.vtoggle{
+  width:42px;height:24px;
+  border-radius:999px;
+  background:var(--n-200);
+  border:none;cursor:pointer;
+  position:relative;
+  flex-shrink:0;
+  transition:background .2s cubic-bezier(.16,1,.3,1);
+}
+.vtoggle.on{background:var(--n-900)}
+.vtoggle::after{
+  content:'';
+  position:absolute;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--n-0);
+  top:3px;left:3px;
+  box-shadow:0 1px 3px rgba(26,25,23,.14);
+  transition:left .22s cubic-bezier(.16,1,.3,1);
+}
+.vtoggle.on::after{left:21px}
+
+/* Active filter badge on button */
+.filter-count{
+  font-family:var(--mono);
+  font-size:10px;font-weight:500;
+  background:var(--p-600);color:var(--n-0);
+  padding:2px 6px;border-radius:999px;
+  line-height:1.4;
+  display:none;
+}
+.filter-btn.active .filter-count{display:inline}
+</style>
+</head>
+<body>
+
+<div class="map-bg"></div>
+
+<!-- ══ NAV ══ -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+
+    <!-- Brand -->
+    <a class="brand" href="#">
+      <span class="brand-name">RateMap</span>
+      <span class="brand-sub" id="brandSub">See what your neighbours are really paying.</span>
+    </a>
+
+    <!-- Single CTA — state driven -->
+    <!-- Pioneer share nudge — visible only in pioneer state -->
+    <button class="nav-nudge" id="navNudge" onclick="nudgeClick()">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M1 6l3.5 3.5L11 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      You're on the map
+      <span class="nudge-sep"></span>
+      Share with neighbours
+    </button>
+    <!-- Single CTA — three states -->
+    <button class="nav-cta" id="navCta" data-state="new" onclick="ctaClick()">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" id="ctaIcon">
+        <path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <span id="ctaLabel">See how your renewal compares</span>
+      <span class="cta-urgency" id="ctaUrgency" hidden></span>
+    </button>
+
+    <!-- Mobile burger -->
+    <button class="nav-burger" id="burger" aria-label="Menu" aria-expanded="false" onclick="toggleDrawer()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <!-- Mobile drawer -->
+  <div class="nav-drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-inner">
+      <div class="drawer-status" id="drawerStatus" style="display:none"></div>
+      <!-- Pioneer share nudge — mobile -->
+      <button class="drawer-nudge" id="drawerNudge" onclick="nudgeClick();closeDrawer()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M1 6l3.5 3.5L11 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Share with neighbours
+      </button>
+      <button class="drawer-cta" id="drawerCta" data-state="new" onclick="ctaClick();closeDrawer()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" id="drawerIcon">
+          <path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <span id="drawerLabel">See how your renewal compares</span>
+        <span class="cta-urgency" id="drawerUrgency" hidden></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ MAP FILTER (bottom-left, anchored to canvas) ══ -->
+<div class="map-filter">
+  <button class="filter-btn" id="filterBtn" onclick="toggleFilter()">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M1 2.5h11M3.5 6.5h6M6 10.5h1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>
+    Filter
+    <span class="filter-count" id="filterCount">2</span>
+  </button>
+</div>
+
+
+<!-- ══ FILTER BACKDROP ══ -->
+<div class="filter-backdrop" id="filterBackdrop" onclick="closeFilter()"></div>
+
+<!-- ══ FILTER SHEET ══ -->
+<div class="filter-sheet" id="filterSheet">
+
+  <div class="sheet-handle" id="sheetHandle"></div>
+
+  <div class="sheet-hd">
+    <span class="sheet-title">Filter</span>
+    <button class="sheet-clear" id="sheetClear" onclick="clearAllFilters()">Clear all</button>
+  </div>
+
+  <div class="sheet-body">
+
+    <!-- 1. INSURANCE TYPE -->
+    <span class="sheet-sec">Insurance type</span>
+    <div class="type-toggle">
+      <button class="type-pill on" id="typeAuto" onclick="setType('auto')">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="5" width="14" height="8" rx="2" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="4.5" cy="13" r="1.5" fill="currentColor"/>
+          <circle cx="11.5" cy="13" r="1.5" fill="currentColor"/>
+          <path d="M4 5l1.5-3h5L12 5" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+        </svg>
+        Auto
+      </button>
+      <button class="type-pill on" id="typeHome" onclick="setType('home')">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <path d="M2 7l6-5 6 5v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M6 14V9h4v5" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+        Home
+      </button>
+    </div>
+
+    <!-- 2. PROVIDER -->
+    <span class="sheet-sec">Provider</span>
+    <div class="prov-wrap" id="fprovWrap">
+      <button class="fprov-pill" onclick="toggleProv(this,'Intact')">Intact</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'Aviva')">Aviva</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'TD Insurance')">TD Insurance</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'Desjardins')">Desjardins</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'Belairdirect')">Belairdirect</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'CAA Insurance')">CAA Insurance</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'Economical')">Economical</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'Wawanesa')">Wawanesa</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'Travelers')">Travelers</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'Co-operators')">Co-operators</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'Gore Mutual')">Gore Mutual</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'Sonnet')">Sonnet</button>
+      <button class="fprov-pill" onclick="toggleProv(this,'Allstate')">Allstate</button>
+    </div>
+
+    <!-- 3. RATE INCREASE RANGE -->
+    <span class="sheet-sec">Rate increase</span>
+    <div class="range-wrap">
+      <div class="range-vals">
+        <span class="range-val" id="rMin">0%</span>
+        <span class="range-sep">to</span>
+        <span class="range-val" id="rMax">50%+</span>
+      </div>
+      <div class="range-track-wrap">
+        <!-- Distribution bars (simulated data shape) -->
+        <div class="range-dist" id="distBars"></div>
+      </div>
+      <div class="dual-range">
+        <div class="range-track"></div>
+        <div class="range-fill" id="rangeFill"></div>
+        <input type="range" class="rh" id="rhMin" min="0" max="50" value="0" step="1" oninput="onRangeMin()">
+        <input type="range" class="rh" id="rhMax" min="0" max="50" value="50" step="1" oninput="onRangeMax()">
+      </div>
+      <div class="range-labels">
+        <span class="range-lbl">0%</span>
+        <span class="range-lbl">10%</span>
+        <span class="range-lbl">20%</span>
+        <span class="range-lbl">30%</span>
+        <span class="range-lbl">40%</span>
+        <span class="range-lbl">50%+</span>
+      </div>
+    </div>
+
+    <!-- 4. VERIFIED ONLY -->
+    <span class="sheet-sec">Trust</span>
+    <div class="verify-row">
+      <div class="verify-info">
+        <div class="verify-label">Verified posts only</div>
+        <div class="verify-sub">Show only posts backed by a renewal letter</div>
+      </div>
+      <button class="vtoggle" id="vtoggle" onclick="toggleVerified()"></button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ DEMO STATE SWITCHER ══ -->
+<div class="demo-switcher">
+  <div class="demo-title">Nav state preview</div>
+  <button class="demo-btn on" id="btnNew" onclick="setState('new')">
+    New visitor
+    <span class="demo-tag">no localStorage</span>
+  </button>
+  <button class="demo-btn" id="btnUnverified" onclick="setState('unverified')">
+    Submitted, unverified
+    <span class="demo-tag">posted</span>
+  </button>
+  <button class="demo-btn" id="btnVerified" onclick="setState('verified')">
+    Submitted, verified
+    <span class="demo-tag">verified</span>
+  </button>
+  <!-- Refinement 1: urgency days slider -->
+  <div class="demo-range-row">
+    <span class="demo-range-lbl">Days left</span>
+    <input type="range" min="1" max="30" value="14" id="daysSlider" oninput="onDaysSlider(this)">
+    <span class="demo-days-val" id="daysVal">14d</span>
+  </div>
+  <!-- Refinement 2: pioneer toggle -->
+  <div class="demo-toggle-row">
+    <span class="demo-toggle-lbl">Pioneer FSA (sparse data)</span>
+    <button class="toggle-pill" id="pioneerToggle" onclick="togglePioneer()"></button>
+  </div>
+</div>
+
+<script>
+/* ── CTA CONFIG PER STATE ── */
+var STATES = {
+  new: {
+    label:      'See how your renewal compares',
+    icon:       'plus',
+    drawerNote: null,
+  },
+  unverified: {
+    label:      'Verify your post',
+    icon:       'dot',
+    drawerNote: 'Your renewal is on the map — verify it to make it count more.',
+  },
+  verified: {
+    label:      'Post another renewal',
+    icon:       'check',
+    drawerNote: "You're verified and on the map.",
+  },
+};
+
+var ICONS = {
+  plus:  '<path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+  check: '<path d="M1.5 6.5l3.5 4L11 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+};
+
+var currentState  = 'new';
+var drawerOpen    = false;
+var filterActive  = false;
+var pioneerActive = false;
+var daysRemaining = 14; /* simulated renewal window */
+
+/* ── INIT ── */
+function init(){
+  var stored = localStorage.getItem('ratemap_submission_state');
+  if(stored === 'verified')        applyState('verified');
+  else if(stored === 'unverified') applyState('unverified');
+  else                             applyState('new');
+}
+
+/* ── APPLY STATE ── */
+function applyState(state){
+  currentState = state;
+  var cfg = STATES[state];
+
+  /* Nav CTA — state attribute */
+  var cta = document.getElementById('navCta');
+  cta.setAttribute('data-state', state);
+
+  /* Icon swap */
+  swapIcon('ctaIcon', state, cfg.icon);
+  document.getElementById('ctaLabel').textContent = cfg.label;
+
+  /* Drawer CTA */
+  var dCta = document.getElementById('drawerCta');
+  dCta.setAttribute('data-state', state);
+  swapIcon('drawerIcon', state, cfg.icon);
+  document.getElementById('drawerLabel').textContent = cfg.label;
+
+  /* Drawer status note */
+  var note = document.getElementById('drawerStatus');
+  if(cfg.drawerNote){ note.textContent = cfg.drawerNote; note.style.display = ''; }
+  else               { note.style.display = 'none'; }
+
+  /* Apply urgency if unverified */
+  if(state === 'unverified') applyUrgency(daysRemaining);
+  else                       clearUrgency();
+
+  /* Pioneer nudge visibility — only meaningful in unverified/verified */
+  var showNudge = pioneerActive && (state === 'unverified' || state === 'verified');
+  applyPioneer(showNudge);
+
+  /* Demo buttons */
+  ['new','unverified','verified'].forEach(function(s){
+    document.getElementById('btn'+cap(s)).classList.toggle('on', s===state);
+  });
+}
+
+/* ── ICON SWAP HELPER ── */
+function swapIcon(elId, state, iconKey){
+  var el = document.getElementById(elId);
+  if(!el) return;
+  if(state === 'unverified'){
+    if(el.tagName !== 'SPAN')
+      el.outerHTML = '<span class="dot" id="'+elId+'"></span>';
+  } else {
+    if(el.tagName === 'SPAN'){
+      el.outerHTML = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" id="'+elId+'">'+ICONS[iconKey]+'</svg>';
+    } else {
+      el.innerHTML = ICONS[iconKey];
+    }
+  }
+}
+
+/* ── URGENCY COUNTDOWN (Refinement 1) ──────────────────────────────
+   Shows days remaining in the renewal window inside the unverified CTA.
+   Two tiers:
+     ≤7 days  → amber badge, "X days left", urgent class
+     8–30 days → soft badge, "X days"
+   In production, daysRemaining is computed from:
+     submission_date + 30 - today
+─────────────────────────────────────────────────────────────────── */
+function applyUrgency(days){
+  var navBadge    = document.getElementById('ctaUrgency');
+  var drawerBadge = document.getElementById('drawerUrgency');
+
+  if(!navBadge || !drawerBadge) return;
+
+  var text    = days <= 1 ? '1 day left' : days + ' days left';
+  var urgent  = days <= 7;
+
+  [navBadge, drawerBadge].forEach(function(badge){
+    badge.textContent = text;
+    badge.removeAttribute('hidden');
+    badge.classList.toggle('urgent', urgent);
+  });
+
+  /* Also update drawer note with urgency context */
+  var note = document.getElementById('drawerStatus');
+  if(urgent){
+    note.textContent = 'Your renewal window closes in '+days+' day'+(days===1?'':'s')+'. Verify before it lapses.';
+    note.style.display = '';
+    note.style.color = '#845A0C';
+    note.style.fontWeight = '500';
+  } else {
+    note.textContent = 'Your renewal is on the map — verify it to make it count more.';
+    note.style.display = '';
+    note.style.color = '';
+    note.style.fontWeight = '';
+  }
+}
+
+function clearUrgency(){
+  ['ctaUrgency','drawerUrgency'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){ el.setAttribute('hidden',''); el.textContent = ''; }
+  });
+}
+
+/* ── PIONEER SHARE NUDGE (Refinement 2) ────────────────────────────
+   Shown when the user submitted in a sparse FSA (pioneer state).
+   Appears as a secondary ghost link in the nav — "You're on the map ·
+   Share with neighbours" — to drive organic acquisition from the users
+   most invested in the dataset growing.
+   Hidden entirely for new visitors and after verification.
+─────────────────────────────────────────────────────────────────── */
+function applyPioneer(visible){
+  var navNudge    = document.getElementById('navNudge');
+  var drawerNudge = document.getElementById('drawerNudge');
+  var toggle      = document.getElementById('pioneerToggle');
+  if(!navNudge || !drawerNudge) return;
+  navNudge.classList.toggle('visible', visible);
+  drawerNudge.classList.toggle('visible', visible);
+  if(toggle) toggle.classList.toggle('on', pioneerActive);
+}
+
+function nudgeClick(){
+  /* In production: open native share sheet or copy link to clipboard */
+  var url = 'https://ratemap.ca'; /* replace with real URL */
+  if(navigator.share){
+    navigator.share({
+      title: "I'm on the map — RateMap",
+      text:  "I just posted my insurance renewal. See what your neighbours are paying.",
+      url:   url
+    });
+  } else {
+    /* Fallback: copy to clipboard */
+    navigator.clipboard && navigator.clipboard.writeText(url);
+    alert('Link copied — paste it to share with neighbours.');
+  }
+}
+
+/* ── DEMO CONTROLS ── */
+function setState(state){
+  if(state === 'new') localStorage.removeItem('ratemap_submission_state');
+  else                localStorage.setItem('ratemap_submission_state', state);
+  applyState(state);
+}
+
+function onDaysSlider(el){
+  daysRemaining = parseInt(el.value);
+  var daysVal = document.getElementById('daysVal');
+  if(daysVal) daysVal.textContent = daysRemaining+'d';
+  if(currentState === 'unverified') applyUrgency(daysRemaining);
+}
+
+function togglePioneer(){
+  pioneerActive = !pioneerActive;
+  var showNudge = pioneerActive && (currentState === 'unverified' || currentState === 'verified');
+  applyPioneer(showNudge);
+}
+
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+function ctaClick(){
+  console.log('CTA clicked — state:', currentState, '| days:', daysRemaining, '| pioneer:', pioneerActive);
+}
+
+/* ── FILTER TOGGLE ── */
+/* ══════════════════════════════════
+   FILTER STATE
+══════════════════════════════════ */
+var F = {
+  types:    { auto: true, home: true }, /* both on = no filter applied */
+  provs:    [],                          /* empty = all providers */
+  rMin:     0,
+  rMax:     50,
+  verified: false,
+};
+
+/* ── OPEN / CLOSE ── */
+function toggleFilter(){
+  var sheet    = document.getElementById('filterSheet');
+  var backdrop = document.getElementById('filterBackdrop');
+  var isOpen   = sheet.classList.contains('open');
+  if(isOpen){ closeFilter(); }
+  else       { openFilter(); }
+}
+
+function openFilter(){
+  document.getElementById('filterSheet').classList.add('open');
+  document.getElementById('filterBackdrop').classList.add('open');
+  buildDist(); updateRangeFill();
+}
+
+function closeFilter(){
+  document.getElementById('filterSheet').classList.remove('open');
+  document.getElementById('filterBackdrop').classList.remove('open');
+}
+
+/* ── INSURANCE TYPE ── */
+function setType(t){
+  /* Each pill toggles independently; at least one must stay on */
+  if(t === 'auto'){
+    var both = F.types.auto && F.types.home;
+    if(both){ F.types.home = false; }   /* deselect the other */
+    else     { F.types.auto = !F.types.auto; }
+    if(!F.types.auto && !F.types.home){ F.types.auto = true; } /* prevent all-off */
+  } else {
+    var both2 = F.types.auto && F.types.home;
+    if(both2){ F.types.auto = false; }
+    else      { F.types.home = !F.types.home; }
+    if(!F.types.auto && !F.types.home){ F.types.home = true; }
+  }
+  document.getElementById('typeAuto').classList.toggle('on', F.types.auto);
+  document.getElementById('typeHome').classList.toggle('on', F.types.home);
+  syncFilter();
+}
+
+/* ── PROVIDER MULTI-SELECT ── */
+function toggleProv(btn, name){
+  var idx = F.provs.indexOf(name);
+  if(idx === -1){ F.provs.push(name);   btn.classList.add('on'); }
+  else          { F.provs.splice(idx,1); btn.classList.remove('on'); }
+  syncFilter();
+}
+
+/* ── RATE RANGE ── */
+function onRangeMin(){
+  var mn = parseInt(document.getElementById('rhMin').value);
+  var mx = parseInt(document.getElementById('rhMax').value);
+  if(mn >= mx){ mn = mx - 1; document.getElementById('rhMin').value = mn; }
+  F.rMin = mn;
+  document.getElementById('rMin').textContent = mn + '%';
+  updateRangeFill(); buildDist(); syncFilter();
+}
+function onRangeMax(){
+  var mn = parseInt(document.getElementById('rhMin').value);
+  var mx = parseInt(document.getElementById('rhMax').value);
+  if(mx <= mn){ mx = mn + 1; document.getElementById('rhMax').value = mx; }
+  F.rMax = mx;
+  document.getElementById('rMax').textContent = mx >= 50 ? '50%+' : mx + '%';
+  updateRangeFill(); buildDist(); syncFilter();
+}
+function updateRangeFill(){
+  var mn  = parseInt(document.getElementById('rhMin').value);
+  var mx  = parseInt(document.getElementById('rhMax').value);
+  var pct = function(v){ return (v/50*100).toFixed(1)+'%'; };
+  var fill = document.getElementById('rangeFill');
+  if(fill){ fill.style.left = pct(mn); fill.style.right = (100 - v2p(mx)).toFixed(1)+'%'; }
+}
+function v2p(v){ return v/50*100; }
+
+/* ── DISTRIBUTION BARS (simulated data shape) ──
+   Bell-ish curve skewed to 8–18% — realistic Ontario distribution.
+   In production: SELECT rate_bucket, COUNT(*) FROM submissions GROUP BY 1
+──────────────────────────────────────────────── */
+var DIST = [2,3,5,7,11,16,20,18,14,10,7,5,4,3,2,2,2,1,1,1,
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+            1,1,1,1,1,1,1,1,1,1];
+
+function buildDist(){
+  var wrap = document.getElementById('distBars');
+  if(!wrap) return;
+  var mn = parseInt(document.getElementById('rhMin').value);
+  var mx = parseInt(document.getElementById('rhMax').value);
+  var maxV = Math.max.apply(null, DIST);
+  wrap.innerHTML = '';
+  DIST.forEach(function(v, i){
+    var bar = document.createElement('div');
+    bar.className = 'dist-bar' + (i >= mn && i <= mx ? ' in-range' : '');
+    bar.style.height = Math.max(3, Math.round(v/maxV*20))+'px';
+    wrap.appendChild(bar);
+  });
+}
+
+/* ── VERIFIED TOGGLE ── */
+function toggleVerified(){
+  F.verified = !F.verified;
+  document.getElementById('vtoggle').classList.toggle('on', F.verified);
+  syncFilter();
+}
+
+/* ── SYNC — count active filters, update button ── */
+function syncFilter(){
+  var count = 0;
+  /* Type: both on = neutral; one off = 1 filter */
+  if(!F.types.auto || !F.types.home) count++;
+  /* Providers: any selected = 1 filter (shows count of selected) */
+  if(F.provs.length > 0) count += F.provs.length;
+  /* Range: non-default = 1 filter */
+  if(F.rMin > 0 || F.rMax < 50) count++;
+  /* Verified */
+  if(F.verified) count++;
+
+  var btn   = document.getElementById('filterBtn');
+  var badge = document.getElementById('filterCount');
+  var clear = document.getElementById('sheetClear');
+
+  btn.classList.toggle('active', count > 0);
+  if(badge){ badge.textContent = count; }
+  if(clear){ clear.classList.toggle('active', count > 0); }
+
+  /* In production: re-query Supabase and update map markers here */
+  console.log('Filter updated:', JSON.stringify(F), '| Active filters:', count);
+}
+
+/* ── CLEAR ALL ── */
+function clearAllFilters(){
+  F = { types:{auto:true,home:true}, provs:[], rMin:0, rMax:50, verified:false };
+
+  /* Reset UI */
+  document.getElementById('typeAuto').classList.add('on');
+  document.getElementById('typeHome').classList.add('on');
+  document.querySelectorAll('.fprov-pill').forEach(function(p){ p.classList.remove('on'); });
+  var rhMin = document.getElementById('rhMin');
+  var rhMax = document.getElementById('rhMax');
+  if(rhMin){ rhMin.value = 0; }
+  if(rhMax){ rhMax.value = 50; }
+  document.getElementById('rMin').textContent = '0%';
+  document.getElementById('rMax').textContent = '50%+';
+  if(document.getElementById('vtoggle')) document.getElementById('vtoggle').classList.remove('on');
+  F.verified = false;
+  updateRangeFill(); buildDist(); syncFilter();
+}
+
+/* ── SWIPE TO DISMISS (touch drag handle) ── */
+(function(){
+  var handle, startY, curY, dragging=false;
+  document.addEventListener('DOMContentLoaded', function(){
+    handle = document.getElementById('sheetHandle');
+    if(!handle) return;
+    handle.addEventListener('touchstart', function(e){
+      startY = e.touches[0].clientY; dragging = true;
+    }, {passive:true});
+    document.addEventListener('touchmove', function(e){
+      if(!dragging) return;
+      curY = e.touches[0].clientY;
+      var dy = Math.max(0, curY - startY);
+      var sheet = document.getElementById('filterSheet');
+      if(sheet) sheet.style.transform = 'translateY('+dy+'px)';
+    }, {passive:true});
+    document.addEventListener('touchend', function(){
+      if(!dragging) return;
+      dragging = false;
+      var sheet = document.getElementById('filterSheet');
+      if(!sheet) return;
+      sheet.style.transform = '';
+      if(curY - startY > 80){ closeFilter(); }
+    });
+  });
+})();
+
+
+/* ── MOBILE DRAWER ── */
+function toggleDrawer(){
+  drawerOpen = !drawerOpen;
+  var b = document.getElementById('burger');
+  var d = document.getElementById('drawer');
+  b.classList.toggle('open', drawerOpen);
+  d.classList.toggle('open', drawerOpen);
+  b.setAttribute('aria-expanded', drawerOpen);
+  d.setAttribute('aria-hidden', !drawerOpen);
+}
+function closeDrawer(){
+  drawerOpen = false;
+  document.getElementById('burger').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('burger').setAttribute('aria-expanded', false);
+  document.getElementById('drawer').setAttribute('aria-hidden', true);
+}
+document.addEventListener('click', function(e){
+  if(drawerOpen &&
+     !document.getElementById('burger').contains(e.target) &&
+     !document.getElementById('drawer').contains(e.target)){
+    closeDrawer();
+  }
+});
+
+init();
+</script>
+</body>
+</html>

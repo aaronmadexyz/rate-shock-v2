@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — GLOBAL STYLES
+   All CSS custom properties mirror /lib/tokens.ts so Tailwind-generated
+   classes and raw CSS can both access the same values.
+═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── FONTS ──────────────────────────────────────────────────────────── */
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'SF Mono', monospace;
+
+  /* ── NEUTRALS ───────────────────────────────────────────────────────── */
+  --n-0:   #FFFFFF;
+  --n-25:  #FAFAF8;
+  --n-50:  #F5F4F1;
+  --n-100: #EEEDEA;
+  --n-150: #E2E1DD;
+  --n-200: #D4D3CE;
+  --n-300: #B8B7B1;
+  --n-400: #9A998F;
+  --n-500: #7C7B72;
+  --n-600: #5E5D56;
+  --n-700: #43423D;
+  --n-800: #2C2B27;
+  --n-900: #1A1917;
+
+  /* ── PRIMARY (indigo) ───────────────────────────────────────────────── */
+  --p-50:  #EEEFFA;
+  --p-100: #D5D7F2;
+  --p-200: #B0B4E6;
+  --p-400: #636AC5;
+  --p-500: #4A50B0;
+  --p-600: #3A3F8F;
+  --p-700: #2D3170;
+
+  /* ── POSITIVE (sage) ────────────────────────────────────────────────── */
+  --pos-50:  #EDF7F0;
+  --pos-200: #93D1A2;
+  --pos-400: #3A9B55;
+  --pos-500: #2A7D41;
+  --pos-600: #1F6132;
+
+  /* ── CAUTION (amber) ────────────────────────────────────────────────── */
+  --cau-50:  #FEF6E8;
+  --cau-200: #FACA6B;
+  --cau-400: #D49316;
+  --cau-500: #AD7710;
+  --cau-600: #845A0C;
+
+  /* ── NEGATIVE (coral) ───────────────────────────────────────────────── */
+  --neg-50:  #FDF0EE;
+  --neg-200: #F2A597;
+  --neg-400: #D4503A;
+  --neg-500: #B33C28;
+  --neg-600: #8C2E1E;
+
+  /* ── SEAL COLORS ────────────────────────────────────────────────────── */
+  --seal-positive:       #3A9B55;
+  --seal-positive-shine: #5CB872;
+  --seal-neutral:        #D49316;
+  --seal-neutral-shine:  #FACA6B;
+  --seal-negative:       #D4503A;
+  --seal-negative-shine: #F2A597;
+
+  /* ── PAPER COLORS ───────────────────────────────────────────────────── */
+  --paper-body: #F0EDE8;
+  --paper-flap: #E6E3DD;
+
+  /* ── MAP COLORS ─────────────────────────────────────────────────────── */
+  --map-land:   #EEEDEA;
+  --map-border: #D4D3CE;
+  --map-water:  #F5F4F1;
+
+  /* ── SHADOWS ────────────────────────────────────────────────────────── */
+  --shadow-xs: 0 1px 2px rgba(26,25,23,.04);
+  --shadow-sm: 0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04);
+  --shadow-md: 0 4px 12px rgba(26,25,23,.06), 0 1px 3px rgba(26,25,23,.04);
+  --shadow-lg: 0 8px 28px rgba(26,25,23,.08), 0 2px 6px rgba(26,25,23,.04);
+  --shadow-xl: 0 16px 48px rgba(26,25,23,.10), 0 4px 12px rgba(26,25,23,.04);
+
+  /* ── SPACING ────────────────────────────────────────────────────────── */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+
+  /* ── BORDER RADIUS ──────────────────────────────────────────────────── */
+  --r-sm:   6px;
+  --r-md:   10px;
+  --r-lg:   14px;
+  --r-xl:   20px;
+  --r-full: 9999px;
+
+  /* ── Z-INDEX ────────────────────────────────────────────────────────── */
+  --z-map:      0;
+  --z-markers:  10;
+  --z-controls: 20;
+  --z-nav:      100;
+  --z-panel:    200;
+  --z-tooltip:  300;
+  --z-backdrop: 400;
+  --z-modal:    500;
+}
+
+/* ─── BASE ───────────────────────────────────────────────────────────────── */
+
+html {
+  background-color: var(--n-50); /* #F5F4F1 — prevents white flash on overscroll */
+}
+
+body {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--n-900);
+  background: var(--n-50); /* #F5F4F1 */
+}
+
+/* ─── UTILITY CLASSES NOT COVERED BY TAILWIND ───────────────────────────── */
+
+.font-display {
+  font-family: var(--font-display);
+  font-variation-settings: 'opsz' 32;
+}
+
+.data-value {
+  font-family: var(--font-display);
+  font-variation-settings: 'opsz' 32;
+  font-weight: 700;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* ─── KEYFRAMES ─────────────────────────────────────────────────────────── */
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.75); }
+}
+
+@keyframes envelopeBob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+/* Stepper tick-up: new value slides in from below */
+@keyframes snUp {
+  from { transform: translateY(8px);  opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Stepper tick-down: new value slides in from above */
+@keyframes snDown {
+  from { transform: translateY(-8px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ─── REDUCED MOTION ────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .envelope-bob {
+    animation-play-state: paused;
+  }
+
+  * {
+    transition-duration:  0.01ms !important;
+    animation-duration:   0.01ms !important;
+  }
+}

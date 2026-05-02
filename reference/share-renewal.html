@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Share My Renewal — RateMap</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#EEECE7;min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased}
+#app{width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;transition:background .38s ease}
+#app.open{background:rgba(26,25,23,.46)}
+#trg{display:flex;flex-direction:column;align-items:center;gap:14px;transition:opacity .22s,transform .22s}
+#trg.gone{opacity:0;pointer-events:none;transform:scale(.96)}
+#cta{font-family:'Inter',system-ui,sans-serif;font-size:15px;font-weight:500;padding:13px 32px;border-radius:999px;background:#1A1917;color:#FFFFFF;border:none;cursor:pointer;letter-spacing:-.01em;transition:opacity .15s,transform .1s}
+#cta:hover{opacity:.82}#cta:active{transform:scale(.97)}
+#ctag{font-size:13px;color:#7C7B72;text-align:center;max-width:240px;line-height:1.55}
+#mod{position:fixed;top:50%;left:50%;transform:translate(-50%,-52%) scale(.94);opacity:0;pointer-events:none;width:calc(100vw - 48px);max-width:468px;background:#FFFFFF;border-radius:20px;border:1px solid #E2E1DD;box-shadow:0 8px 32px rgba(26,25,23,.12),0 2px 8px rgba(26,25,23,.06);transition:transform .44s cubic-bezier(.16,1,.3,1),opacity .34s cubic-bezier(.16,1,.3,1)}
+#mod.vis{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:all}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:20px 22px 0}
+.mttl{font-size:15px;font-weight:500;color:#1A1917}
+.xcls{width:26px;height:26px;border-radius:50%;border:1px solid #EEEDEA;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0;padding:0}
+.xcls:hover{background:#F5F4F1}
+.dotrow{display:flex;gap:5px;justify-content:center;padding:12px 0 0}
+.dot{width:5px;height:5px;border-radius:50%;background:#D4D3CE;transition:all .35s cubic-bezier(.16,1,.3,1)}
+.dot.on{width:18px;border-radius:3px;background:#1A1917}
+.mbdy{padding:16px 22px 0;max-height:420px;overflow-y:auto}
+.mbdy::-webkit-scrollbar{width:3px}
+.mbdy::-webkit-scrollbar-thumb{background:#E2E1DD;border-radius:2px}
+.ff{margin-bottom:16px}
+.fl{display:block;font-size:11px;font-weight:500;color:#9A998F;margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
+.fsai{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;width:100%;padding:11px 15px;border:1.5px solid #EEEDEA;border-radius:12px;background:#FFFFFF;color:#1A1917;outline:none;letter-spacing:.14em;text-transform:uppercase;transition:border-color .15s,box-shadow .15s;display:block}
+.fsai:focus{border-color:#4A50B0;box-shadow:0 0 0 3px rgba(74,80,176,.09)}
+.fsai::placeholder{color:#D4D3CE}
+.fhint{font-size:12px;color:#4A50B0;font-weight:500;margin-top:5px;min-height:16px}
+.ferr{font-size:12px;color:#D4503A;margin-top:4px;display:none}
+.ferr.on{display:block}
+.ttog{display:flex;gap:8px}
+.tbt{flex:1;padding:11px 8px;border-radius:10px;font-size:13px;font-weight:500;border:1.5px solid #EEEDEA;background:#FFFFFF;color:#7C7B72;cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;justify-content:center;gap:7px;font-family:'Inter',system-ui,sans-serif}
+.tbt:active{transform:scale(.97)}
+.tbt.on{background:#1A1917;color:#FFFFFF;border-color:#1A1917}
+.prog{overflow:hidden;max-height:0;transition:max-height .5s cubic-bezier(.16,1,.3,1),opacity .35s;opacity:0}
+.prog.open{max-height:300px;opacity:1}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stpr{display:flex;align-items:center;border:1px solid #EEEDEA;border-radius:10px;overflow:hidden;width:fit-content}
+.sb{width:34px;height:34px;border:none;background:#FFFFFF;cursor:pointer;font-size:17px;color:#9A998F;display:flex;align-items:center;justify-content:center;transition:background .12s,transform .1s;font-family:'Inter',system-ui,sans-serif;flex-shrink:0;line-height:1}
+.sb:hover{background:#F5F4F1}
+.sb:active{transform:scale(.86)}
+.sn{min-width:40px;text-align:center;font-size:14px;font-weight:500;color:#1A1917;border-left:1px solid #EEEDEA;border-right:1px solid #EEEDEA;line-height:34px;background:#FFFFFF}
+.slhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.slval{font-size:28px;font-weight:600;color:#1A1917;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.sltog{display:flex;background:#F5F4F1;border-radius:8px;padding:2px}
+.slm{padding:4px 14px;border-radius:6px;font-size:12px;font-weight:500;border:none;background:transparent;cursor:pointer;color:#9A998F;transition:all .15s;font-family:'Inter',system-ui,sans-serif}
+.slm.on{background:#FFFFFF;color:#1A1917;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+input[type=range].rng{width:100%;height:4px;border-radius:2px;outline:none;-webkit-appearance:none;cursor:pointer;margin:6px 0;display:block}
+input[type=range].rng::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#FFFFFF;border:1.5px solid #D4D3CE;box-shadow:0 1px 3px rgba(0,0,0,.12);cursor:pointer;transition:border-color .15s,transform .1s}
+input[type=range].rng::-webkit-slider-thumb:hover{border-color:#9A998F}
+input[type=range].rng:active::-webkit-slider-thumb{transform:scale(1.18)}
+.rbds{display:flex;justify-content:space-between;margin-top:3px}
+.rbd{font-size:11px;color:#B8B7B1;font-family:'IBM Plex Mono',monospace}
+.sents{display:flex;gap:5px;margin-bottom:2px}
+.so{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 3px;border-radius:12px;border:1.5px solid #EEEDEA;cursor:pointer;transition:all .22s cubic-bezier(.16,1,.3,1);background:#FFFFFF;font-family:'Inter',system-ui,sans-serif}
+.so:active{transform:scale(.92)}
+.sl{font-size:10px;color:#9A998F;text-align:center;line-height:1.3}
+textarea.ta{width:100%;padding:11px 13px;font-family:'Inter',system-ui,sans-serif;font-size:14px;border:1.5px solid #EEEDEA;border-radius:12px;background:#FFFFFF;color:#1A1917;outline:none;resize:none;line-height:1.6;min-height:76px;transition:border-color .15s,box-shadow .15s;display:block}
+textarea.ta:focus{border-color:#4A50B0;box-shadow:0 0 0 3px rgba(74,80,176,.09)}
+textarea.ta::placeholder{color:#D4D3CE}
+.step{display:none}.step.on{display:block}
+.mft{padding:14px 22px 18px;display:flex;gap:10px;align-items:center}
+.bkbt{font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:500;padding:11px 18px;border-radius:999px;border:1px solid #D4D3CE;background:#FFFFFF;cursor:pointer;color:#7C7B72;transition:background .15s,transform .1s;white-space:nowrap}
+.bkbt:hover{background:#F5F4F1}
+.bkbt:active{transform:scale(.97)}
+.nxbt{font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:500;padding:11px 0;border-radius:999px;border:none;background:#1A1917;color:#FFFFFF;cursor:pointer;transition:opacity .15s,transform .1s;flex:1;text-align:center;display:block}
+.nxbt:hover{opacity:.83}
+.nxbt:active{transform:scale(.97)}
+
+/* ══════════════════════════════════
+   ANIMATION STAGE
+══════════════════════════════════ */
+.astg{display:none;flex-direction:column;align-items:center;padding:16px 22px 24px}
+.astg.on{display:flex}
+
+/*
+  env-scene: the coordinate container.
+  overflow:visible so the open flap and rising letter
+  can extend above the envelope's top edge.
+  Height = envelope body height (118px).
+  Elements above it overflow freely.
+*/
+.env-scene{
+  position:relative;
+  width:180px;
+  height:118px;
+  margin:70px auto 16px;   /* 70px top margin = room for open flap + letter tip */
+  overflow:visible;
+  flex-shrink:0;
+}
+
+/* ── LAYER Z-INDEX STACK ──
+   1: envelope body (permanent)
+   2: letter (rises, eventually z=5 above flap)
+   3: rip elements
+   4: flap SVG (starts above letter, ends as open lid)
+*/
+
+/* Letter */
+#envLetter{
+  position:absolute;
+  left:14px; right:14px;
+  top:14px;
+  height:140px;                /* tall letter */
+  background:#FFFFFF;
+  border:1px solid #DDDBD6;
+  border-radius:4px;
+  box-shadow:0 2px 10px rgba(26,25,23,.1);
+  z-index:2;
+  opacity:0;
+  transform:translateY(0px);
+  /* JS drives the animation, no CSS transition here */
+}
+.letter-inner{padding:14px 13px 0}
+.ll{height:2px;background:#EEEDEA;border-radius:1px;margin-bottom:10px}
+.ll.s{width:70%}.ll.xs{width:50%}
+.letter-face{display:flex;align-items:center;justify-content:center;padding-top:10px;opacity:0;transition:opacity .4s ease}
+.letter-face.on{opacity:1}
+
+/* Rip halves */
+#ripL,#ripR{
+  position:absolute;left:14px;right:14px;top:14px;height:140px;
+  background:#FFFFFF;border:1px solid #DDDBD6;border-radius:4px;
+  z-index:6;opacity:0;
+}
+#ripL{clip-path:inset(0 50% 0 0 round 4px 0 0 4px)}
+#ripR{clip-path:inset(0 0 0 50% round 0 4px 4px 0)}
+#ripCrack{
+  position:absolute;left:50%;width:2px;top:14px;height:140px;
+  margin-left:-1px;
+  background:linear-gradient(to bottom,transparent,#E87460 15%,#E87460 85%,transparent);
+  z-index:7;opacity:0;transform:scaleY(0);transform-origin:top;
+}
+
+/* Glow */
+@keyframes glowG{
+  0%,100%{box-shadow:0 0 0 0 rgba(58,155,85,0),0 4px 14px rgba(58,155,85,.15)}
+  50%{box-shadow:0 0 0 6px rgba(58,155,85,.06),0 4px 26px rgba(58,155,85,.36)}
+}
+#envLetter.glow{animation:glowG 2s ease-in-out infinite}
+
+/* Particles */
+@keyframes ptcUp{
+  0%{opacity:.9;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-80px) scale(.1)}
+}
+
+/* Rip animations */
+@keyframes crackIn{
+  0%{opacity:0;transform:scaleY(0)}
+  40%{opacity:1;transform:scaleY(1)}
+  100%{opacity:0;transform:scaleY(1)}
+}
+@keyframes flyL{
+  0%{opacity:1;transform:translateX(0) translateY(0) rotate(0)}
+  100%{opacity:0;transform:translateX(-55px) translateY(-24px) rotate(-21deg)}
+}
+@keyframes flyR{
+  0%{opacity:1;transform:translateX(0) translateY(0) rotate(0)}
+  100%{opacity:0;transform:translateX(55px) translateY(-24px) rotate(21deg)}
+}
+
+/* Success */
+.ptc-wrap{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:0 0 20px 20px}
+.ptc{position:absolute;border-radius:50%}
+.amsg{text-align:center;margin-top:4px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.amsg.show{animation:fadeUp .45s ease both}
+.amsgt{font-size:15px;font-weight:500;color:#1A1917;margin-bottom:6px}
+.amsgs{font-size:13px;color:#7C7B72;line-height:1.65;max-width:260px;margin:0 auto 16px}
+.ag{font-family:'Inter',system-ui,sans-serif;font-size:13px;padding:8px 20px;border-radius:999px;border:1px solid #D4D3CE;background:#FFFFFF;cursor:pointer;color:#7C7B72;transition:background .15s}
+.ag:hover{background:#F5F4F1}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="trg">
+    <button id="cta" onclick="rmOpen()">Share my renewal</button>
+    <p id="ctag">See how your increase compares to neighbours in your area</p>
+  </div>
+
+  <div id="mod">
+    <div class="mhd">
+      <span class="mttl" id="mttl">Your policy</span>
+      <button class="xcls" onclick="rmClose()">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+          <path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke="#9A998F" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="dotrow" id="dotrow">
+      <div class="dot on" id="d1"></div>
+      <div class="dot" id="d2"></div>
+    </div>
+
+    <div class="mbdy">
+      <!-- STEP 1 -->
+      <div class="step on" id="st1">
+        <div class="ff">
+          <label class="fl">FSA — First 3 characters of postal code</label>
+          <input class="fsai" id="fsai" type="text" maxlength="3" placeholder="M5V" autocomplete="off" oninput="onFsa(this)">
+          <div class="fhint" id="fhint"></div>
+          <div class="ferr" id="ferr">Please enter your 3-character FSA to continue</div>
+        </div>
+        <div class="ff">
+          <label class="fl">Insurance type</label>
+          <div class="ttog">
+            <button class="tbt on" id="bauto" onclick="setType('auto')">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
+                <rect x="1" y="5" width="14" height="8" rx="2" stroke="currentColor" stroke-width="1.2"/>
+                <circle cx="4.5" cy="13" r="1.5" fill="currentColor"/>
+                <circle cx="11.5" cy="13" r="1.5" fill="currentColor"/>
+                <path d="M4 5l1.5-3h5L12 5" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+              </svg>Auto
+            </button>
+            <button class="tbt" id="bhome" onclick="setType('home')">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
+                <path d="M2 7l6-5 6 5v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M6 14V9h4v5" stroke="currentColor" stroke-width="1.2"/>
+              </svg>Home
+            </button>
+          </div>
+        </div>
+        <div class="prog open" id="af">
+          <div class="twocol" style="margin-bottom:14px">
+            <div><label class="fl">Years licensed (G)</label><div class="stpr"><button class="sb" onclick="adj('yrs',-1)">−</button><span class="sn" id="yrsv">5</span><button class="sb" onclick="adj('yrs',1)">+</button></div></div>
+            <div><label class="fl">At-fault claims (6 yrs)</label><div class="stpr"><button class="sb" onclick="adj('cl',-1)">−</button><span class="sn" id="clv">0</span><button class="sb" onclick="adj('cl',1)">+</button></div></div>
+          </div>
+          <div class="ff" style="margin-bottom:4px">
+            <label class="fl">Convictions (last 3 years)</label>
+            <div class="stpr"><button class="sb" onclick="adj('cv',-1)">−</button><span class="sn" id="cvv">0</span><button class="sb" onclick="adj('cv',1)">+</button></div>
+          </div>
+        </div>
+        <div class="prog" id="hf">
+          <div class="twocol">
+            <div><label class="fl">Years continuously insured</label><div class="stpr"><button class="sb" onclick="adj('hyr',-1)">−</button><span class="sn" id="hyrv">3</span><button class="sb" onclick="adj('hyr',1)">+</button></div></div>
+            <div><label class="fl">Number of claims</label><div class="stpr"><button class="sb" onclick="adj('hcl',-1)">−</button><span class="sn" id="hclv">0</span><button class="sb" onclick="adj('hcl',1)">+</button></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step" id="st2">
+        <div class="ff">
+          <label class="fl">Premium increase this renewal</label>
+          <div class="slhd">
+            <span class="slval" id="slval">12%</span>
+            <div class="sltog">
+              <button class="slm on" id="mpct" onclick="setMode('pct')">%</button>
+              <button class="slm" id="mdol" onclick="setMode('dol')">$</button>
+            </div>
+          </div>
+          <input type="range" class="rng" id="rng" min="0" max="50" step="1" value="12" oninput="onRange()">
+          <div class="rbds"><span class="rbd" id="rlo">0%</span><span class="rbd" id="rhi">50%+</span></div>
+        </div>
+        <div class="ff">
+          <label class="fl">How do you feel about your renewal?</label>
+          <div class="sents">
+            <button class="so" id="so1" onclick="setSent(1)"><svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#3A9B55"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M10 21Q17 27 24 21" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg><span class="sl">Very<br>fair</span></button>
+            <button class="so" id="so2" onclick="setSent(2)"><svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#93D1A2"/><circle cx="12" cy="14" r="2" fill="#1F6132"/><circle cx="22" cy="14" r="2" fill="#1F6132"/><path d="M12 21Q17 24.5 22 21" stroke="#1F6132" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg><span class="sl">Fair</span></button>
+            <button class="so" id="so3" onclick="setSent(3)"><svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#D49316"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 22L22 22" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg><span class="sl">Neutral</span></button>
+            <button class="so" id="so4" onclick="setSent(4)"><svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#E87460"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 24Q17 20 22 24" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg><span class="sl">Unfair</span></button>
+            <button class="so" id="so5" onclick="setSent(5)"><svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#D4503A"/><circle cx="12" cy="13" r="2" fill="white"/><circle cx="22" cy="13" r="2" fill="white"/><path d="M10 24Q17 19 24 24" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg><span class="sl">Very<br>unfair</span></button>
+          </div>
+          <div class="ferr" id="serr">Please select how you feel about your renewal</div>
+        </div>
+        <div class="ff" style="margin-bottom:0">
+          <label class="fl">Additional comments <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+          <textarea class="ta" id="note" placeholder="Anything your neighbours should know..." maxlength="500" oninput="document.getElementById('cc').textContent=this.value.length+' / 500'"></textarea>
+          <div style="text-align:right;font-size:11px;color:#B8B7B1;margin-top:4px" id="cc">0 / 500</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ANIMATION STAGE ══ -->
+    <div class="astg" id="astg">
+      <div class="ptc-wrap" id="ptcWrap"></div>
+
+      <!--
+        env-scene: 180×118px envelope body.
+        overflow:visible — letter and open flap extend above freely.
+        margin-top:70px gives visual breathing room for what rises above.
+      -->
+      <div class="env-scene" id="envScene">
+
+        <!-- Z=1 BODY — permanent, static, never changes -->
+        <svg id="envBody" width="180" height="118" viewBox="0 0 180 118"
+             style="position:absolute;top:0;left:0;z-index:1;display:block;overflow:visible">
+          <rect x="0" y="0" width="180" height="118" rx="7" fill="#F0EDE8"/>
+          <!-- back-side fold triangles -->
+          <polygon points="0,0 0,118 90,68" fill="#E8E4DD"/>
+          <polygon points="180,0 180,118 90,68" fill="#E8E4DD"/>
+          <polygon points="0,118 180,118 90,68" fill="#DED9D3"/>
+          <!-- crease lines -->
+          <line x1="0"   y1="0"   x2="90" y2="68" stroke="#CBC8C1" stroke-width="0.8"/>
+          <line x1="180" y1="0"   x2="90" y2="68" stroke="#CBC8C1" stroke-width="0.8"/>
+          <line x1="0"   y1="118" x2="90" y2="68" stroke="#CBC8C1" stroke-width="0.8"/>
+          <line x1="180" y1="118" x2="90" y2="68" stroke="#CBC8C1" stroke-width="0.8"/>
+          <!-- border -->
+          <rect x=".5" y=".5" width="179" height="117" rx="6.5" fill="none" stroke="#D4D3CE" stroke-width="1"/>
+        </svg>
+
+        <!-- Z=2 LETTER (rises upward) -->
+        <div id="envLetter">
+          <div class="letter-inner">
+            <div class="ll"></div>
+            <div class="ll s"></div>
+            <div class="ll xs"></div>
+            <div class="ll"></div>
+            <div class="ll s"></div>
+          </div>
+          <div class="letter-face" id="letterFace"></div>
+        </div>
+
+        <!-- Z=3 RIP ELEMENTS (negative sentiment only) -->
+        <div id="ripL"></div>
+        <div id="ripR"></div>
+        <div id="ripCrack"></div>
+
+        <!--
+          Z=4 FLAP SVG
+          overflow:visible — polygon can draw above y=0.
+          JS animates flapPoly points in two phases:
+            Phase A: peak Y goes  68 → 0  (flap unfolds flat, like hinge opening)
+            Phase B: peak Y goes   0 → -48 (flap folds back behind, showing inside)
+          Fill changes from front-face to inside-face colour at the hinge point.
+          Opacity stays 1 throughout — flap remains visible as an open lid.
+        -->
+        <svg id="envFlap" width="180" height="118" viewBox="0 0 180 118"
+             style="position:absolute;top:0;left:0;z-index:4;display:block;overflow:visible">
+          <defs>
+            <filter id="flapShadow" x="-20%" y="-40%" width="140%" height="180%">
+              <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="rgba(26,25,23,0.12)"/>
+            </filter>
+          </defs>
+          <!--
+            flapPoly: starts at 0,0 → 180,0 → 90,68 (closed)
+            flapEdge: the two diagonal fold-crease lines from corners to peak
+            flapTop:  the straight top edge
+          -->
+          <polygon id="flapPoly"
+            points="0,0 180,0 90,68"
+            fill="#ECE9E3"/>
+          <polyline id="flapEdge"
+            points="0,0 90,68 180,0"
+            fill="none" stroke="#C8C5BE" stroke-width="0.9" stroke-linejoin="round"/>
+          <line id="flapTop" x1="0" y1="0" x2="180" y2="0" stroke="#D4D3CE" stroke-width="1"/>
+
+          <!-- Wax seal — centroid of closed triangle: x=90, y≈23 -->
+          <g id="sealGroup">
+            <circle id="sealCircle" cx="90" cy="26" r="18" fill="#D4D3CE"/>
+            <circle cx="90" cy="26" r="12" fill="none" stroke="white" stroke-width="0.7" opacity="0.35"/>
+            <circle cx="84" cy="20" r="3" fill="white" opacity="0.28"/>
+          </g>
+        </svg>
+
+      </div><!-- /env-scene -->
+
+      <!-- Success message -->
+      <div class="amsg" id="amsg" style="visibility:hidden">
+        <div class="amsgt" id="amsgt">Renewal posted</div>
+        <div class="amsgs" id="amsgs"></div>
+        <button class="ag" onclick="rmReset()">Share another renewal</button>
+      </div>
+
+    </div><!-- /astg -->
+
+    <div class="mft" id="mft">
+      <button class="bkbt" id="bkbt" style="display:none" onclick="prev()">Back</button>
+      <button class="nxbt" id="nxbt" onclick="nxt()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var S={step:1,type:'auto',mode:'pct',rval:12,sent:0,yrs:5,cl:0,cv:0,hyr:3,hcl:0};
+var SC=['','#3A9B55','#93D1A2','#D49316','#E87460','#D4503A'];
+var PROV={A:'Newfoundland & Labrador',B:'Nova Scotia',C:'Prince Edward Island',E:'New Brunswick',G:'Quebec',H:'Quebec',J:'Quebec',K:'Ontario',L:'Ontario',M:'Ontario',N:'Ontario',P:'Ontario',R:'Manitoba',S:'Saskatchewan',T:'Alberta',V:'British Columbia',X:'NWT / Nunavut',Y:'Yukon'};
+
+function $id(id){return document.getElementById(id);}
+
+/* Easing functions */
+function easeInOut(t){return t<.5?2*t*t:-1+(4-2*t)*t;}
+function easeOutCubic(t){return 1-Math.pow(1-t,3);}
+function lerp(a,b,t){return a+(b-a)*t;}
+
+function rmOpen(){
+  $id('trg').classList.add('gone');
+  $id('app').classList.add('open');
+  setTimeout(function(){$id('mod').classList.add('vis');},50);
+}
+function rmClose(){
+  $id('mod').classList.remove('vis');
+  setTimeout(function(){
+    $id('app').classList.remove('open');
+    setTimeout(function(){$id('trg').classList.remove('gone');},180);
+    rmReset();
+  },420);
+}
+function rmReset(){
+  S={step:1,type:'auto',mode:'pct',rval:12,sent:0,yrs:5,cl:0,cv:0,hyr:3,hcl:0};
+  $id('fsai').value='';$id('fhint').textContent='';
+  $id('note').value='';$id('cc').textContent='0 / 500';
+  $id('ferr').classList.remove('on');$id('serr').classList.remove('on');
+  [['yrsv',5],['clv',0],['cvv',0],['hyrv',3],['hclv',0]].forEach(function(a){$id(a[0]).textContent=a[1];});
+  for(var i=1;i<=5;i++){$id('so'+i).style.borderColor='#EEEDEA';$id('so'+i).style.background='#FFFFFF';}
+  $id('rng').value=12;onRange();
+  $id('st1').classList.add('on');$id('st2').classList.remove('on');
+  $id('astg').classList.remove('on');
+  $id('mft').style.display='';$id('dotrow').style.display='';
+  $id('mttl').textContent='Your policy';
+  $id('nxbt').textContent='Continue';$id('bkbt').style.display='none';
+  $id('d1').classList.add('on');$id('d2').classList.remove('on');
+
+  /* Reset envelope */
+  var el=$id('envLetter');
+  el.className='';
+  el.style.cssText='position:absolute;left:14px;right:14px;top:14px;height:140px;background:#FFFFFF;border:1px solid #DDDBD6;border-radius:4px;box-shadow:0 2px 10px rgba(26,25,23,.1);z-index:2;opacity:0;transform:translateY(0px)';
+  $id('letterFace').className='letter-face';
+  $id('letterFace').innerHTML='';
+
+  /* Reset flap to closed position */
+  $id('flapPoly').setAttribute('points','0,0 180,0 90,68');
+  $id('flapPoly').setAttribute('fill','#ECE9E3');
+  $id('flapEdge').setAttribute('points','0,0 90,68 180,0');
+  $id('envFlap').style.filter='none';
+  $id('envFlap').style.zIndex='4';
+  $id('sealGroup').style.opacity='1';
+  $id('sealCircle').setAttribute('fill','#D4D3CE');
+
+  /* Reset rip */
+  ['ripL','ripR','ripCrack'].forEach(function(id){
+    var e=$id(id);e.style.cssText='';e.style.opacity='0';e.style.animation='none';
+  });
+  $id('amsg').style.visibility='hidden';
+  $id('amsg').classList.remove('show');
+  $id('ptcWrap').innerHTML='';
+  setType('auto');setMode('pct');
+}
+
+function onFsa(el){
+  var v=el.value.toUpperCase().replace(/[^A-Z0-9]/g,'');el.value=v;
+  $id('ferr').classList.remove('on');
+  $id('fhint').textContent=(v.length>=1&&PROV[v[0]])?PROV[v[0]]:'';
+}
+function setType(t){
+  S.type=t;
+  $id('bauto').classList.toggle('on',t==='auto');
+  $id('bhome').classList.toggle('on',t==='home');
+  $id('af').classList.toggle('open',t==='auto');
+  $id('hf').classList.toggle('open',t==='home');
+}
+function setMode(m){
+  S.mode=m;
+  $id('mpct').classList.toggle('on',m==='pct');
+  $id('mdol').classList.toggle('on',m==='dol');
+  var r=$id('rng');
+  if(m==='pct'){r.min=0;r.max=50;r.step=1;$id('rlo').textContent='0%';$id('rhi').textContent='50%+';}
+  else{r.min=0;r.max=2000;r.step=25;$id('rlo').textContent='$0';$id('rhi').textContent='$2,000+';}
+  r.value=m==='pct'?Math.min(S.rval,50):480;onRange();
+}
+function onRange(){
+  var r=$id('rng'),v=parseInt(r.value);S.rval=v;
+  var p=Math.round((v-parseInt(r.min))/(parseInt(r.max)-parseInt(r.min))*100);
+  r.style.background='linear-gradient(to right,#1A1917 '+p+'%,#D4D3CE '+p+'%)';
+  $id('slval').textContent=S.mode==='pct'?(v>=50?'50%+':v+'%'):(v>=2000?'$2,000+':'$'+v.toLocaleString());
+}
+function setSent(n){
+  S.sent=n;$id('serr').classList.remove('on');
+  for(var i=1;i<=5;i++){
+    $id('so'+i).style.borderColor=i===n?SC[n]:'#EEEDEA';
+    $id('so'+i).style.background=i===n?SC[n]+'28':'#FFFFFF';
+  }
+}
+function adj(f,d){
+  var cfg={yrs:{id:'yrsv',min:0,max:30,k:'yrs'},cl:{id:'clv',min:0,max:5,k:'cl'},cv:{id:'cvv',min:0,max:3,k:'cv'},hyr:{id:'hyrv',min:0,max:30,k:'hyr'},hcl:{id:'hclv',min:0,max:5,k:'hcl'}};
+  var c=cfg[f];if(!c)return;
+  var v=parseInt($id(c.id).textContent.replace('+',''));
+  v=Math.max(c.min,Math.min(c.max,v+d));S[c.k]=v;
+  $id(c.id).textContent=v+(v===c.max?'+':'');
+}
+function goto(n){
+  S.step=n;
+  $id('st1').classList.toggle('on',n===1);$id('st2').classList.toggle('on',n===2);
+  $id('d1').classList.toggle('on',n===1);$id('d2').classList.toggle('on',n===2);
+  $id('mttl').textContent=n===1?'Your policy':'Your renewal';
+  $id('bkbt').style.display=n>1?'':'none';
+  $id('nxbt').textContent=n===2?'Post renewal':'Continue';
+}
+function nxt(){
+  if(S.step===1){
+    if($id('fsai').value.length<3){$id('ferr').classList.add('on');$id('fsai').focus();return;}
+    goto(2);
+  } else {
+    if(S.sent===0){$id('serr').classList.add('on');return;}
+    $id('st2').classList.remove('on');
+    $id('mft').style.display='none';$id('dotrow').style.display='none';
+    $id('mttl').textContent='';
+    $id('astg').classList.add('on');
+    playAnim();
+  }
+}
+function prev(){if(S.step>1)goto(S.step-1);}
+
+function faceSvg(s){
+  var c=['','#3A9B55','#2A7D41','#92600A','#B33C28','#8C2E1E'][s];
+  var m=['','M9 19Q17 26 25 19','M11 20Q17 24 23 20','M11 22L23 22','M11 24Q17 20 23 24','M9 25Q17 19 25 25'][s];
+  return '<svg width="52" height="52" viewBox="0 0 34 34">'
+    +'<circle cx="12" cy="13" r="2.1" fill="'+c+'"/>'
+    +'<circle cx="22" cy="13" r="2.1" fill="'+c+'"/>'
+    +'<path d="'+m+'" stroke="'+c+'" stroke-width="2.2" stroke-linecap="round" fill="none"/>'
+    +'</svg>';
+}
+
+/* ══════════════════════════════════
+   MAIN ANIMATION ORCHESTRATOR
+══════════════════════════════════ */
+function playAnim(){
+  var sent=S.sent, color=SC[sent], isPos=sent<=2, isNeg=sent>=4;
+  $id('sealCircle').setAttribute('fill',color);
+
+  /*
+    Timeline:
+    500ms  → Start flap opening (1100ms duration, stays open)
+    1700ms → Letter starts rising (950ms duration)
+    2700ms → Face appears on letter
+    3100ms → Sentiment effect (glow or rip)
+    3600ms → Success message
+  */
+
+  setTimeout(function(){ animateFlap(); }, 500);
+  setTimeout(function(){ raiseLetter(); }, 1700);
+  setTimeout(function(){
+    $id('letterFace').innerHTML=faceSvg(sent);
+    $id('letterFace').classList.add('on');
+  }, 2700);
+  setTimeout(function(){
+    if(isPos){ $id('envLetter').classList.add('glow'); spawnParticles(color); }
+    else if(isNeg){ doRip(sent); }
+  }, 3100);
+  setTimeout(function(){ showSuccess(isPos,isNeg); }, isNeg?4200:3700);
+}
+
+/* ══════════════════════════════════
+   FLAP ANIMATION
+   Two-phase rAF loop:
+   Phase A (0→50%): peak moves 68→0  (unfolding to hinge)
+   Phase B (50→100%): peak moves 0→-44 (folding back open)
+
+   Crucially: opacity stays at 1 the whole time.
+   The flap becomes the "open lid" resting above the envelope.
+   Fill changes to inside-face colour at the hinge to show back of paper.
+   A drop shadow is added in Phase B for depth.
+══════════════════════════════════ */
+function animateFlap(){
+  var TOTAL_DUR = 1100;
+  var PEAK_CLOSED = 68;   /* y coordinate of closed flap peak */
+  var PEAK_OPEN   = -44;  /* y coordinate of open flap peak (above envelope top) */
+  var FRONT_FILL  = '#ECE9E3';
+  var BACK_FILL   = '#E2DDD7'; /* slightly darker = inside of paper */
+  var passedHinge = false;
+  var startT      = null;
+  var poly        = $id('flapPoly');
+  var edge        = $id('flapEdge');
+  var sealGrp     = $id('sealGroup');
+  var flapSvg     = $id('envFlap');
+
+  function step(ts){
+    if(!startT) startT=ts;
+    var raw=Math.min((ts-startT)/TOTAL_DUR, 1);
+    var t=easeInOut(raw);
+
+    /* Peak Y interpolates closed → open */
+    var peakY = lerp(PEAK_CLOSED, PEAK_OPEN, t);
+
+    /* Update polygon and fold-edge polyline */
+    poly.setAttribute('points', '0,0 180,0 90,'+peakY.toFixed(2));
+    edge.setAttribute('points', '0,0 90,'+peakY.toFixed(2)+' 180,0');
+
+    /* At hinge point: switch to inside-face colour, add shadow, hide seal */
+    if(!passedHinge && peakY<=0){
+      passedHinge=true;
+      poly.setAttribute('fill', BACK_FILL);
+      sealGrp.style.opacity='0';          /* seal disappears as flap inverts */
+      flapSvg.style.filter='url(#flapShadow)'; /* shadow makes it feel 3D */
+    }
+
+    /* Seal fades out in first quarter of animation */
+    if(!passedHinge){
+      var sealAlpha=Math.max(0, 1-t*4);
+      sealGrp.style.opacity=sealAlpha.toFixed(3);
+    }
+
+    if(raw<1){
+      requestAnimationFrame(step);
+    } else {
+      /* Animation done. Flap stays visible as open lid at z=3
+         (below letter which is about to rise to z=5) */
+      flapSvg.style.zIndex='3';
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+/* ══════════════════════════════════
+   LETTER RISE
+   rAF loop: translateY 0 → -108px over 950ms, ease-out cubic.
+   Letter z-index bumps to 5 so it rises above open flap.
+══════════════════════════════════ */
+function raiseLetter(){
+  var el=$id('envLetter');
+  var DUR=950;
+  var RISE=108; /* px to rise above rest position */
+  var startT=null;
+
+  el.style.opacity='1';
+  el.style.zIndex='5';  /* above flap */
+
+  function step(ts){
+    if(!startT) startT=ts;
+    var raw=Math.min((ts-startT)/DUR, 1);
+    var t=easeOutCubic(raw);
+    el.style.transform='translateY(-'+Math.round(t*RISE)+'px)';
+    if(raw<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ══════════════════════════════════
+   PARTICLES (positive sentiment)
+══════════════════════════════════ */
+function spawnParticles(color){
+  var wrap=$id('ptcWrap');
+  var sizes=[4,6,5,7,4,5,6,4,7,5];
+  for(var i=0;i<10;i++){
+    (function(idx){
+      setTimeout(function(){
+        var p=document.createElement('div');
+        p.className='ptc';
+        var sz=sizes[idx];
+        var dur=(0.7+Math.random()*0.65).toFixed(2);
+        var lx=(18+Math.random()*64).toFixed(1);
+        p.style.cssText='width:'+sz+'px;height:'+sz+'px;background:'+color
+          +';left:'+lx+'%;top:46%;animation:ptcUp '+dur+'s ease-out forwards';
+        wrap.appendChild(p);
+        setTimeout(function(){if(p.parentNode)p.parentNode.removeChild(p);},1800);
+      },idx*95);
+    })(i);
+  }
+}
+
+/* ══════════════════════════════════
+   RIP (negative sentiment)
+   Positions the rip halves at the risen letter's location.
+══════════════════════════════════ */
+function doRip(sent){
+  var RISE_PX=108;
+  var inner='<div class="letter-inner">'
+    +'<div class="ll"></div><div class="ll s"></div><div class="ll xs"></div>'
+    +'<div class="ll"></div><div class="ll s"></div></div>'
+    +'<div style="display:flex;align-items:center;justify-content:center;padding-top:10px">'
+    +faceSvg(sent)+'</div>';
+
+  var shared='position:absolute;left:14px;right:14px;height:140px;background:#FFFFFF;'
+    +'border:1px solid #DDDBD6;border-radius:4px;z-index:6;'
+    +'top:calc(14px - '+RISE_PX+'px);';
+
+  $id('ripL').innerHTML=inner;
+  $id('ripR').innerHTML=inner;
+  $id('ripL').style.cssText=shared+'clip-path:inset(0 50% 0 0 round 4px 0 0 4px);opacity:1';
+  $id('ripR').style.cssText=shared+'clip-path:inset(0 0 0 50% round 0 4px 4px 0);opacity:1';
+
+  $id('ripCrack').style.cssText='position:absolute;left:50%;width:2px;'
+    +'top:calc(14px - '+RISE_PX+'px);height:140px;margin-left:-1px;'
+    +'background:linear-gradient(to bottom,transparent,#E87460 15%,#E87460 85%,transparent);'
+    +'z-index:7;opacity:1;animation:crackIn .65s ease forwards;transform-origin:top';
+
+  $id('envLetter').style.opacity='0';
+
+  setTimeout(function(){
+    $id('ripL').style.animation='flyL .85s cubic-bezier(.4,0,1,1) forwards';
+    $id('ripR').style.animation='flyR .85s cubic-bezier(.4,0,1,1) forwards';
+  },540);
+}
+
+/* ══════════════════════════════════
+   SUCCESS MESSAGE
+══════════════════════════════════ */
+function showSuccess(isPos,isNeg){
+  $id('amsgs').textContent=isPos
+    ?'Your fair renewal is on the map. You\'re helping set the standard for what a fair increase looks like.'
+    :isNeg
+    ?'Your experience is on the map. Your data helps neighbours know what to watch out for.'
+    :'Your renewal is on the map, adding to the picture for your area.';
+  var m=$id('amsg');
+  m.style.visibility='visible';
+  m.classList.add('show');
+}
+
+/* ══ INIT ══ */
+onRange();
+</script>
+</body>
+</html>
