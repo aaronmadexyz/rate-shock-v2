@@ -139,15 +139,22 @@ export default function MapView({ filters, onReady, onLeafletReady }: MapViewPro
 
   // Fetch once on mount — all filtering done in-memory from here on
   useEffect(() => {
-    supabase
-      .from('submissions')
-      .select('id, fsa, provider, insurance_type, rate_change_pct, sentiment, verified, created_at')
-      .order('created_at', { ascending: false })
-      .limit(500)
-      .then(({ data }) => {
-        if (data) setSubmissions(data as Submission[])
-      })
-      .finally(() => setIsLoading(false))
+    const fetchSubmissions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('submissions')
+          .select('id, fsa, provider, insurance_type, rate_change_pct, sentiment, verified, created_at')
+          .order('created_at', { ascending: false })
+          .limit(500)
+        if (data)  setSubmissions(data as Submission[])
+        if (error) console.error('Supabase error:', error)
+      } catch (err) {
+        console.error('Failed to fetch submissions:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchSubmissions()
   }, [])
 
   const visible = useMemo(
