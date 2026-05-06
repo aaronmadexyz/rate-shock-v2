@@ -92,9 +92,11 @@ interface DualRangeProps {
   onMaxChange: (v: number) => void
 }
 
+const MIN_GAP = 1
+
 function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangeProps) {
-  const pct  = (v: number) => `${(v / 50 * 100).toFixed(1)}%`
-  const rPct = (v: number) => `${(100 - v / 50 * 100).toFixed(1)}%`
+  const fillLeft  = (valueMin / 50) * 100
+  const fillRight = 100 - (valueMax / 50) * 100
 
   return (
     <div style={{ position: 'relative', width: '100%', height: 4, marginTop: 4 }}>
@@ -106,7 +108,7 @@ function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangePr
       {/* Active fill */}
       <div style={{
         position: 'absolute', top: 0,
-        left: pct(valueMin), right: rPct(valueMax),
+        left: fillLeft + '%', right: fillRight + '%',
         height: 4, borderRadius: 2, background: '#1A1917',
         transition: 'left .05s, right .05s',
       }} />
@@ -114,17 +116,27 @@ function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangePr
       <input
         type="range"
         className="fs-rh"
-        min={0} max={valueMax - 1} step={1}
+        min={0} max={50} step={1}
         value={valueMin}
-        onChange={e => onMinChange(parseInt(e.target.value))}
+        onChange={e => {
+          const newMin = parseInt(e.target.value)
+          const clamped = Math.min(newMin, valueMax - MIN_GAP)
+          e.target.value = String(clamped)
+          onMinChange(clamped)
+        }}
       />
       {/* Max handle */}
       <input
         type="range"
         className="fs-rh"
-        min={valueMin + 1} max={50} step={1}
+        min={0} max={50} step={1}
         value={valueMax}
-        onChange={e => onMaxChange(parseInt(e.target.value))}
+        onChange={e => {
+          const newMax = parseInt(e.target.value)
+          const clamped = Math.max(newMax, valueMin + MIN_GAP)
+          e.target.value = String(clamped)
+          onMaxChange(clamped)
+        }}
       />
     </div>
   )
@@ -164,8 +176,8 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
     update({ ...filters, provs })
   }
 
-  const setRMin = (v: number) => update({ ...filters, rMin: Math.min(v, filters.rMax - 1) })
-  const setRMax = (v: number) => update({ ...filters, rMax: Math.max(v, filters.rMin + 1) })
+  const setRMin = (v: number) => update({ ...filters, rMin: v })
+  const setRMax = (v: number) => update({ ...filters, rMax: v })
   const toggleVerified = () => update({ ...filters, verified: !filters.verified })
 
   const hasFilters = countFilters(filters) > 0

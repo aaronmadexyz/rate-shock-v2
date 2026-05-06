@@ -21,7 +21,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'RateMap',
+  title: 'RateShock',
   description: 'See what Canadians are really paying.',
 }
 

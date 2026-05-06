@@ -36,9 +36,10 @@ export function setNavState(state: SubmissionState | string): void {
 
 interface NavProps {
   isPioneer?: boolean
+  onCtaClick?: () => void
 }
 
-export default function Nav({ isPioneer: pioneeredProp = false }: NavProps) {
+export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: NavProps) {
   const [state,      setState]      = useState<SubmissionState>('new')
   const [isPioneer,  setIsPioneer]  = useState(false)
   const [daysLeft,   setDaysLeft]   = useState(30)
@@ -95,10 +96,10 @@ export default function Nav({ isPioneer: pioneeredProp = false }: NavProps) {
   // ── navigator.share → clipboard fallback ─────────────────────────────────
   const handleShare = useCallback(async () => {
     const url  = window.location.origin
-    const text = 'I shared my renewal on RateMap – see what your neighbours are really paying.'
+    const text = 'I shared my renewal on RateShock – see what your neighbours are really paying.'
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'RateMap', text, url })
+        await navigator.share({ title: 'RateShock', text, url })
       } else {
         await navigator.clipboard.writeText(`${text} ${url}`)
         setShareToast(true)
@@ -145,7 +146,7 @@ export default function Nav({ isPioneer: pioneeredProp = false }: NavProps) {
     const base: React.CSSProperties = {
       fontFamily:    'inherit',
       fontWeight:    500,
-      fontSize:      drawer ? 15 : 13,          // ref: 13px desktop, 15px drawer
+      fontSize:      drawer ? 14 : 14,          // 14px — matches design system base button font-size
       lineHeight:    1,
       letterSpacing: '-0.01em',
       whiteSpace:    'nowrap',
@@ -155,8 +156,8 @@ export default function Nav({ isPioneer: pioneeredProp = false }: NavProps) {
       justifyContent: drawer ? 'center' : undefined,
       gap:           drawer ? 8 : 7,            // ref: drawer-cta gap:8, nav-cta gap:7
       width:         drawer ? '100%' : undefined,
-      padding:       drawer ? '13px 16px' : '9px 18px',  // ref: 9px 18px desktop
-      borderRadius:  drawer ? 10 : 9999,        // ref: r-md=10 drawer, r-full=9999 desktop
+      padding:       drawer ? '13px 24px' : '13px 24px',  // 13px 24px — identical height/weight on both
+      borderRadius:  9999,                       // r-full — all buttons at every breakpoint
     }
 
     // ── State: new ─────────────────────────────────────────────────────────
@@ -164,6 +165,7 @@ export default function Nav({ isPioneer: pioneeredProp = false }: NavProps) {
       return (
         <motion.button
           type="button"
+          onClick={onCtaClick}
           style={{ ...base, backgroundColor: '#3A3F8F', color: '#FFFFFF', boxShadow: SH_SM }}
           whileHover={{ backgroundColor: '#2D3170' }}       // ref: p-700 on hover
           whileTap={TAP}
@@ -180,6 +182,7 @@ export default function Nav({ isPioneer: pioneeredProp = false }: NavProps) {
       return (
         <motion.button
           type="button"
+          onClick={onCtaClick}
           style={{
             ...base,
             // ref: nav-cta unverified = n-0 (#FFF); drawer-cta unverified = n-50 (#F5F4F1)
@@ -225,6 +228,7 @@ export default function Nav({ isPioneer: pioneeredProp = false }: NavProps) {
     return (
       <motion.button
         type="button"
+        onClick={onCtaClick}
         style={{
           ...base,
           backgroundColor: '#EDF7F0',
@@ -438,7 +442,7 @@ export default function Nav({ isPioneer: pioneeredProp = false }: NavProps) {
               letterSpacing:        '-0.03em',  // ref: -0.03em
             }}
           >
-            RateMap
+            RateShock
           </span>
 
           <span
