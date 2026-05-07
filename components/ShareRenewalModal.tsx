@@ -147,7 +147,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const [provider, setProvider]   = useState('')
   const [provErr, setProvErr]     = useState(false)
   const [steppers, setSteppers]   = useState<Record<string, StepperVal>>({
-    yrs: { v: 5, k: 0, dir: 'up' }, cl:  { v: 0, k: 0, dir: 'up' },
+    yrs: { v: 0, k: 0, dir: 'up' }, cl:  { v: 0, k: 0, dir: 'up' },
     cv:  { v: 0, k: 0, dir: 'up' }, hyr: { v: 3, k: 0, dir: 'up' },
     hcl: { v: 0, k: 0, dir: 'up' },
   })
@@ -225,7 +225,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     setStep(1); setFsa(''); setFsaError(false); setAreaLabel(''); setFsaCount(0)
     setInsType('auto'); setProvider(''); setProvErr(false)
     setSteppers({
-      yrs: { v: 5, k: 0, dir: 'up' }, cl:  { v: 0, k: 0, dir: 'up' },
+      yrs: { v: 0, k: 0, dir: 'up' }, cl:  { v: 0, k: 0, dir: 'up' },
       cv:  { v: 0, k: 0, dir: 'up' }, hyr: { v: 3, k: 0, dir: 'up' },
       hcl: { v: 0, k: 0, dir: 'up' },
     })
@@ -685,7 +685,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 {step === 1 && (
                   <div>
                     {/* FSA */}
-                    <div style={{ marginBottom: 16 }}>
+                    <div style={{ marginBottom: 10 }}>
                       <label style={LABEL_STYLE}>FSA — First 3 characters of postal code</label>
                       <input
                         type="text"
@@ -728,7 +728,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           Please enter your 3-character FSA to continue
                         </p>
                       )}
-                      <p style={{ fontSize: 11, color: '#9A998F', marginTop: 6, display: 'flex', alignItems: 'flex-start', gap: 5, lineHeight: 1.5 }}>
+                      <p style={{ fontSize: 11, color: '#9A998F', marginTop: 6, marginBottom: 0, display: 'flex', alignItems: 'flex-start', gap: 5, lineHeight: 1.5 }}>
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }}>
                           <circle cx="6" cy="6" r="5" stroke="#B8B7B1" strokeWidth="1"/>
                           <path d="M6 5.5v3" stroke="#B8B7B1" strokeWidth="1.2" strokeLinecap="round"/>
@@ -804,7 +804,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     </div>
 
                     {/* Provider */}
-                    <div style={{ marginBottom: 4 }}>
+                    <div style={{ marginBottom: 4, marginTop: 20 }}>
                       <label style={LABEL_STYLE}>Insurance provider</label>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {PROVIDERS.map(p => (
