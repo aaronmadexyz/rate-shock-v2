@@ -166,7 +166,7 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
         <motion.button
           type="button"
           onClick={onCtaClick}
-          style={{ ...base, backgroundColor: '#3A3F8F', color: '#FFFFFF', boxShadow: SH_SM }}
+          style={{ ...base, backgroundColor: 'var(--tod-cta, #3A3F8F)', color: '#FFFFFF', boxShadow: SH_SM }}
           whileHover={{ backgroundColor: '#2D3170' }}       // ref: p-700 on hover
           whileTap={TAP}
         >

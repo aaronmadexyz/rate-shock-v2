@@ -136,7 +136,7 @@
 /* ─── BASE ───────────────────────────────────────────────────────────────── */
 
 html {
-  background-color: var(--n-50); /* #F5F4F1 — prevents white flash on overscroll */
+  background-color: var(--tod-bg, var(--n-50)); /* shifts with time of day; fallback n-50 */
 }
 
 body {
@@ -145,7 +145,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--n-900);
-  background: var(--n-50); /* #F5F4F1 */
+  background-color: var(--tod-bg, #F5F4F1);
 }
 
 /* ─── UTILITY CLASSES NOT COVERED BY TAILWIND ───────────────────────────── */
@@ -224,11 +224,84 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ─── ENVELOPE HOVER ────────────────────────────────────────────────────── */
+
+/* Exit (default): 150ms accelerate-out — snappy, faster than entry */
+.env-hover-wrap {
+  transform-origin: bottom center;
+  filter: drop-shadow(0 2px 6px rgba(26,25,23,.12));
+  transition: transform 150ms cubic-bezier(0.4, 0, 1, 1),
+              filter   150ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Entry: 200ms overshoot-enter */
+.env-hover-wrap:hover {
+  transform: scale(1.08);
+  filter: drop-shadow(0 6px 16px rgba(26,25,23,.2));
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              filter   200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─── MARKER FILTER STATE ───────────────────────────────────────────────── */
+
+@keyframes markerPulse {
+  0%   { transform: scale(0.95); }
+  60%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.marker-match {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 250ms ease, transform 300ms cubic-bezier(0.16,1,0.3,1);
+}
+
+.marker-dim {
+  opacity: 0.08;
+  transform: scale(0.85);
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+
+.marker-pulse {
+  animation: markerPulse 300ms cubic-bezier(0.16,1,0.3,1) forwards;
+}
+
+/* ─── PIONEER SHIMMER ───────────────────────────────────────────────────── */
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+.pioneer-shimmer {
+  background: linear-gradient(
+    90deg,
+    #1A1917 0%,
+    #1A1917 40%,
+    #4A50B0 50%,
+    #1A1917 60%,
+    #1A1917 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 1.8s ease-in-out 1;
+  animation-delay: 0.3s;
+}
+
 /* ─── REDUCED MOTION ────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
   .envelope-marker {
     animation-play-state: paused;
+  }
+
+  .env-hover-wrap,
+  .env-hover-wrap:hover {
+    transition: none;
+    transform:  none;
+    filter:     none;
   }
 
   * {

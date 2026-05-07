@@ -6,6 +6,8 @@ import { getAreaLabel } from '@/lib/fsaData'
 import { getFsaCount } from '@/lib/fsaCounts'
 import { supabase } from '@/lib/supabase'
 import { setNavState } from '@/components/Nav'
+import { useReducedMotion } from '@/lib/motionSafety'
+import { playRip, playSeal, playChime } from '@/lib/sounds'
 import type { Submission } from '@/lib/types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -179,7 +181,12 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const ptcWrapRef    = useRef<HTMLDivElement>(null)
   const envSceneRef   = useRef<HTMLDivElement>(null)
   const amsgRef       = useRef<HTMLDivElement>(null)
-  const rafRef        = useRef<number>(0)
+  const rafRef          = useRef<number>(0)
+  const pioneerNameRef  = useRef<HTMLElement>(null)
+
+  const { prefersReduced } = useReducedMotion()
+  const prefersReducedRef  = useRef(prefersReduced)
+  prefersReducedRef.current = prefersReduced
 
   // ── update track background ─────────────────────────────────────────────────
   const updateTrack = useCallback((v: number, mn: number, mx: number) => {
@@ -356,6 +363,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
         flapPolyRef.current?.setAttribute('fill', '#E2DDD7')
         if (sealGroupRef.current)  sealGroupRef.current.style.opacity  = '0'
         if (envFlapRef.current)    envFlapRef.current.style.filter     = 'url(#flapShadow)'
+        if (!prefersReducedRef.current) playSeal()
       }
 
       if (!passedHinge && sealGroupRef.current) {
@@ -421,6 +429,9 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     if (envLetterRef.current) envLetterRef.current.style.opacity = '0'
 
     setTimeout(() => {
+      if (!prefersReducedRef.current) playRip()
+    }, 520)
+    setTimeout(() => {
       if (ripLRef.current) ripLRef.current.style.animation = 'flyL .85s cubic-bezier(.4,0,1,1) forwards'
       if (ripRRef.current) ripRRef.current.style.animation = 'flyR .85s cubic-bezier(.4,0,1,1) forwards'
     }, 540)
@@ -482,6 +493,17 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   }, [animDone, rval, mode, neighbourAvg])
 
   // ── Pioneer/early/established copy ──────────────────────────────────────────
+  // ── Pioneer moment — chime + shimmer on first appearance ────────────────────
+  useEffect(() => {
+    if (!animDone || fsaCount >= 5) return
+    if (!prefersReducedRef.current) playChime()
+    const el = pioneerNameRef.current
+    if (el && !prefersReducedRef.current) {
+      const onEnd = () => el.classList.remove('pioneer-shimmer')
+      el.addEventListener('animationend', onEnd, { once: true })
+    }
+  }, [animDone])
+
   const fsaPioneer  = fsaCount === 0
   const fsaEarly    = fsaCount >= 1 && fsaCount <= 9
   // const fsaEstablished = fsaCount >= 10
@@ -620,11 +642,23 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         onFocus={e => { e.currentTarget.style.borderColor = '#4A50B0'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,80,176,.09)' }}
                         onBlur={e => { e.currentTarget.style.borderColor = fsaError ? '#D4503A' : '#EEEDEA'; e.currentTarget.style.boxShadow = 'none' }}
                       />
-                      {fsaHint && !fsaError && (
-                        <p style={{ fontSize: 12, color: '#4A50B0', fontWeight: 500, marginTop: 5, minHeight: 16 }}>
-                          {fsaHint}
-                        </p>
-                      )}
+                      {/* Reserved-height container prevents layout shift when hint is absent */}
+                      <div style={{ minHeight: 16, marginTop: 5 }}>
+                        <AnimatePresence mode="wait">
+                          {fsaHint && !fsaError && (
+                            <motion.p
+                              key={fsaHint}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: prefersReduced ? 0 : 0.12, ease: 'easeInOut' }}
+                              style={{ fontSize: 12, color: '#4A50B0', fontWeight: 500, margin: 0, display: 'block' }}
+                            >
+                              {fsaHint}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
+                      </div>
                       {fsaError && (
                         <p style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>
                           Please enter your 3-character FSA to continue
@@ -1003,6 +1037,25 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         </div>
                       )}
                     </div>
+
+                    {/* Pioneer moment */}
+                    {fsaCount < 5 && (
+                      <div style={{
+                        background: '#EEEFFA', border: '1px solid #B0B4E6',
+                        borderRadius: 10, padding: '10px 14px', marginBottom: 14, textAlign: 'left',
+                      }}>
+                        <p style={{ fontSize: 12, color: '#2D3170', lineHeight: 1.55, margin: 0, fontWeight: 500 }}>
+                          {'You just put '}
+                          <strong
+                            ref={pioneerNameRef as React.Ref<HTMLElement>}
+                            className={!prefersReduced ? 'pioneer-shimmer' : undefined}
+                          >
+                            {areaLabel || fsa}
+                          </strong>
+                          {' on the map.'}
+                        </p>
+                      </div>
+                    )}
 
                     {/* Verify prompt */}
                     <div style={{ marginBottom: 4 }}>

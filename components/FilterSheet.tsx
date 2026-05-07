@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence, useDragControls } from 'framer-motion'
+import { useReducedMotion } from '@/lib/motionSafety'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,6 +49,36 @@ export function countFilters(f: FilterState): number {
   if (f.rMin > 0 || f.rMax < 50) n++
   if (f.verified) n++
   return n
+}
+
+// ─── Entrance / exit variants ─────────────────────────────────────────────────
+
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.04,
+      delayChildren:   0.05,
+    },
+  },
+  exit: {
+    transition: {
+      staggerChildren: 0, // no stagger on exit — all children fade together
+    },
+  },
+}
+
+const itemVariants = {
+  hidden:   { opacity: 0, y: 8 },
+  visible:  {
+    opacity:    1,
+    y:          0,
+    transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] },
+  },
+  exit: {
+    opacity:    0,
+    transition: { duration: 0.12, ease: [0.4, 0, 1, 1] },
+  },
 }
 
 // ─── Shared style ─────────────────────────────────────────────────────────────
@@ -147,6 +178,7 @@ function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangePr
 export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetProps) {
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
   const dragControls = useDragControls()
+  const { prefersReduced } = useReducedMotion()
 
   const update = useCallback((next: FilterState) => {
     setFilters(next)
@@ -263,236 +295,265 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
               }}
             >
 
-              {/* ── Drag handle ── */}
-              <div
-                onPointerDown={e => dragControls.start(e)}
+              {/* ── Stagger container — orchestrates content entrance ── */}
+              <motion.div
+                variants={containerVariants}
+                initial={prefersReduced ? 'visible' : 'hidden'}
+                animate="visible"
+                exit="exit"
                 style={{
                   display: 'flex',
-                  justifyContent: 'center',
-                  padding: '12px 0 4px',
-                  cursor: 'grab',
-                  touchAction: 'none',
-                  flexShrink: 0,
+                  flexDirection: 'column',
+                  flex: 1,
+                  overflow: 'hidden',
                 }}
               >
-                <div style={{
-                  width: 36, height: 4,
-                  borderRadius: 2,
-                  background: '#D4D3CE',
-                }} />
-              </div>
 
-              {/* ── Header ── */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '14px 20px 12px',
-                flexShrink: 0,
-                borderBottom: '1px solid #EEEDEA',
-              }}>
-                <span style={{
-                  fontSize: 15, fontWeight: 500,
-                  color: '#1A1917',
-                  letterSpacing: '-0.01em',
-                }}>
-                  Filter
-                </span>
-                <button
-                  type="button"
-                  onClick={hasFilters ? clearAll : undefined}
+                {/* ── 1. Drag handle ── */}
+                <motion.div
+                  variants={itemVariants}
+                  onPointerDown={e => dragControls.start(e)}
                   style={{
-                    fontFamily: 'inherit',
-                    fontSize: 13, fontWeight: 500,
-                    color: hasFilters ? '#3A3F8F' : '#B8B7B1',
-                    background: 'none', border: 'none',
-                    cursor: hasFilters ? 'pointer' : 'default',
-                    padding: 4,
-                    letterSpacing: '-0.01em',
-                    pointerEvents: hasFilters ? 'all' : 'none',
-                    transition: 'color .15s',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '12px 0 4px',
+                    cursor: 'grab',
+                    touchAction: 'none',
+                    flexShrink: 0,
                   }}
                 >
-                  Clear all
-                </button>
-              </div>
-
-              {/* ── Scrollable body ── */}
-              <div style={{ overflowY: 'auto', padding: '0 20px 32px', flex: 1 }}>
-
-                {/* Insurance type */}
-                <span style={sectionLabel}>Insurance type</span>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {(['auto', 'home'] as const).map(t => {
-                    const on = filters.types[t]
-                    return (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => toggleType(t)}
-                        style={{
-                          flex: 1,
-                          fontFamily: 'inherit',
-                          fontSize: 13, fontWeight: 500,
-                          padding: '10px 8px',
-                          borderRadius: 10,
-                          border: `1.5px solid ${on ? '#1A1917' : '#D4D3CE'}`,
-                          background: on ? '#1A1917' : '#FFFFFF',
-                          color: on ? '#FFFFFF' : '#5E5D56',
-                          cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                          transition: 'all .18s cubic-bezier(.16,1,.3,1)',
-                          letterSpacing: '-0.01em',
-                        }}
-                      >
-                        {t === 'auto' ? <AutoIcon /> : <HomeIcon />}
-                        {t === 'auto' ? 'Auto' : 'Home'}
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Provider pills */}
-                <span style={sectionLabel}>Provider</span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {PROVIDERS.map(name => {
-                    const on = filters.provs.includes(name)
-                    return (
-                      <button
-                        key={name}
-                        type="button"
-                        onClick={() => toggleProv(name)}
-                        style={{
-                          fontFamily: 'inherit',
-                          fontSize: 12, fontWeight: 500,
-                          padding: '6px 13px',
-                          borderRadius: 9999,
-                          border: `1px solid ${on ? '#1A1917' : '#D4D3CE'}`,
-                          background: on ? '#1A1917' : '#FFFFFF',
-                          color: on ? '#FFFFFF' : '#5E5D56',
-                          cursor: 'pointer',
-                          transition: 'all .18s cubic-bezier(.16,1,.3,1)',
-                          letterSpacing: '-0.01em',
-                          whiteSpace: 'nowrap',
-                          lineHeight: 1,
-                        }}
-                      >
-                        {name}
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Rate increase range */}
-                <span style={sectionLabel}>Rate increase</span>
-                <div style={{ position: 'relative', paddingBottom: 4 }}>
-
-                  {/* Values */}
                   <div style={{
-                    display: 'flex', alignItems: 'center',
-                    justifyContent: 'space-between', marginBottom: 10,
+                    width: 36, height: 4,
+                    borderRadius: 2,
+                    background: '#D4D3CE',
+                  }} />
+                </motion.div>
+
+                {/* ── 2. Header ── */}
+                <motion.div
+                  variants={itemVariants}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '14px 20px 12px',
+                    flexShrink: 0,
+                    borderBottom: '1px solid #EEEDEA',
+                  }}
+                >
+                  <span style={{
+                    fontSize: 15, fontWeight: 500,
+                    color: '#1A1917',
+                    letterSpacing: '-0.01em',
                   }}>
-                    <span style={{
-                      fontSize: 22, fontWeight: 600, color: '#1A1917',
-                      letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums',
-                    }}>
-                      {filters.rMin}%
-                    </span>
-                    <span style={{ fontSize: 13, color: '#9A998F' }}>to</span>
-                    <span style={{
-                      fontSize: 22, fontWeight: 600, color: '#1A1917',
-                      letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums',
-                    }}>
-                      {filters.rMax >= 50 ? '50%+' : `${filters.rMax}%`}
-                    </span>
-                  </div>
-
-                  {/* Distribution bars */}
-                  <div style={{
-                    display: 'flex', alignItems: 'flex-end', gap: 1,
-                    height: 20, marginBottom: 4,
-                  }}>
-                    {DIST.map((v, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          flex: 1,
-                          borderRadius: '2px 2px 0 0',
-                          background: i >= filters.rMin && i <= filters.rMax ? '#B0B4E6' : '#EEEDEA',
-                          height: `${Math.max(3, Math.round(v / DIST_MAX * 20))}px`,
-                          transition: 'background .2s',
-                        }}
-                      />
-                    ))}
-                  </div>
-
-                  <DualRange
-                    valueMin={filters.rMin}
-                    valueMax={filters.rMax}
-                    onMinChange={setRMin}
-                    onMaxChange={setRMax}
-                  />
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                    {['0%', '10%', '20%', '30%', '40%', '50%+'].map(l => (
-                      <span key={l} style={{
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: 10, color: '#9A998F',
-                      }}>
-                        {l}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Verified only */}
-                <span style={sectionLabel}>Trust</span>
-                <div style={{
-                  display: 'flex', alignItems: 'center',
-                  justifyContent: 'space-between', padding: '12px 0',
-                }}>
-                  <div>
-                    <div style={{
-                      fontSize: 14, fontWeight: 500,
-                      color: '#2C2B27', letterSpacing: '-0.01em',
-                    }}>
-                      Verified posts only
-                    </div>
-                    <div style={{ fontSize: 12, color: '#9A998F', marginTop: 2, lineHeight: 1.4 }}>
-                      Show only posts backed by a renewal letter
-                    </div>
-                  </div>
+                    Filter
+                  </span>
                   <button
                     type="button"
-                    onClick={toggleVerified}
-                    aria-pressed={filters.verified}
+                    onClick={hasFilters ? clearAll : undefined}
                     style={{
-                      width: 42, height: 24,
-                      borderRadius: 9999,
-                      background: filters.verified ? '#1A1917' : '#D4D3CE',
-                      border: 'none',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      flexShrink: 0,
-                      marginLeft: 16,
-                      transition: 'background .2s cubic-bezier(.16,1,.3,1)',
+                      fontFamily: 'inherit',
+                      fontSize: 13, fontWeight: 500,
+                      color: hasFilters ? '#3A3F8F' : '#B8B7B1',
+                      background: 'none', border: 'none',
+                      cursor: hasFilters ? 'pointer' : 'default',
+                      padding: 4,
+                      letterSpacing: '-0.01em',
+                      pointerEvents: hasFilters ? 'all' : 'none',
+                      transition: 'color .15s',
                     }}
                   >
-                    <span style={{
-                      position: 'absolute',
-                      width: 18, height: 18,
-                      borderRadius: '50%',
-                      background: '#FFFFFF',
-                      top: 3,
-                      left: filters.verified ? 21 : 3,
-                      boxShadow: '0 1px 3px rgba(26,25,23,.14)',
-                      transition: 'left .22s cubic-bezier(.16,1,.3,1)',
-                      display: 'block',
-                    }} />
+                    Clear all
                   </button>
-                </div>
+                </motion.div>
 
-              </div>{/* /body */}
+                {/* ── Scrollable body ── */}
+                <div style={{ overflowY: 'auto', padding: '0 20px 32px', flex: 1 }}>
+
+                  {/* ── 3. Insurance type ── */}
+                  <motion.div variants={itemVariants}>
+                    <span style={sectionLabel}>Insurance type</span>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {(['auto', 'home'] as const).map(t => {
+                        const on = filters.types[t]
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => toggleType(t)}
+                            style={{
+                              flex: 1,
+                              fontFamily: 'inherit',
+                              fontSize: 13, fontWeight: 500,
+                              padding: '10px 8px',
+                              borderRadius: 10,
+                              border: `1.5px solid ${on ? '#1A1917' : '#D4D3CE'}`,
+                              background: on ? '#1A1917' : '#FFFFFF',
+                              color: on ? '#FFFFFF' : '#5E5D56',
+                              cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                              transition: 'all .18s cubic-bezier(.16,1,.3,1)',
+                              letterSpacing: '-0.01em',
+                            }}
+                          >
+                            {t === 'auto' ? <AutoIcon /> : <HomeIcon />}
+                            {t === 'auto' ? 'Auto' : 'Home'}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </motion.div>
+
+                  {/* ── 4. Provider pills ── */}
+                  <motion.div variants={itemVariants}>
+                    <span style={sectionLabel}>Provider</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {PROVIDERS.map(name => {
+                        const on = filters.provs.includes(name)
+                        return (
+                          <button
+                            key={name}
+                            type="button"
+                            onClick={() => toggleProv(name)}
+                            style={{
+                              fontFamily: 'inherit',
+                              fontSize: 12, fontWeight: 500,
+                              padding: '6px 13px',
+                              borderRadius: 9999,
+                              border: `1px solid ${on ? '#1A1917' : '#D4D3CE'}`,
+                              background: on ? '#1A1917' : '#FFFFFF',
+                              color: on ? '#FFFFFF' : '#5E5D56',
+                              cursor: 'pointer',
+                              transition: 'all .18s cubic-bezier(.16,1,.3,1)',
+                              letterSpacing: '-0.01em',
+                              whiteSpace: 'nowrap',
+                              lineHeight: 1,
+                            }}
+                          >
+                            {name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </motion.div>
+
+                  {/* ── 5. Rate increase range ── */}
+                  <motion.div variants={itemVariants}>
+                    <span style={sectionLabel}>Rate increase</span>
+                    <div style={{ position: 'relative', paddingBottom: 4 }}>
+
+                      {/* Values */}
+                      <div style={{
+                        display: 'flex', alignItems: 'center',
+                        justifyContent: 'space-between', marginBottom: 10,
+                      }}>
+                        <span style={{
+                          fontSize: 22, fontWeight: 600, color: '#1A1917',
+                          letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums',
+                        }}>
+                          {filters.rMin}%
+                        </span>
+                        <span style={{ fontSize: 13, color: '#9A998F' }}>to</span>
+                        <span style={{
+                          fontSize: 22, fontWeight: 600, color: '#1A1917',
+                          letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums',
+                        }}>
+                          {filters.rMax >= 50 ? '50%+' : `${filters.rMax}%`}
+                        </span>
+                      </div>
+
+                      {/* Distribution bars */}
+                      <div style={{
+                        display: 'flex', alignItems: 'flex-end', gap: 1,
+                        height: 20, marginBottom: 4,
+                      }}>
+                        {DIST.map((v, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              flex: 1,
+                              borderRadius: '2px 2px 0 0',
+                              background: i >= filters.rMin && i <= filters.rMax ? '#B0B4E6' : '#EEEDEA',
+                              height: `${Math.max(3, Math.round(v / DIST_MAX * 20))}px`,
+                              transition: 'background .2s',
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      <DualRange
+                        valueMin={filters.rMin}
+                        valueMax={filters.rMax}
+                        onMinChange={setRMin}
+                        onMaxChange={setRMax}
+                      />
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                        {['0%', '10%', '20%', '30%', '40%', '50%+'].map(l => (
+                          <span key={l} style={{
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontSize: 10, color: '#9A998F',
+                          }}>
+                            {l}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* ── 6. Verified only ── */}
+                  <motion.div variants={itemVariants}>
+                    <span style={sectionLabel}>Trust</span>
+                    <div style={{
+                      display: 'flex', alignItems: 'center',
+                      justifyContent: 'space-between', padding: '12px 0',
+                    }}>
+                      <div>
+                        <div style={{
+                          fontSize: 14, fontWeight: 500,
+                          color: '#2C2B27', letterSpacing: '-0.01em',
+                        }}>
+                          Verified posts only
+                        </div>
+                        <div style={{ fontSize: 12, color: '#9A998F', marginTop: 2, lineHeight: 1.4 }}>
+                          Show only posts backed by a renewal letter
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={toggleVerified}
+                        aria-pressed={filters.verified}
+                        style={{
+                          width: 42, height: 24,
+                          borderRadius: 9999,
+                          background: filters.verified ? '#1A1917' : '#D4D3CE',
+                          border: 'none',
+                          cursor: 'pointer',
+                          position: 'relative',
+                          flexShrink: 0,
+                          marginLeft: 16,
+                          transition: 'background .2s cubic-bezier(.16,1,.3,1)',
+                        }}
+                      >
+                        <span style={{
+                          position: 'absolute',
+                          width: 18, height: 18,
+                          borderRadius: '50%',
+                          background: '#FFFFFF',
+                          top: 3,
+                          left: filters.verified ? 21 : 3,
+                          boxShadow: '0 1px 3px rgba(26,25,23,.14)',
+                          transition: 'left .22s cubic-bezier(.16,1,.3,1)',
+                          display: 'block',
+                        }} />
+                      </button>
+                    </div>
+                  </motion.div>
+
+                </div>{/* /body */}
+
+              </motion.div>{/* /stagger container */}
+
             </motion.div>
           </>
         )}

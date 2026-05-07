@@ -3,7 +3,8 @@
 // Prevent static prerender — page depends on client-side Supabase and Leaflet
 export const dynamic = 'force-dynamic'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { getTimeOfDay, timeOfDayTokens } from '@/lib/timeOfDay'
 import lazyLoad from 'next/dynamic'
 import type { Map as LeafletMap } from 'leaflet'
 import Nav from '@/components/Nav'
@@ -36,6 +37,19 @@ export default function Page() {
   // Leaflet map instance — forwarded to MapControls for PostalCodeSearch flyTo
   const leafletMapRef = useRef<LeafletMap | null>(null)
   const onLeafletReady = useCallback((m: LeafletMap) => { leafletMapRef.current = m }, [])
+
+  // Apply time-of-day CSS tokens on mount and refresh every hour
+  useEffect(() => {
+    function apply() {
+      const tokens = timeOfDayTokens[getTimeOfDay()]
+      Object.entries(tokens).forEach(([key, value]) => {
+        document.documentElement.style.setProperty(key, value)
+      })
+    }
+    apply()
+    const id = setInterval(apply, 60 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [])
 
   const activeFilterCount = countFilters(filters)
 
