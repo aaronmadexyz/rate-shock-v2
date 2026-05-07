@@ -738,7 +738,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     </div>
 
                     {/* Insurance type */}
-                    <div style={{ marginBottom: 0 }}>
+                    <div style={{ marginBottom: 16 }}>
                       <label style={LABEL_STYLE}>Insurance type</label>
                       <div style={{ display: 'flex', gap: 8 }}>
                         {(['auto', 'home'] as const).map(t => (
