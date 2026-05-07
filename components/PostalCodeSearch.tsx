@@ -230,7 +230,7 @@ export default function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearc
                   type="text"
                   value={value}
                   maxLength={3}
-                  placeholder="Your neighbourhood"
+                  placeholder="e.g. M5V"
                   aria-label="Jump to FSA postal area"
                   onChange={e => handleInput(e.target.value)}
                   onFocus={() => setFocused(true)}
@@ -285,7 +285,7 @@ export default function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearc
             type="text"
             value={value}
             maxLength={3}
-            placeholder="Your neighbourhood"
+            placeholder="e.g. M5V"
             aria-label="Jump to FSA postal area"
             onChange={e => handleInput(e.target.value)}
             onFocus={() => setFocused(true)}
