@@ -706,8 +706,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         onFocus={e => { e.currentTarget.style.borderColor = '#4A50B0'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,80,176,.09)' }}
                         onBlur={e => { e.currentTarget.style.borderColor = fsaError ? '#D4503A' : '#EEEDEA'; e.currentTarget.style.boxShadow = 'none' }}
                       />
-                      {/* Reserved-height container prevents layout shift when hint is absent */}
-                      <div style={{ minHeight: 16, marginTop: 5 }}>
+                      <div style={{ marginTop: 4, marginBottom: 0 }}>
                         <AnimatePresence mode="wait">
                           {fsaHint && !fsaError && (
                             <motion.p
