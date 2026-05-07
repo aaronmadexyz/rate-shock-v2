@@ -188,6 +188,32 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const prefersReducedRef  = useRef(prefersReduced)
   prefersReducedRef.current = prefersReduced
 
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 680)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // Lock body scroll when modal is open (prevents map pan-through on mobile)
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow  = 'hidden'
+      document.body.style.position  = 'fixed'
+      document.body.style.width     = '100%'
+    } else {
+      document.body.style.overflow  = ''
+      document.body.style.position  = ''
+      document.body.style.width     = ''
+    }
+    return () => {
+      document.body.style.overflow  = ''
+      document.body.style.position  = ''
+      document.body.style.width     = ''
+    }
+  }, [isOpen])
+
   // ── update track background ─────────────────────────────────────────────────
   const updateTrack = useCallback((v: number, mn: number, mx: number) => {
     const p = Math.round(((v - mn) / (mx - mn)) * 100)
@@ -551,26 +577,59 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
             role="dialog"
             aria-modal="true"
             aria-label={stepTitle || 'Submitting renewal'}
-            style={{
-              position: 'fixed',
-              top: '50%', left: '50%',
-              width: 'calc(100vw - 48px)',
-              maxWidth: 468,
-              background: '#FFFFFF',
+            className={isMobile ? 'modal-mobile' : undefined}
+            style={isMobile ? {
+              position:     'fixed',
+              bottom:       0,
+              left:         0,
+              right:        0,
+              top:          'auto',
+              width:        '100%',
+              margin:       0,
+              background:   '#FFFFFF',
+              borderRadius: '20px 20px 0 0',
+              border:       '1px solid #E2E1DD',
+              boxShadow:    '0 8px 32px rgba(26,25,23,.12), 0 2px 8px rgba(26,25,23,.06)',
+              zIndex:       500,
+              display:      'flex',
+              flexDirection:'column',
+              overflow:     'hidden',
+            } : {
+              position:     'fixed',
+              top:          '50%',
+              left:         '50%',
+              width:        'calc(100vw - 48px)',
+              maxWidth:     468,
+              background:   '#FFFFFF',
               borderRadius: 20,
-              border: '1px solid #E2E1DD',
-              boxShadow: '0 8px 32px rgba(26,25,23,.12), 0 2px 8px rgba(26,25,23,.06)',
-              zIndex: 500,
-              display: 'flex',
-              flexDirection: 'column',
-              maxHeight: 'calc(100vh - 48px)',
-              overflow: 'hidden',
+              border:       '1px solid #E2E1DD',
+              boxShadow:    '0 8px 32px rgba(26,25,23,.12), 0 2px 8px rgba(26,25,23,.06)',
+              zIndex:       500,
+              display:      'flex',
+              flexDirection:'column',
+              maxHeight:    'calc(100vh - 48px)',
+              overflow:     'hidden',
             }}
-            initial={{ opacity: 0, scale: 0.94, x: '-50%', y: '-52%' }}
-            animate={{ opacity: 1, scale: 1,    x: '-50%', y: '-50%' }}
-            exit={{   opacity: 0, scale: 0.94,  x: '-50%', y: '-52%' }}
+            initial={isMobile
+              ? { opacity: 0, y: '100%' }
+              : { opacity: 0, scale: 0.94, x: '-50%', y: '-52%' }}
+            animate={isMobile
+              ? { opacity: 1, y: 0 }
+              : { opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
+            exit={isMobile
+              ? { opacity: 0, y: '100%' }
+              : { opacity: 0, scale: 0.94, x: '-50%', y: '-52%' }}
             transition={{ type: 'spring', stiffness: 200, damping: 24 }}
           >
+            {/* ── Drag handle (mobile only) ── */}
+            {isMobile && (
+              <div style={{
+                width: 36, height: 4, borderRadius: 2,
+                background: '#D4D3CE',
+                margin: '12px auto 0', display: 'block',
+              }} />
+            )}
+
             {/* ── Header ── */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 22px 0', flexShrink: 0 }}>
               <span style={{ fontSize: 15, fontWeight: 500, color: '#1A1917' }}>{stepTitle}</span>
@@ -615,6 +674,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               <div style={{
                 padding: '16px 22px 0', overflowY: 'auto', flex: 1,
                 scrollbarWidth: 'thin', scrollbarColor: '#E2E1DD transparent',
+                ...(isMobile ? {
+                  maxHeight:                 'calc(92dvh - 140px)',
+                  WebkitOverflowScrolling:   'touch',
+                  overscrollBehavior:        'contain',
+                } : {}),
               }}>
 
                 {/* ════ STEP 1 ════ */}
@@ -1096,7 +1160,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
             {/* ── Footer ── */}
             {step !== 'anim' && (
-              <div style={{ padding: '14px 22px 18px', display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
+              <div style={{
+                padding: '14px 22px 18px', display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0,
+                ...(isMobile ? {
+                  position:      'sticky',
+                  bottom:        0,
+                  background:    '#FFFFFF',
+                  paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
+                } : {}),
+              }}>
                 {step === 2 && (
                   <button
                     type="button"

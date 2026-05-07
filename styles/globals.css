@@ -290,6 +290,17 @@ body {
   animation-delay: 0.3s;
 }
 
+/* ─── MODAL MOBILE — dvh fallback ──────────────────────────────────────── */
+
+@supports not (height: 1dvh) {
+  .modal-mobile {
+    max-height: 92vh;
+  }
+}
+.modal-mobile {
+  max-height: 92dvh;
+}
+
 /* ─── REDUCED MOTION ────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
