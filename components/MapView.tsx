@@ -146,14 +146,16 @@ export default function MapView({ filters, onReady, onLeafletReady }: MapViewPro
           .select('id, fsa, provider, insurance_type, rate_change_pct, sentiment, verified, created_at')
           .order('created_at', { ascending: false })
           .limit(500)
-        if (data)  setSubmissions(data as Submission[])
-        if (error) console.error('Supabase error:', error)
+
+        if (error) console.error('Supabase fetch error:', error)
+        if (data) setSubmissions(data as Submission[])
       } catch (err) {
-        console.error('Failed to fetch submissions:', err)
+        console.error('Unexpected error fetching submissions:', err)
       } finally {
         setIsLoading(false)
       }
     }
+
     fetchSubmissions()
   }, [])
 
