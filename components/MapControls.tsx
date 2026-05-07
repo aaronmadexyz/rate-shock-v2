@@ -19,12 +19,13 @@ const TAP = {
 interface MapControlsProps {
   activeCount: number
   onClick:     () => void
+  onCtaClick:  () => void
   mapRef:      React.MutableRefObject<LeafletMap | null>
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function MapControls({ activeCount, onClick, mapRef }: MapControlsProps) {
+export default function MapControls({ activeCount, onClick, onCtaClick, mapRef }: MapControlsProps) {
   const isActive = activeCount > 0
 
   return (
@@ -112,7 +113,7 @@ export default function MapControls({ activeCount, onClick, mapRef }: MapControl
         </motion.button>
 
         {/* Postal code search — sits to the right of the filter pill */}
-        <PostalCodeSearch mapRef={mapRef} />
+        <PostalCodeSearch mapRef={mapRef} onCtaClick={onCtaClick} />
       </div>
     </>
   )

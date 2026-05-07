@@ -11,6 +11,7 @@ import Nav from '@/components/Nav'
 import MapControls from '@/components/MapControls'
 import FilterSheet, { FilterState, countFilters } from '@/components/FilterSheet'
 import ShareRenewalModal from '@/components/ShareRenewalModal'
+import FeatureRequestButton from '@/components/FeatureRequestButton'
 import { MapErrorBoundary } from '@/components/MapErrorBoundary'
 import type { Submission, MapViewHandle } from '@/lib/types'
 
@@ -75,6 +76,7 @@ export default function Page() {
       <MapControls
         activeCount={activeFilterCount}
         onClick={() => setFilterOpen(true)}
+        onCtaClick={() => setModalOpen(true)}
         mapRef={leafletMapRef}
       />
 
@@ -92,6 +94,8 @@ export default function Page() {
         onVerify={handleVerify}
         onSubmitted={handleSubmitted}
       />
+
+      <FeatureRequestButton />
     </>
   )
 }
