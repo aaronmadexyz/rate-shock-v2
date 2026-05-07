@@ -148,7 +148,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const [provErr, setProvErr]     = useState(false)
   const [steppers, setSteppers]   = useState<Record<string, StepperVal>>({
     yrs: { v: 0, k: 0, dir: 'up' }, cl:  { v: 0, k: 0, dir: 'up' },
-    cv:  { v: 0, k: 0, dir: 'up' }, hyr: { v: 3, k: 0, dir: 'up' },
+    cv:  { v: 0, k: 0, dir: 'up' },
     hcl: { v: 0, k: 0, dir: 'up' },
   })
   const [mode, setMode]           = useState<'pct' | 'dol'>('pct')
@@ -226,7 +226,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     setInsType('auto'); setProvider(''); setProvErr(false)
     setSteppers({
       yrs: { v: 0, k: 0, dir: 'up' }, cl:  { v: 0, k: 0, dir: 'up' },
-      cv:  { v: 0, k: 0, dir: 'up' }, hyr: { v: 3, k: 0, dir: 'up' },
+      cv:  { v: 0, k: 0, dir: 'up' },
       hcl: { v: 0, k: 0, dir: 'up' },
     })
     setMode('pct'); setRval(12); updateTrack(12, 0, 50)
@@ -272,7 +272,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   // ── Stepper adjust ──────────────────────────────────────────────────────────
   const cfg: Record<string, { min: number; max: number }> = {
     yrs: { min: 0, max: 30 }, cl:  { min: 0, max: 5 },
-    cv:  { min: 0, max: 3  }, hyr: { min: 0, max: 30 },
+    cv:  { min: 0, max: 3  },
     hcl: { min: 0, max: 5  },
   }
   function adj(f: string, d: 1 | -1) {
@@ -685,7 +685,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 {step === 1 && (
                   <div>
                     {/* FSA */}
-                    <div style={{ marginBottom: 10 }}>
+                    <div style={{ marginBottom: 0 }}>
                       <label style={LABEL_STYLE}>FSA — First 3 characters of postal code</label>
                       <input
                         type="text"
@@ -728,7 +728,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           Please enter your 3-character FSA to continue
                         </p>
                       )}
-                      <p style={{ fontSize: 11, color: '#9A998F', marginTop: 6, marginBottom: 0, display: 'flex', alignItems: 'flex-start', gap: 5, lineHeight: 1.5 }}>
+                      <p style={{ fontSize: 11, color: '#9A998F', marginTop: 4, marginBottom: 16, display: 'flex', alignItems: 'flex-start', gap: 5, lineHeight: 1.5 }}>
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }}>
                           <circle cx="6" cy="6" r="5" stroke="#B8B7B1" strokeWidth="1"/>
                           <path d="M6 5.5v3" stroke="#B8B7B1" strokeWidth="1.2" strokeLinecap="round"/>
@@ -739,7 +739,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     </div>
 
                     {/* Insurance type */}
-                    <div style={{ marginBottom: 16 }}>
+                    <div style={{ marginBottom: 0 }}>
                       <label style={LABEL_STYLE}>Insurance type</label>
                       <div style={{ display: 'flex', gap: 8 }}>
                         {(['auto', 'home'] as const).map(t => (
@@ -797,9 +797,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       opacity: insType === 'home' ? 1 : 0,
                       transition: 'max-height .5s cubic-bezier(.16,1,.3,1), opacity .35s',
                     }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, paddingBottom: 4 }}>
-                        <Stepper s={steppers.hyr} min={0} max={30} label="Years continuously insured" onAdj={d => adj('hyr', d)} />
-                        <Stepper s={steppers.hcl} min={0} max={5}  label="Number of claims"           onAdj={d => adj('hcl', d)} />
+                      <div style={{ paddingBottom: 4 }}>
+                        <Stepper s={steppers.hcl} min={0} max={5} label="Number of claims" onAdj={d => adj('hcl', d)} />
                       </div>
                     </div>
 
