@@ -45,6 +45,7 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
   const [daysLeft,   setDaysLeft]   = useState(30)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [shareToast, setShareToast] = useState(false)
+  const [mounted,    setMounted]    = useState(false)
 
   const burgerRef = useRef<HTMLButtonElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -69,6 +70,7 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
     const onNavEvent = (e: Event) =>
       setState((e as CustomEvent<SubmissionState>).detail)
     window.addEventListener(NAV_EVENT, onNavEvent)
+    setMounted(true)
     return () => window.removeEventListener(NAV_EVENT, onNavEvent)
   }, [pioneeredProp])
 
@@ -469,8 +471,11 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
             flexShrink:    0,
           }}
         >
-          {renderPioneerNudge()}
-          {renderCta()}
+          {mounted ? renderPioneerNudge() : null}
+          {mounted
+            ? renderCta()
+            : <div style={{ width: 220, height: 38, borderRadius: 9999, background: '#E2E1DD', opacity: 0.5 }} />
+          }
         </div>
 
         {/* ── Hamburger — mobile only ──────────────────────────────────────── */}

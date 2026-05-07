@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import type { Map as LeafletMap } from 'leaflet'
 import { getCentroid } from '@/lib/fsaCentroids'
 import { getAreaLabel } from '@/lib/fsaData'
@@ -45,7 +45,7 @@ function ClockIcon() {
   )
 }
 
-export default function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
+function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
   const [value,          setValue]          = useState('')
   const [status,         setStatus]         = useState<Status>('idle')
   const [focused,        setFocused]        = useState(false)
@@ -305,3 +305,5 @@ export default function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearc
     </div>
   )
 }
+
+export default React.memo(PostalCodeSearch)

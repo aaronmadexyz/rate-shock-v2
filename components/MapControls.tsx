@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { motion } from 'framer-motion'
 import type { Map as LeafletMap } from 'leaflet'
 import { springs } from '@/lib/springs'
@@ -25,7 +26,7 @@ interface MapControlsProps {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function MapControls({ activeCount, onClick, onCtaClick, mapRef }: MapControlsProps) {
+function MapControls({ activeCount, onClick, onCtaClick, mapRef }: MapControlsProps) {
   const isActive = activeCount > 0
 
   return (
@@ -118,3 +119,5 @@ export default function MapControls({ activeCount, onClick, onCtaClick, mapRef }
     </>
   )
 }
+
+export default React.memo(MapControls)

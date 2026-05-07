@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { springs } from '@/lib/springs'
 import { supabase } from '@/lib/supabase'
@@ -45,7 +45,7 @@ function CloseIcon() {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function FeatureRequestButton() {
+function FeatureRequestButton() {
   const [open,      setOpen]      = useState(false)
   const [message,   setMessage]   = useState('')
   const [uiState,   setUiState]   = useState<UIState>('idle')
@@ -419,3 +419,5 @@ export default function FeatureRequestButton() {
     </>
   )
 }
+
+export default React.memo(FeatureRequestButton)

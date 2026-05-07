@@ -146,6 +146,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   color: var(--n-900);
   background-color: var(--tod-bg, #F5F4F1);
+  transition: background-color 600ms ease;
 }
 
 /* ─── UTILITY CLASSES NOT COVERED BY TAILWIND ───────────────────────────── */

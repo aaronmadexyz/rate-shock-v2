@@ -3,7 +3,7 @@
 // Prevent static prerender — page depends on client-side Supabase and Leaflet
 export const dynamic = 'force-dynamic'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { getTimeOfDay, timeOfDayTokens } from '@/lib/timeOfDay'
 import lazyLoad from 'next/dynamic'
 import type { Map as LeafletMap } from 'leaflet'
@@ -16,7 +16,12 @@ import { MapErrorBoundary } from '@/components/MapErrorBoundary'
 import type { Submission, MapViewHandle } from '@/lib/types'
 
 // Leaflet requires browser APIs — skip SSR entirely
-const MapView = lazyLoad(() => import('@/components/MapView'), { ssr: false })
+const MapView = lazyLoad(() => import('@/components/MapView'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ position: 'fixed', inset: 0, background: '#F5F4F1', zIndex: 0 }} />
+  ),
+})
 
 const DEFAULT_FILTERS: FilterState = {
   types: { auto: true, home: true },
@@ -52,21 +57,26 @@ export default function Page() {
     return () => clearInterval(id)
   }, [])
 
+  const handleFilterChange = useCallback((f: FilterState) => setFilters(f), [])
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableFilters = useMemo(() => filters, [JSON.stringify(filters)])
+
   const activeFilterCount = countFilters(filters)
 
-  function handleSubmitted(sub: Submission) {
+  const handleSubmitted = useCallback((sub: Submission) => {
     mapHandle.current?.prependSubmission(sub)
-  }
+  }, [])
 
-  function handleVerify() {
+  const handleVerify = useCallback(() => {
     setModalOpen(false)
-  }
+  }, [])
 
   return (
     <>
       {/* Map — fills the viewport at z-index 0 */}
       <MapErrorBoundary>
-        <MapView filters={filters} onReady={onMapReady} onLeafletReady={onLeafletReady} />
+        <MapView filters={stableFilters} onReady={onMapReady} onLeafletReady={onLeafletReady} />
       </MapErrorBoundary>
 
       {/* Fixed nav — above the map via z-index in globals.css (--z-nav: 100) */}
@@ -84,7 +94,7 @@ export default function Page() {
       <FilterSheet
         isOpen={filterOpen}
         onClose={() => setFilterOpen(false)}
-        onChange={setFilters}
+        onChange={handleFilterChange}
       />
 
       {/* Renewal modal */}
