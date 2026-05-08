@@ -10,8 +10,10 @@ import { getCentroid } from '@/lib/fsaCentroids'
 import { getAreaLabel } from '@/lib/fsaData'
 import { useReducedMotion } from '@/lib/motionSafety'
 import { playChime } from '@/lib/sounds'
-import type { FilterState } from '@/components/FilterSheet'
-import type { Submission, MapViewHandle } from '@/lib/types'
+import type { FilterState } from '@/lib/types'
+import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
+import { matchCohort } from '@/lib/cohortMatch'
+import type { CohortResult } from '@/lib/cohortMatch'
 
 // ─── Leaflet default-icon fix ─────────────────────────────────────────────────
 // Next.js webpack can't resolve the default icon paths that Leaflet hard-codes.
@@ -324,12 +326,15 @@ function MapMarker({ s, icon, pos, isMatch, delay, mapRef, showTooltip, onHideSt
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface MapViewProps {
-  filters:         FilterState
-  onReady?:        (handle: MapViewHandle) => void
-  onLeafletReady?: (map: L.Map) => void
+  filters:          FilterState
+  onReady?:         (handle: MapViewHandle) => void
+  onLeafletReady?:  (map: L.Map) => void
+  likeMeMode?:      boolean
+  userProfile?:     UserProfile | null
+  onCohortResult?:  (result: CohortResult | null) => void
 }
 
-export default function MapView({ filters, onReady, onLeafletReady }: MapViewProps) {
+export default function MapView({ filters, onReady, onLeafletReady, likeMeMode = false, userProfile = null, onCohortResult }: MapViewProps) {
   const [submissions,  setSubmissions]  = useState<Submission[]>([])
   const [isLoading,    setIsLoading]    = useState(true)
   const [tooltipState, setTooltipState] = useState<TooltipState | null>(null)
@@ -405,7 +410,7 @@ export default function MapView({ filters, onReady, onLeafletReady }: MapViewPro
       try {
         const { data, error } = await supabase
           .from('submissions')
-          .select('id, fsa, provider, insurance_type, rate_change_pct, sentiment, verified, created_at')
+          .select('id, fsa, provider, insurance_type, rate_change_pct, sentiment, verified, created_at, years_licensed, at_fault_claims, convictions, home_claims')
           .order('created_at', { ascending: false })
           .limit(500)
 
@@ -428,6 +433,16 @@ export default function MapView({ filters, onReady, onLeafletReady }: MapViewPro
     () => submissions.filter(s => getCentroid(s.fsa) !== null),
     [submissions],
   )
+
+  // Cohort result — recomputed whenever submissions, mode, or profile changes.
+  const cohortResult = useMemo(() => {
+    if (!likeMeMode || !userProfile) return null
+    return matchCohort(userProfile, submissions)
+  }, [likeMeMode, userProfile, submissions])
+
+  useEffect(() => {
+    onCohortResult?.(cohortResult)
+  }, [cohortResult, onCohortResult])
 
   return (
     <>
@@ -463,7 +478,9 @@ export default function MapView({ filters, onReady, onLeafletReady }: MapViewPro
         {/* Real markers once loaded — all are rendered; non-matching ones are dimmed */}
         {!isLoading && allWithCentroid.map((s, idx) => {
           const pos     = getCentroid(s.fsa)! as [number, number]
-          const isMatch = getMarkerMatchState(s, filters)
+          const isMatch = (likeMeMode && cohortResult)
+            ? cohortResult.ids.has(s.id)
+            : getMarkerMatchState(s, filters)
           const delay   = Math.min(idx * 8, 200)
           return (
             <MapMarker

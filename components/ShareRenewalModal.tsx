@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { setNavState } from '@/components/Nav'
 import { useReducedMotion } from '@/lib/motionSafety'
 import { playRip, playSeal, playChime } from '@/lib/sounds'
+import { safeSetItem } from '@/lib/storage'
 import type { Submission } from '@/lib/types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -21,6 +22,38 @@ const PROVIDERS = [
   'CAA Insurance', 'Economical', 'Wawanesa', 'Travelers', 'Co-operators',
   'Gore Mutual', 'Sonnet', 'Allstate', 'Other',
 ]
+
+const ONTARIO_PREFIXES = new Set(['K', 'L', 'M', 'N', 'P'])
+
+function validatePayload(payload: {
+  fsa: string
+  insurance_type: string
+  provider: string
+  sentiment: number
+  rate_change_pct: number | null
+}): string | null {
+  if (!/^[A-Z][0-9][A-Z]$/.test(payload.fsa) || !ONTARIO_PREFIXES.has(payload.fsa[0])) {
+    console.error('[ShareRenewalModal] Validation failed: fsa =', payload.fsa)
+    return 'Invalid FSA'
+  }
+  if (payload.insurance_type !== 'auto' && payload.insurance_type !== 'home') {
+    console.error('[ShareRenewalModal] Validation failed: insurance_type =', payload.insurance_type)
+    return 'Invalid insurance type'
+  }
+  if (!PROVIDERS.includes(payload.provider)) {
+    console.error('[ShareRenewalModal] Validation failed: provider =', payload.provider)
+    return 'Invalid provider'
+  }
+  if (!Number.isInteger(payload.sentiment) || payload.sentiment < 1 || payload.sentiment > 5) {
+    console.error('[ShareRenewalModal] Validation failed: sentiment =', payload.sentiment)
+    return 'Invalid sentiment'
+  }
+  if (payload.rate_change_pct !== null && (payload.rate_change_pct < 0 || payload.rate_change_pct > 100)) {
+    console.error('[ShareRenewalModal] Validation failed: rate_change_pct =', payload.rate_change_pct)
+    return 'Invalid rate change percentage'
+  }
+  return null
+}
 
 // ─── Easing ───────────────────────────────────────────────────────────────────
 
@@ -187,6 +220,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const { prefersReduced } = useReducedMotion()
   const prefersReducedRef  = useRef(prefersReduced)
   prefersReducedRef.current = prefersReduced
+  const lastSubmitRef = useRef<number>(0)
 
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
@@ -316,44 +350,79 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
   // ── Submit ───────────────────────────────────────────────────────────────────
   async function handleSubmit() {
+    // Debounce: ignore double-taps within 5 seconds
+    const now = Date.now()
+    if (now - lastSubmitRef.current < 5000) return
+    lastSubmitRef.current = now
+
     setSubmitting(true)
-    const payload = {
-      fsa: fsa.toUpperCase(),
-      neighbourhood: getAreaLabel(fsa),
-      insurance_type: insType,
+
+    const fsaUpper = fsa.toUpperCase()
+    const ratePct  = mode === 'pct' ? rval : null
+
+    // Validate before touching Supabase
+    const validationError = validatePayload({
+      fsa:             fsaUpper,
+      insurance_type:  insType,
       provider,
-      rate_change_pct:    mode === 'pct' ? rval : null,
+      sentiment:       sent,
+      rate_change_pct: ratePct,
+    })
+    if (validationError) {
+      setSubmitting(false)
+      return
+    }
+
+    const payload = {
+      fsa:                fsaUpper,
+      neighbourhood:      getAreaLabel(fsa),
+      insurance_type:     insType,
+      provider,
+      rate_change_pct:    ratePct,
       rate_change_dollar: mode === 'dol' ? rval : null,
-      mode: mode === 'dol' ? 'dollar' : 'pct',
-      years_licensed:  insType === 'auto' ? steppers.yrs.v : null,
-      at_fault_claims: insType === 'auto' ? steppers.cl.v  : 0,
-      convictions:     insType === 'auto' ? steppers.cv.v  : 0,
-      home_claims:     insType === 'home' ? steppers.hcl.v : 0,
-      sentiment: sent,
-      comment_raw: note || null,
+      mode:               mode === 'dol' ? 'dollar' : 'pct',
+      years_licensed:     insType === 'auto' ? steppers.yrs.v : null,
+      at_fault_claims:    insType === 'auto' ? steppers.cl.v  : 0,
+      convictions:        insType === 'auto' ? steppers.cv.v  : 0,
+      home_claims:        insType === 'home' ? steppers.hcl.v : 0,
+      sentiment:          sent,
+      comment_raw:        note || null,
     }
 
     // Build optimistic submission for the map — shown immediately without waiting for DB
     const optimisticSub: Submission = {
-      id:              crypto.randomUUID(),
-      fsa:             fsa.toUpperCase(),
+      id:                 crypto.randomUUID(),
+      fsa:                fsaUpper,
       provider,
-      insurance_type:  insType,
-      rate_change_pct: mode === 'pct' ? rval : null,
-      sentiment:       sent,
-      verified:        false,
-      created_at:      new Date().toISOString(),
+      insurance_type:     insType,
+      rate_change_pct:    ratePct,
+      rate_change_dollar: mode === 'dol' ? rval : null,
+      mode:               mode === 'dol' ? 'dollar' : 'pct',
+      sentiment:          sent as (1 | 2 | 3 | 4 | 5),
+      comment_raw:        note || null,
+      verified:           false,
+      neighbourhood:      getAreaLabel(fsa),
+      created_at:         new Date().toISOString(),
     }
 
-    // Fire-and-forget write; don't block the animation
-    supabase.from('submissions').insert(payload).then(async () => {
-      // Fetch aggregate for comparison card
-      const { data } = await supabase
+    // Insert — fire-and-forget so it doesn't block the animation
+    supabase.from('submissions').insert(payload).then(async ({ error }) => {
+      if (error) {
+        console.error('[ShareRenewalModal] Supabase insert error:', error.message)
+        return
+      }
+      // Fetch aggregate for comparison card after successful write
+      const { data, error: fetchErr } = await supabase
         .from('submissions')
         .select('rate_change_pct')
-        .eq('fsa', fsa.toUpperCase())
+        .eq('fsa', fsaUpper)
         .eq('insurance_type', insType)
         .not('rate_change_pct', 'is', null)
+        .limit(200)
+      if (fetchErr) {
+        console.error('[ShareRenewalModal] Supabase aggregate fetch error:', fetchErr.message)
+        return
+      }
       if (data && data.length >= 5) {
         const avg = data.reduce((s: number, r: { rate_change_pct: number }) => s + r.rate_change_pct, 0) / data.length
         setNeighbourAvg(Math.round(avg))
@@ -362,6 +431,16 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
     // Update nav state and surface the submission to the map immediately
     setNavState('unverified')
+    safeSetItem('ratemap_user_profile', JSON.stringify({
+      insurance_type:  insType,
+      provider,
+      fsa:             fsaUpper,
+      rate_change_pct: ratePct ?? 0,
+      years_licensed:  insType === 'auto' ? steppers.yrs.v : null,
+      at_fault_claims: insType === 'auto' ? steppers.cl.v  : null,
+      convictions:     insType === 'auto' ? steppers.cv.v  : null,
+      home_claims:     insType === 'home' ? steppers.hcl.v : null,
+    }))
     onSubmitted?.(optimisticSub)
 
     setStep('anim')

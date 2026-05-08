@@ -6,13 +6,8 @@ import { useReducedMotion } from '@/lib/motionSafety'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface FilterState {
-  types: { auto: boolean; home: boolean }
-  provs: string[]
-  rMin: number
-  rMax: number
-  verified: boolean
-}
+export type { FilterState } from '@/lib/types'
+import type { FilterState } from '@/lib/types'
 
 interface FilterSheetProps {
   isOpen: boolean

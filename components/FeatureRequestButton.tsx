@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { springs } from '@/lib/springs'
 import { supabase } from '@/lib/supabase'
+import { safeGetItem } from '@/lib/storage'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -46,14 +47,13 @@ function CloseIcon() {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 function FeatureRequestButton() {
-  const [open,      setOpen]      = useState(false)
-  const [message,   setMessage]   = useState('')
-  const [uiState,   setUiState]   = useState<UIState>('idle')
-  const [isMobile,  setIsMobile]  = useState(false)
-  const [focused,   setFocused]   = useState(false)
+  const [open,     setOpen]     = useState(false)
+  const [message,  setMessage]  = useState('')
+  const [uiState,  setUiState]  = useState<UIState>('idle')
+  const [isMobile, setIsMobile] = useState(false)
   const prefersReduced = useReducedMotion()
   const closeTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const textareaRef    = useRef<HTMLTextAreaElement>(null)
+  const lastSubmitRef  = useRef<number>(0)
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 680px)')
@@ -90,14 +90,21 @@ function FeatureRequestButton() {
   }
 
   async function handleSubmit() {
-    if (!message.trim()) return
+    const trimmed = message.trim()
+    if (!trimmed || trimmed.length > CHAR_LIMIT) return
+
+    // Debounce: ignore rapid double-submits within 5 seconds
+    const now = Date.now()
+    if (now - lastSubmitRef.current < 5000) return
+    lastSubmitRef.current = now
+
     setUiState('loading')
     try {
       const { error } = await supabase
         .from('feature_requests')
         .insert({
-          message:  message.trim(),
-          fsa:      localStorage.getItem('ratemap_last_fsa') ?? null,
+          message:  trimmed,
+          fsa:      safeGetItem('ratemap_last_fsa') ?? null,
           page_url: window.location.href,
         })
       if (error) throw error
@@ -284,13 +291,10 @@ function FeatureRequestButton() {
                     }
                   `}</style>
                   <textarea
-                    ref={textareaRef}
                     className="frb-ta"
                     value={message}
                     maxLength={CHAR_LIMIT}
                     placeholder="e.g. Show me which providers raised rates the most this year..."
-                    onFocus={() => setFocused(true)}
-                    onBlur={() => setFocused(false)}
                     onChange={e => {
                       setMessage(e.target.value)
                       if (uiState === 'error') setUiState('idle')

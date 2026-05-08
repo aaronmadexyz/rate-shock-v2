@@ -9,11 +9,14 @@ import lazyLoad from 'next/dynamic'
 import type { Map as LeafletMap } from 'leaflet'
 import Nav from '@/components/Nav'
 import MapControls from '@/components/MapControls'
-import FilterSheet, { FilterState, countFilters } from '@/components/FilterSheet'
+import FilterSheet, { countFilters } from '@/components/FilterSheet'
+import type { FilterState } from '@/lib/types'
 import ShareRenewalModal from '@/components/ShareRenewalModal'
 import FeatureRequestButton from '@/components/FeatureRequestButton'
 import { MapErrorBoundary } from '@/components/MapErrorBoundary'
-import type { Submission, MapViewHandle } from '@/lib/types'
+import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
+import type { CohortResult } from '@/lib/cohortMatch'
+import { safeGetItem } from '@/lib/storage'
 
 // Leaflet requires browser APIs — skip SSR entirely
 const MapView = lazyLoad(() => import('@/components/MapView'), {
@@ -32,9 +35,24 @@ const DEFAULT_FILTERS: FilterState = {
 }
 
 export default function Page() {
-  const [modalOpen,  setModalOpen]  = useState(false)
-  const [filterOpen, setFilterOpen] = useState(false)
-  const [filters,    setFilters]    = useState<FilterState>(DEFAULT_FILTERS)
+  const [modalOpen,    setModalOpen]    = useState(false)
+  const [filterOpen,   setFilterOpen]   = useState(false)
+  const [filters,      setFilters]      = useState<FilterState>(DEFAULT_FILTERS)
+  const [likeMeMode,   setLikeMeMode]   = useState(false)
+  const [userProfile,  setUserProfile]  = useState<UserProfile | null>(null)
+  const [hasSubmission, setHasSubmission] = useState(false)
+  const [cohortResult, setCohortResult] = useState<CohortResult | null>(null)
+
+  // Read persisted profile on mount
+  useEffect(() => {
+    const stored = safeGetItem('ratemap_user_profile')
+    if (stored) {
+      try {
+        setUserProfile(JSON.parse(stored) as UserProfile)
+        setHasSubmission(true)
+      } catch { /* ignore */ }
+    }
+  }, [])
 
   // Stable ref to MapView's handle — allows prepending without a re-fetch
   const mapHandle = useRef<MapViewHandle | null>(null)
@@ -66,6 +84,18 @@ export default function Page() {
 
   const handleSubmitted = useCallback((sub: Submission) => {
     mapHandle.current?.prependSubmission(sub)
+    // ShareRenewalModal writes ratemap_user_profile before calling onSubmitted
+    const stored = safeGetItem('ratemap_user_profile')
+    if (stored) {
+      try {
+        setUserProfile(JSON.parse(stored) as UserProfile)
+        setHasSubmission(true)
+      } catch { /* ignore */ }
+    }
+  }, [])
+
+  const handleCohortResult = useCallback((r: CohortResult | null) => {
+    setCohortResult(r)
   }, [])
 
   const handleVerify = useCallback(() => {
@@ -76,7 +106,14 @@ export default function Page() {
     <>
       {/* Map — fills the viewport at z-index 0 */}
       <MapErrorBoundary>
-        <MapView filters={stableFilters} onReady={onMapReady} onLeafletReady={onLeafletReady} />
+        <MapView
+          filters={stableFilters}
+          onReady={onMapReady}
+          onLeafletReady={onLeafletReady}
+          likeMeMode={likeMeMode}
+          userProfile={userProfile}
+          onCohortResult={handleCohortResult}
+        />
       </MapErrorBoundary>
 
       {/* Fixed nav — above the map via z-index in globals.css (--z-nav: 100) */}
@@ -88,6 +125,11 @@ export default function Page() {
         onClick={() => setFilterOpen(true)}
         onCtaClick={() => setModalOpen(true)}
         mapRef={leafletMapRef}
+        hasSubmission={hasSubmission}
+        likeMeMode={likeMeMode}
+        onLikeMeToggle={() => setLikeMeMode(m => !m)}
+        userProfile={userProfile}
+        cohortResult={cohortResult}
       />
 
       {/* Filter sheet */}

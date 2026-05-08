@@ -3,10 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { springs } from '@/lib/springs'
+import { safeGetItem, safeSetItem } from '@/lib/storage'
+import type { NavState } from '@/lib/types'
 
 // ─── Types & constants ────────────────────────────────────────────────────────
 
-type SubmissionState = 'new' | 'unverified' | 'verified'
+type SubmissionState = NavState
 
 const LS_KEY     = 'ratemap_submission_state'
 const LS_PIONEER = 'ratemap_is_pioneer'
@@ -25,9 +27,9 @@ const TAP = { scale: 0.97, transition: { type: 'spring', stiffness: 500, damping
 export function setNavState(state: SubmissionState | string): void {
   if (typeof window === 'undefined') return
   const s = state as SubmissionState
-  localStorage.setItem(LS_KEY, s)
+  safeSetItem(LS_KEY, s)
   if (s === 'unverified') {
-    localStorage.setItem(LS_POSTED, new Date().toISOString())
+    safeSetItem(LS_POSTED, new Date().toISOString())
   }
   window.dispatchEvent(new CustomEvent(NAV_EVENT, { detail: s }))
 }
@@ -52,17 +54,17 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
 
   // ── Mount: read localStorage ──────────────────────────────────────────────
   useEffect(() => {
-    const stored = localStorage.getItem(LS_KEY) as SubmissionState | null
+    const stored = safeGetItem(LS_KEY) as SubmissionState | null
     if (stored === 'new' || stored === 'unverified' || stored === 'verified') {
       setState(stored)
     }
     if (pioneeredProp) {
       setIsPioneer(true)
-      localStorage.setItem(LS_PIONEER, 'true')
-    } else if (localStorage.getItem(LS_PIONEER) === 'true') {
+      safeSetItem(LS_PIONEER, 'true')
+    } else if (safeGetItem(LS_PIONEER) === 'true') {
       setIsPioneer(true)
     }
-    const postedAt = localStorage.getItem(LS_POSTED)
+    const postedAt = safeGetItem(LS_POSTED)
     if (postedAt) {
       const elapsed = Math.floor((Date.now() - new Date(postedAt).getTime()) / 86_400_000)
       setDaysLeft(Math.max(0, 30 - elapsed))
