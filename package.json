@@ -12,7 +12,7 @@
     "@supabase/supabase-js": "^2",
     "framer-motion": "^11",
     "leaflet": "^1",
-    "next": "14",
+    "next": "^16.2.6",
     "react": "^18",
     "react-dom": "^18",
     "react-leaflet": "^4"
