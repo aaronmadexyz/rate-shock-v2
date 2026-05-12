@@ -306,7 +306,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .envelope-marker {
-    animation-play-state: paused;
+    animation-play-state: paused !important;
   }
 
   .env-hover-wrap,
