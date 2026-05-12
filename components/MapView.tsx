@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { getCentroid } from '@/lib/fsaCentroids'
 import { getAreaLabel } from '@/lib/fsaData'
 import { useReducedMotion } from '@/lib/motionSafety'
+import { safeGetItem } from '@/lib/storage'
 import { playChime } from '@/lib/sounds'
 import type { FilterState } from '@/lib/types'
 import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
@@ -131,128 +132,224 @@ function MapSetup({
   return null
 }
 
-// ─── Tooltip ─────────────────────────────────────────────────────────────────
+// ─── Tooltip helpers ──────────────────────────────────────────────────────────
 
-interface TooltipState {
-  sub:      Submission
-  x:        number   // fixed screen x (marker anchor)
-  y:        number   // fixed screen y (marker anchor)
-  animated: boolean  // false when a tooltip is already visible → instant
+const SENTIMENT_COLORS: Record<number, string> = {
+  1: '#3A9B55',
+  2: '#93D1A2',
+  3: '#D49316',
+  4: '#E87460',
+  5: '#D4503A',
 }
 
-function SentimentFace({ sentiment }: { sentiment: number }) {
-  const color = sealColor(sentiment)
+function rateColor(sentiment: number): string {
+  if (sentiment <= 2) return '#2A7D41'
+  if (sentiment === 3) return '#AD7710'
+  return '#B33C28'
+}
+
+function SentimentFace28({ sentiment }: { sentiment: number }) {
+  const color = SENTIMENT_COLORS[sentiment] ?? '#9A998F'
   const happy = sentiment <= 2
   const sad   = sentiment >= 4
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <circle cx="8" cy="8" r="7" fill={color} fillOpacity="0.12" stroke={color} strokeWidth="1"/>
-      <circle cx="5.5" cy="7"  r="1" fill={color}/>
-      <circle cx="10.5" cy="7" r="1" fill={color}/>
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+      <circle cx="14" cy="14" r="12" fill={color} fillOpacity="0.15" stroke={color} strokeWidth="1.2"/>
+      <circle cx="9.5"  cy="12.5" r="1.5" fill={color}/>
+      <circle cx="18.5" cy="12.5" r="1.5" fill={color}/>
       {happy && (
-        <path d="M5.5 10 Q8 12 10.5 10"
-          stroke={color} strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+        <path d="M9.5 17.5 Q14 21 18.5 17.5"
+          stroke={color} strokeWidth="1.4" strokeLinecap="round" fill="none"/>
       )}
       {sad && (
-        <path d="M5.5 11.5 Q8 9.5 10.5 11.5"
-          stroke={color} strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+        <path d="M9.5 20.5 Q14 17 18.5 20.5"
+          stroke={color} strokeWidth="1.4" strokeLinecap="round" fill="none"/>
       )}
       {!happy && !sad && (
-        <path d="M5.5 10.5 H10.5"
-          stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+        <path d="M9.5 19 H18.5"
+          stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
       )}
     </svg>
   )
 }
 
-function EnvelopeTooltip({ data }: { data: TooltipState }) {
+interface FsaStats { median: number; count: number }
+
+function getContextLine(
+  s: Submission,
+  stats: FsaStats | undefined,
+  areaLabel: string,
+): { text: string; color: string } {
+  const rate = s.rate_change_pct
+  if (!stats || stats.count < 3 || rate == null) {
+    const n = stats?.count ?? 1
+    return { text: `One of ${n} report${n !== 1 ? 's' : ''} here`, color: '#9A998F' }
+  }
+  if (rate > stats.median) return { text: `↑ Above ${areaLabel} average`, color: '#B33C28' }
+  if (rate < stats.median) return { text: `↓ Below ${areaLabel} average`, color: '#2A7D41' }
+  return { text: 'Around the area average', color: '#9A998F' }
+}
+
+// ─── Tooltip ─────────────────────────────────────────────────────────────────
+
+interface TooltipState {
+  sub:      Submission
+  x:        number
+  y:        number
+  animated: boolean  // true only for the first ever tooltip in this session
+}
+
+interface EnvelopeTooltipProps {
+  data:          TooltipState
+  fsaMedians:    Map<string, FsaStats>
+  viewerFsa:     string | null
+  onCtaClick?:   () => void
+  onFirstShown?: () => void
+}
+
+function EnvelopeTooltip({ data, fsaMedians, viewerFsa, onCtaClick, onFirstShown }: EnvelopeTooltipProps) {
   const { sub, x, y, animated } = data
   const { prefersReduced } = useReducedMotion()
-  const label = getAreaLabel(sub.fsa)
-  const pct   = sub.rate_change_pct
+
+  const isViewerArea  = viewerFsa != null && sub.fsa.toUpperCase() === viewerFsa.toUpperCase()
+  const displayLabel  = isViewerArea ? 'Your area' : getAreaLabel(sub.fsa)
+  const contextLabel  = getAreaLabel(sub.fsa)
+  const pct           = sub.rate_change_pct
+  const pctStr        = pct != null ? (pct >= 0 ? `+${pct}%` : `${pct}%`) : '–'
+  const ctx           = getContextLine(sub, fsaMedians.get(sub.fsa), contextLabel)
+
+  const rawComment    = sub.comment_raw?.trim() ?? ''
+  const commentExcerpt = rawComment
+    ? (rawComment.length > 60 ? rawComment.substring(0, 60) + '…' : rawComment)
+    : null
 
   return (
-    // Outer div: pure positioning — keeps motion transforms uncontaminated
     <div style={{
-      position:      'fixed',
-      left:          x,
-      top:           y - 8,
-      transform:     'translateX(-50%) translateY(-100%)',
+      position:        'fixed',
+      left:            x,
+      top:             y - 8,
+      transform:       'translateX(-50%) translateY(-100%)',
       transformOrigin: 'bottom center',
-      zIndex:        300,
-      pointerEvents: 'none',
+      zIndex:          300,
+      pointerEvents:   'none',
+      willChange:      'transform',
     }}>
       <motion.div
         initial={animated && !prefersReduced
           ? { opacity: 0, scale: 0.95, y: 4 }
           : false}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, transition: { duration: prefersReduced ? 0 : 0.08 } }}
-        transition={prefersReduced
-          ? { duration: 0 }
-          : { duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+        exit={{ opacity: 0, transition: { duration: prefersReduced ? 0 : 0.08, ease: [0.4, 0, 1, 1] as [number, number, number, number] } }}
+        transition={animated && !prefersReduced
+          ? { type: 'spring', stiffness: 400, damping: 28, mass: 0.8, delay: 0.1 }
+          : { duration: 0 }}
+        onAnimationComplete={() => onFirstShown?.()}
         style={{
           transformOrigin: 'bottom center',
           background:      '#FFFFFF',
-          border:          '1px solid #E2E1DD',
-          borderRadius:    10,
-          padding:         '10px 13px',
-          boxShadow:       '0 4px 12px rgba(26,25,23,.08)',
-          fontSize:        13,
-          color:           '#1A1917',
-          minWidth:        160,
+          borderTop:       '1px solid #E2E1DD',
+          borderRight:     '1px solid #E2E1DD',
+          borderBottom:    '1px solid #E2E1DD',
+          borderLeft:      isViewerArea ? '3px solid #4A50B0' : '1px solid #E2E1DD',
+          borderRadius:    12,
+          padding:         '12px 14px',
+          paddingLeft:     isViewerArea ? 11 : 14,
+          boxShadow:       '0 4px 12px rgba(26,25,23,.06), 0 1px 3px rgba(26,25,23,.04)',
+          minWidth:        200,
+          maxWidth:        240,
           fontFamily:      "'Inter', system-ui, sans-serif",
           letterSpacing:   '-0.01em',
-          lineHeight:      1.4,
-          whiteSpace:      'nowrap',
+          fontSize:        13,
+          color:           '#1A1917',
         }}
       >
-        {/* Neighbourhood */}
-        <div style={{ fontWeight: 600, marginBottom: 2, color: '#1A1917' }}>
-          {label}
-        </div>
+        {/* Rule 7 — blur crossfade when content changes between markers */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={sub.id}
+            initial={{ filter: 'blur(2px)', opacity: 0 }}
+            animate={{ filter: 'blur(0px)', opacity: 1 }}
+            exit={{ filter: 'blur(2px)', opacity: 0 }}
+            transition={{ duration: prefersReduced ? 0 : 0.06 }}
+          >
+            {/* Section 1 — Header */}
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#1A1917', lineHeight: 1.2 }}>
+              {displayLabel}
+            </div>
+            <div style={{ fontSize: 11, color: '#9A998F', fontWeight: 400, marginTop: 2 }}>
+              {sub.provider} · {sub.insurance_type === 'auto' ? 'Auto' : 'Home'}
+            </div>
 
-        {/* Provider */}
-        <div style={{ color: '#9A998F', fontSize: 12, marginBottom: 6 }}>
-          {sub.provider}
-        </div>
+            {/* Section 2 — Number */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 10 }}>
+              <SentimentFace28 sentiment={sub.sentiment} />
+              <div>
+                <div style={{
+                  fontSize:              26,
+                  fontWeight:            700,
+                  fontVariationSettings: "'opsz' 32",
+                  letterSpacing:         '-0.02em',
+                  fontVariantNumeric:    'tabular-nums',
+                  color:                 rateColor(sub.sentiment),
+                  lineHeight:            1,
+                }}>
+                  {pctStr}
+                </div>
+                <div style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize:   11,
+                  fontWeight: 500,
+                  color:      ctx.color,
+                  marginTop:  4,
+                  lineHeight: 1.4,
+                }}>
+                  {ctx.text}
+                </div>
+              </div>
+            </div>
 
-        {/* Rate + sentiment face */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontWeight: 500,
-            fontSize:   13,
-            color:      pct != null && pct > 0 ? '#D4503A' : '#3A9B55',
-          }}>
-            {pct != null ? (pct >= 0 ? `+${pct}%` : `${pct}%`) : '—'}
-          </span>
-          <SentimentFace sentiment={sub.sentiment} />
-        </div>
+            {/* Section 3 — Comment excerpt */}
+            {commentExcerpt && (
+              <div style={{
+                borderTop:  '1px solid #EEEDEA',
+                paddingTop: 8,
+                marginTop:  8,
+                fontSize:   12,
+                color:      '#5E5D56',
+                lineHeight: 1.5,
+                fontStyle:  'italic',
+              }}>
+                &#8220;{commentExcerpt}
+              </div>
+            )}
 
-        {/* Verified badge */}
-        {sub.verified && (
-          <div style={{
-            display:      'inline-flex',
-            alignItems:   'center',
-            gap:          4,
-            marginTop:    6,
-            fontSize:     11,
-            fontWeight:   500,
-            color:        '#3A3F8F',
-            background:   '#EEEFFA',
-            border:       '1px solid #B0B4E6',
-            borderRadius: 999,
-            padding:      '2px 8px',
-          }}>
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-              <path d="M2 5l2.5 2.5L8 3"
-                stroke="#3A3F8F" strokeWidth="1.4"
-                strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Verified
-          </div>
-        )}
+            {/* Verified badge */}
+            {sub.verified && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path d="M2 6l3 3 5-5" stroke="#1F6132"
+                        strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span style={{ fontSize: 11, fontWeight: 500, color: '#1F6132' }}>
+                  Verified renewal
+                </span>
+              </div>
+            )}
+
+            {/* CTA */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={onCtaClick}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onCtaClick?.() }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#3A3F8F' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#9A998F' }}
+              style={{ fontSize: 11, color: '#9A998F', marginTop: 8, cursor: 'pointer', pointerEvents: 'all' }}
+            >
+              See how yours compares →
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </motion.div>
     </div>
   )
@@ -332,16 +429,19 @@ interface MapViewProps {
   likeMeMode?:      boolean
   userProfile?:     UserProfile | null
   onCohortResult?:  (result: CohortResult | null) => void
+  onCtaClick?:      () => void
 }
 
-export default function MapView({ filters, onReady, onLeafletReady, likeMeMode = false, userProfile = null, onCohortResult }: MapViewProps) {
+export default function MapView({ filters, onReady, onLeafletReady, likeMeMode = false, userProfile = null, onCohortResult, onCtaClick }: MapViewProps) {
   const [submissions,  setSubmissions]  = useState<Submission[]>([])
   const [isLoading,    setIsLoading]    = useState(true)
   const [tooltipState, setTooltipState] = useState<TooltipState | null>(null)
+  const [viewerFsa,    setViewerFsa]    = useState<string | null>(null)
 
   const localMapRef       = useRef<L.Map | null>(null)
   const tooltipVisibleRef = useRef(false)
   const hideTimerRef      = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tooltipEverShown  = useRef(false)
 
   // isInitialLoad: true during the first Supabase fetch, false thereafter.
   // Guards playChime so it only fires for new user-submitted markers, not map load.
@@ -364,6 +464,11 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
     return icon
   }
 
+  // Read viewer FSA from localStorage (client-side only)
+  useEffect(() => {
+    setViewerFsa(safeGetItem('ratemap_last_fsa'))
+  }, [])
+
   // Dismiss immediately — used by map click / pan / zoom
   const clearTooltip = useCallback(() => {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
@@ -371,14 +476,15 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
     tooltipVisibleRef.current = false
   }, [])
 
-  // Show tooltip at marker's screen-space anchor
+  // Show tooltip at marker's screen-space anchor.
+  // animated = true only for the very first tooltip in this session (Rule 3).
   const showTooltip = useCallback((sub: Submission, x: number, y: number) => {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
     setTooltipState({
       sub,
       x,
       y,
-      animated: !tooltipVisibleRef.current, // instant if one is already showing
+      animated: !tooltipEverShown.current && !prefersReducedRef.current,
     })
     tooltipVisibleRef.current = true
   }, [])
@@ -410,7 +516,7 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
       try {
         const { data, error } = await supabase
           .from('submissions')
-          .select('id, fsa, provider, insurance_type, rate_change_pct, sentiment, verified, created_at, years_licensed, at_fault_claims, convictions, home_claims')
+          .select('id, fsa, provider, insurance_type, rate_change_pct, sentiment, verified, created_at, comment_raw, years_licensed, at_fault_claims, convictions, home_claims')
           .order('created_at', { ascending: false })
           .limit(500)
 
@@ -426,6 +532,28 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
 
     fetchSubmissions()
   }, [])
+
+  // FSA median map — used by tooltip context line
+  const fsaMedians = useMemo(() => {
+    const byFsa = new Map<string, number[]>()
+    for (const s of submissions) {
+      if (s.rate_change_pct != null) {
+        const arr = byFsa.get(s.fsa) ?? []
+        arr.push(s.rate_change_pct)
+        byFsa.set(s.fsa, arr)
+      }
+    }
+    const result = new Map<string, FsaStats>()
+    for (const [fsa, vals] of byFsa) {
+      const sorted = [...vals].sort((a, b) => a - b)
+      const mid    = Math.floor(sorted.length / 2)
+      const median = sorted.length % 2 === 0
+        ? (sorted[mid - 1] + sorted[mid]) / 2
+        : sorted[mid]
+      result.set(fsa, { median, count: sorted.length })
+    }
+    return result
+  }, [submissions])
 
   // All loaded submissions that have a known centroid — rendered regardless of filter state.
   // Match/dim treatment is applied via DOM class updates in MapMarker.
@@ -501,9 +629,17 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
       {/* Tooltip rendered outside MapContainer so it isn't clipped by the map */}
       <AnimatePresence>
         {tooltipState && (
-          // Stable key so content updates in-place (no exit/enter) when moving between markers.
-          // Only disappears + reappears when the tooltip was fully dismissed first.
-          <EnvelopeTooltip key="map-tooltip" data={tooltipState} />
+          // Stable key so the card never exits/enters when moving between markers.
+          // Content blur-crossfades inside via AnimatePresence key={sub.id} (Rule 7).
+          // The card itself only exits when tooltipState becomes null.
+          <EnvelopeTooltip
+            key="map-tooltip"
+            data={tooltipState}
+            fsaMedians={fsaMedians}
+            viewerFsa={viewerFsa}
+            onCtaClick={onCtaClick}
+            onFirstShown={() => { tooltipEverShown.current = true }}
+          />
         )}
       </AnimatePresence>
     </>
