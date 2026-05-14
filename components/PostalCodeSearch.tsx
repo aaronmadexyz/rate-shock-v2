@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import type { Map as LeafletMap } from 'leaflet'
 import { getCentroid } from '@/lib/fsaCentroids'
 import { getAreaLabel } from '@/lib/fsaData'
-import { getFsaCount } from '@/lib/fsaCounts'
+import { supabase } from '@/lib/supabase'
 
 export interface PostalCodeSearchProps {
   mapRef:      React.MutableRefObject<LeafletMap | null>
@@ -16,15 +16,19 @@ const SH_SM = '0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04)'
 // Ontario FSA first-letter prefixes
 const ONTARIO_PREFIXES = new Set(['K', 'L', 'M', 'N', 'P'])
 
-type Status = 'idle' | 'valid' | 'pioneer' | 'invalid'
+type Status = 'idle' | 'loading' | 'valid' | 'pioneer' | 'invalid'
 
-function classify(v: string): Status {
-  if (v.length !== 3) return 'idle'
-  if (!ONTARIO_PREFIXES.has(v[0])) return 'invalid'
-  const centroid = getCentroid(v)
-  const count    = getFsaCount(v)
-  if (centroid && count > 0) return 'valid'
-  return 'pioneer'
+async function fetchFsaCount(fsa: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from('submissions')
+      .select('*', { count: 'exact', head: true })
+      .ilike('fsa', fsa)
+    if (error) return 0
+    return count ?? 0
+  } catch {
+    return 0
+  }
 }
 
 function SearchIcon() {
@@ -51,7 +55,8 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
   const [focused,        setFocused]        = useState(false)
   const [isMobile,       setIsMobile]       = useState(false)
   const [mobileExpanded, setMobileExpanded] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef      = useRef<HTMLInputElement>(null)
+  const pendingFsaRef = useRef<string>('')
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 680px)')
@@ -64,22 +69,36 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  function handleInput(raw: string) {
+  async function handleInput(raw: string) {
     const v = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3)
     setValue(v)
-    setStatus('idle') // clear message immediately on any edit
+    setStatus('idle')
 
-    if (v.length === 3) {
-      const s = classify(v)
-      setStatus(s)
-      if (s === 'valid' || s === 'pioneer') {
-        const centroid = getCentroid(v)
-        if (centroid) {
-          mapRef.current?.flyTo(centroid, 13, { duration: 1.2, easeLinearity: 0.1 })
-          if (isMobile && s === 'valid') setMobileExpanded(false)
-        }
-      }
+    if (v.length !== 3) {
+      pendingFsaRef.current = ''
+      return
     }
+
+    if (!ONTARIO_PREFIXES.has(v[0])) {
+      pendingFsaRef.current = ''
+      setStatus('invalid')
+      return
+    }
+
+    const centroid = getCentroid(v)
+    if (centroid) {
+      mapRef.current?.flyTo(centroid, 13, { duration: 1.2, easeLinearity: 0.1 })
+    }
+
+    pendingFsaRef.current = v
+    setStatus('loading')
+    const count = await fetchFsaCount(v)
+
+    if (pendingFsaRef.current !== v) return // stale — user moved on
+
+    const s: Status = count > 0 ? 'valid' : 'pioneer'
+    setStatus(s)
+    if (isMobile && s === 'valid') setMobileExpanded(false)
   }
 
   function toggleMobile() {
@@ -125,7 +144,7 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
     display:     'flex',
   }
 
-  const neighbourhood = status === 'pioneer' ? getAreaLabel(value) : ''
+  const neighbourhood = value.length === 3 ? getAreaLabel(value) : ''
 
   // ── Feedback messages ─────────────────────────────────────────────────────
 
