@@ -324,19 +324,6 @@ input[type="checkbox"]:focus + div {
   outline-offset: 2px;
 }
 
-/* ─── MOBILE SHEET GRADIENT ─────────────────────────────────────────────── */
-
-.sheet-gradient-top {
-  position: sticky;
-  top: 0;
-  height: 20px;
-  margin-bottom: -20px;
-  background: linear-gradient(to bottom, #FFFFFF 30%, transparent);
-  pointer-events: none;
-  z-index: 1;
-  flex-shrink: 0;
-}
-
 /* ─── SLIDER DRAG AFFORDANCE ─────────────────────────────────────────────── */
 
 .rng {

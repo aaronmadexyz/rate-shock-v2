@@ -85,6 +85,19 @@ function formatSliderVal(val: number, mode: 'pct' | 'dol'): string {
   return val >= 2000 ? '$2,000+' : `$${val.toLocaleString()}`
 }
 
+async function fetchFsaCount(fsa: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from('submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('fsa', fsa)
+    if (error) return 0
+    return count ?? 0
+  } catch {
+    return 0
+  }
+}
+
 function medianOf(values: number[]): number | null {
   if (!values.length) return null
   const s = [...values].sort((a, b) => a - b)
@@ -210,6 +223,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const [submitting, setSubmitting] = useState(false)
 
   const [provSearch, setProvSearch] = useState('')
+  const [fsaCountLoading, setFsaCountLoading] = useState(false)
 
   // ── draft rescue state ──────────────────────────────────────────────────────
   const [showRestoreNotice, setShowRestoreNotice] = useState(false)
@@ -249,6 +263,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const modalRef           = useRef<HTMLDivElement>(null)
   const triggerRef         = useRef<HTMLElement | null>(null)
   const counterRef         = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingFsaRef      = useRef<string>('')
 
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
@@ -406,12 +421,25 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   }, [onClose, resetAll])
 
   // ── FSA input ───────────────────────────────────────────────────────────────
-  function onFsaInput(val: string) {
+  async function onFsaInput(val: string) {
     const v = val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3)
     setFsa(v)
     setFsaError(false)
     setAreaLabel(v.length >= 1 ? getAreaLabel(v) : '')
-    setFsaCount(v.length === 3 ? getFsaCount(v) : 0)
+    if (v.length === 3) {
+      pendingFsaRef.current = v
+      setFsaCountLoading(true)
+      setFsaCount(0)
+      const count = await fetchFsaCount(v)
+      if (pendingFsaRef.current === v) {
+        setFsaCount(count)
+        setFsaCountLoading(false)
+      }
+    } else {
+      pendingFsaRef.current = ''
+      setFsaCount(0)
+      setFsaCountLoading(false)
+    }
   }
 
   // ── Stepper adjust ──────────────────────────────────────────────────────────
@@ -794,13 +822,17 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const fsaEarly    = fsaCount >= 1 && fsaCount <= 9
   // const fsaEstablished = fsaCount >= 10
 
-  const fsaHint = fsa.length === 3 ? (
-    fsaPioneer
-      ? `You're the first in ${areaLabel || fsa}. Be a pioneer.`
-      : fsaEarly
-      ? `${fsaCount} neighbour${fsaCount === 1 ? '' : 's'} in ${areaLabel || fsa} have shared.`
-      : `${fsaCount} renewals on the map for ${areaLabel || fsa}.`
-  ) : fsa.length >= 1 ? areaLabel : ''
+  const fsaHintIsLoading = fsaCountLoading && fsa.length === 3
+  const fsaHint = fsaHintIsLoading
+    ? 'Looking up your area…'
+    : fsa.length === 3 ? (
+        fsaPioneer
+          ? `You're the first in ${areaLabel || fsa}. Be a pioneer.`
+          : fsaEarly
+          ? `${fsaCount} neighbour${fsaCount === 1 ? '' : 's'} in ${areaLabel || fsa} have shared.`
+          : `${fsaCount} renewals on the map for ${areaLabel || fsa}.`
+      ) : fsa.length >= 1 ? areaLabel : ''
+  const fsaHintColor = fsaHintIsLoading ? '#9A998F' : '#4A50B0'
 
   // ── Comparison card ──────────────────────────────────────────────────────────
   const daysRemaining = 21
@@ -962,7 +994,6 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                   overscrollBehavior:        'contain',
                 } : {}),
               }}>
-                {isMobile && <div className="sheet-gradient-top" />}
 
                 {/* ════ STEP 1 ════ */}
                 {step === 1 && (
@@ -1026,7 +1057,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               exit={{ opacity: 0 }}
                               transition={{ duration: prefersReduced ? 0 : 0.12, ease: 'easeInOut' }}
                               style={{
-                                fontSize: 12, color: '#4A50B0', fontWeight: 500, margin: 0,
+                                fontSize: 12, color: fsaHintColor, fontWeight: 500, margin: 0,
                                 lineHeight: 1.4, overflow: 'hidden',
                                 display: '-webkit-box', WebkitLineClamp: 2,
                                 WebkitBoxOrient: 'vertical',
