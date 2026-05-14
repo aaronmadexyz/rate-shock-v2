@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { springs } from '@/lib/springs'
 import { safeGetItem, safeSetItem } from '@/lib/storage'
+import { supabase } from '@/lib/supabase'
 import type { NavState } from '@/lib/types'
 
 // ─── Types & constants ────────────────────────────────────────────────────────
@@ -42,12 +43,13 @@ interface NavProps {
 }
 
 export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: NavProps) {
-  const [state,      setState]      = useState<SubmissionState>('new')
-  const [isPioneer,  setIsPioneer]  = useState(false)
-  const [daysLeft,   setDaysLeft]   = useState(30)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [shareToast, setShareToast] = useState(false)
-  const [mounted,    setMounted]    = useState(false)
+  const [state,        setState]        = useState<SubmissionState>('new')
+  const [isPioneer,    setIsPioneer]    = useState(false)
+  const [daysLeft,     setDaysLeft]     = useState(30)
+  const [drawerOpen,   setDrawerOpen]   = useState(false)
+  const [shareToast,   setShareToast]   = useState(false)
+  const [mounted,      setMounted]      = useState(false)
+  const [activityCount, setActivityCount] = useState(0)
 
   const burgerRef = useRef<HTMLButtonElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -69,6 +71,23 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
       const elapsed = Math.floor((Date.now() - new Date(postedAt).getTime()) / 86_400_000)
       setDaysLeft(Math.max(0, 30 - elapsed))
     }
+
+    // Neighbourhood activity badge — check for new posts in user's FSA since last visit
+    const storedFsa   = safeGetItem('ratemap_last_fsa')
+    const lastVisit   = safeGetItem('rateshock_last_visit')
+    safeSetItem('rateshock_last_visit', Date.now().toString())
+    const currentState = (safeGetItem(LS_KEY) ?? 'new') as SubmissionState
+    if (storedFsa && lastVisit && (currentState === 'unverified' || currentState === 'verified')) {
+      supabase
+        .from('submissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('fsa', storedFsa)
+        .gt('created_at', new Date(parseInt(lastVisit)).toISOString())
+        .then(({ count }) => {
+          if (count && count > 0) setActivityCount(count)
+        })
+    }
+
     const onNavEvent = (e: Event) =>
       setState((e as CustomEvent<SubmissionState>).detail)
     window.addEventListener(NAV_EVENT, onNavEvent)
@@ -143,6 +162,31 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // Activity badge dot
+  // ─────────────────────────────────────────────────────────────────────────
+  const renderBadge = () => {
+    if (!activityCount) return null
+    const label = activityCount > 9 ? '9+' : String(activityCount)
+    return (
+      <motion.span
+        initial={{ scale: 0.5, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.7 }}
+        style={{
+          position: 'absolute', top: -4, right: -4,
+          minWidth: 18, height: 18, borderRadius: 9999,
+          background: '#D4503A', color: '#FFFFFF',
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: 10, fontWeight: 500,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '0 4px', border: '2px solid #FFFFFF',
+          pointerEvents: 'none',
+        }}
+      >{label}</motion.span>
+    )
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // CTA button
   // ─────────────────────────────────────────────────────────────────────────
   const renderCta = (drawer = false) => {
@@ -164,19 +208,27 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
       borderRadius:  9999,                       // r-full — all buttons at every breakpoint
     }
 
+    const handleCtaClick = () => {
+      setActivityCount(0)
+      onCtaClick?.()
+    }
+
     // ── State: new ─────────────────────────────────────────────────────────
     if (state === 'new') {
       return (
-        <motion.button
-          type="button"
-          onClick={onCtaClick}
-          style={{ ...base, backgroundColor: 'var(--tod-cta, #3A3F8F)', color: '#FFFFFF', boxShadow: SH_SM }}
-          whileHover={{ backgroundColor: '#2D3170' }}       // ref: p-700 on hover
-          whileTap={TAP}
-        >
-          {ctaIcon()}
-          See how your renewal compares
-        </motion.button>
+        <div style={{ position: 'relative', display: 'inline-flex' }}>
+          <motion.button
+            type="button"
+            onClick={handleCtaClick}
+            style={{ ...base, backgroundColor: 'var(--tod-cta, #3A3F8F)', color: '#FFFFFF', boxShadow: SH_SM }}
+            whileHover={{ backgroundColor: '#2D3170' }}
+            whileTap={TAP}
+          >
+            {ctaIcon()}
+            See how your renewal compares
+          </motion.button>
+          {renderBadge()}
+        </div>
       )
     }
 
@@ -184,68 +236,73 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
     if (state === 'unverified') {
       const isUrgent = daysLeft <= 7 && daysLeft > 0
       return (
-        <motion.button
-          type="button"
-          onClick={onCtaClick}
-          style={{
-            ...base,
-            // ref: nav-cta unverified = n-0 (#FFF); drawer-cta unverified = n-50 (#F5F4F1)
-            backgroundColor: drawer ? '#F5F4F1' : '#FFFFFF',
-            color:           '#2C2B27',                     // ref: n-800
-            borderWidth:     1,
-            borderStyle:     'solid',
-            borderColor:     '#D4D3CE',                     // ref: n-200 solid token
-            boxShadow:       SH_SM,
-          }}
-          whileHover={{
-            backgroundColor: drawer ? '#EEEDEA' : '#FAFAF8',  // ref: n-25 on hover
-            borderColor:     '#B8B7B1',                        // ref: n-300 on hover
-          }}
-          whileTap={TAP}
-        >
-          {ctaIcon()}
-          Verify your post
-          {daysLeft > 0 && (
-            <span
-              style={{
-                fontFamily:      "'IBM Plex Mono', monospace",
-                fontSize:        10,                            // ref: 10px
-                fontWeight:      500,
-                letterSpacing:   '0.02em',                     // ref: .02em
-                lineHeight:      1.4,
-                color:           isUrgent ? '#7A4E08' : '#92600A',
-                backgroundColor: isUrgent ? 'rgba(212,147,22,.22)' : 'rgba(212,147,22,.14)',
-                padding:         '2px 7px',                    // ref: cta-urgency pill
-                borderRadius:    999,
-                whiteSpace:      'nowrap',
-                flexShrink:      0,
-              }}
-            >
-              {daysLeft}d
-            </span>
-          )}
-        </motion.button>
+        <div style={{ position: 'relative', display: 'inline-flex' }}>
+          <motion.button
+            type="button"
+            onClick={handleCtaClick}
+            style={{
+              ...base,
+              backgroundColor: drawer ? '#F5F4F1' : '#FFFFFF',
+              color:           '#2C2B27',
+              borderWidth:     1,
+              borderStyle:     'solid',
+              borderColor:     '#D4D3CE',
+              boxShadow:       SH_SM,
+            }}
+            whileHover={{
+              backgroundColor: drawer ? '#EEEDEA' : '#FAFAF8',
+              borderColor:     '#B8B7B1',
+            }}
+            whileTap={TAP}
+          >
+            {ctaIcon()}
+            Verify your post
+            {daysLeft > 0 && (
+              <span
+                style={{
+                  fontFamily:      "'IBM Plex Mono', monospace",
+                  fontSize:        10,
+                  fontWeight:      500,
+                  letterSpacing:   '0.02em',
+                  lineHeight:      1.4,
+                  color:           isUrgent ? '#7A4E08' : '#92600A',
+                  backgroundColor: isUrgent ? 'rgba(212,147,22,.22)' : 'rgba(212,147,22,.14)',
+                  padding:         '2px 7px',
+                  borderRadius:    999,
+                  whiteSpace:      'nowrap',
+                  flexShrink:      0,
+                }}
+              >
+                {daysLeft}d
+              </span>
+            )}
+          </motion.button>
+          {renderBadge()}
+        </div>
       )
     }
 
     // ── State: verified ────────────────────────────────────────────────────
     return (
-      <motion.button
-        type="button"
-        onClick={onCtaClick}
-        style={{
-          ...base,
-          backgroundColor: '#EDF7F0',
-          color:           '#1F6132',
-          border:          '1px solid rgba(58,155,85,.2)',    // ref: .2 opacity
-          boxShadow:       SH_SM,
-        }}
-        whileHover={{ backgroundColor: '#e0f2e6' }}           // ref: exact hover value
-        whileTap={TAP}
-      >
-        {ctaIcon()}
-        Post another renewal
-      </motion.button>
+      <div style={{ position: 'relative', display: 'inline-flex' }}>
+        <motion.button
+          type="button"
+          onClick={handleCtaClick}
+          style={{
+            ...base,
+            backgroundColor: '#EDF7F0',
+            color:           '#1F6132',
+            border:          '1px solid rgba(58,155,85,.2)',
+            boxShadow:       SH_SM,
+          }}
+          whileHover={{ backgroundColor: '#e0f2e6' }}
+          whileTap={TAP}
+        >
+          {ctaIcon()}
+          Post another renewal
+        </motion.button>
+        {renderBadge()}
+      </div>
     )
   }
 

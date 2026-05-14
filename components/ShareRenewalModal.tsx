@@ -8,14 +8,15 @@ import { supabase } from '@/lib/supabase'
 import { setNavState } from '@/components/Nav'
 import { useReducedMotion } from '@/lib/motionSafety'
 import { playRip, playSeal, playChime } from '@/lib/sounds'
-import { safeSetItem } from '@/lib/storage'
+import { safeSetItem, safeGetItem, safeRemoveItem } from '@/lib/storage'
+import { getCentroid } from '@/lib/fsaCentroids'
 import type { Submission } from '@/lib/types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const SC = ['', '#3A9B55', '#93D1A2', '#D49316', '#E87460', '#D4503A']
 const SENT_LABELS = ['', 'Very fair', 'Fair', 'Neutral', 'Unfair', 'Very unfair']
-const ONTARIO_AVG = 14 // province-wide placeholder %
+const DRAFT_KEY = 'rateshock_form_draft'
 
 const PROVIDERS = [
   'Intact', 'Aviva', 'TD Insurance', 'Desjardins', 'Belairdirect',
@@ -84,6 +85,13 @@ function formatSliderVal(val: number, mode: 'pct' | 'dol'): string {
   return val >= 2000 ? '$2,000+' : `$${val.toLocaleString()}`
 }
 
+function medianOf(values: number[]): number | null {
+  if (!values.length) return null
+  const s = [...values].sort((a, b) => a - b)
+  const m = Math.floor(s.length / 2)
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2
+}
+
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const LABEL_STYLE: React.CSSProperties = {
@@ -114,6 +122,7 @@ interface ShareRenewalModalProps {
   onClose: () => void
   onVerify?: () => void
   onSubmitted?: (sub: Submission) => void
+  onZoomToPost?: (fsa: string) => void
 }
 
 // ─── Stepper component ────────────────────────────────────────────────────────
@@ -169,7 +178,7 @@ function Stepper({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitted }: ShareRenewalModalProps) {
+export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitted, onZoomToPost }: ShareRenewalModalProps) {
   // ── form state ──────────────────────────────────────────────────────────────
   const [step, setStep]           = useState<Step>(1)
   const [fsa, setFsa]             = useState('')
@@ -193,12 +202,18 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const [consent, setConsent]     = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
+  // ── draft rescue state ──────────────────────────────────────────────────────
+  const [showRestoreNotice, setShowRestoreNotice] = useState(false)
+
   // ── post-anim state ─────────────────────────────────────────────────────────
-  const [animDone, setAnimDone]           = useState(false)
-  const [neighbourAvg, setNeighbourAvg]   = useState<number | null>(null)
-  const [cntYou, setCntYou]               = useState(0)
-  const [cntNbr, setCntNbr]               = useState(0)
-  const [cntOnt, setCntOnt]               = useState(0)
+  const [animDone, setAnimDone]     = useState(false)
+  const [compLoading, setCompLoading] = useState(false)
+  const [areaMed,    setAreaMed]    = useState<number | null>(null)
+  const [areaMedCount, setAreaMedCount] = useState(0)
+  const [ontMed,     setOntMed]     = useState<number | null>(null)
+  const [cntYou, setCntYou]         = useState(0)
+  const [cntNbr, setCntNbr]         = useState(0)
+  const [cntOnt, setCntOnt]         = useState(0)
 
   // ── animation element refs ──────────────────────────────────────────────────
   const envFlapRef    = useRef<SVGSVGElement>(null)
@@ -248,6 +263,42 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     }
   }, [isOpen])
 
+  // ── draft rescue: save after every field change ─────────────────────────────
+  useEffect(() => {
+    if (!isOpen || step === 'anim') return
+    safeSetItem(DRAFT_KEY, JSON.stringify({
+      fsa, type: insType, provider, mode,
+      rval, yrs: steppers.yrs.v, cl: steppers.cl.v,
+      cv: steppers.cv.v, hcl: steppers.hcl.v, sent,
+    }))
+  }, [isOpen, step, fsa, insType, provider, mode, rval, steppers, sent])
+
+  // ── draft rescue: restore when modal opens ──────────────────────────────────
+  useEffect(() => {
+    if (!isOpen) return
+    const raw = safeGetItem(DRAFT_KEY)
+    if (!raw) return
+    try {
+      const d = JSON.parse(raw)
+      if (d.fsa)      { setFsa(d.fsa); setAreaLabel(getAreaLabel(d.fsa)); setFsaCount(getFsaCount(d.fsa)) }
+      if (d.type)     setInsType(d.type)
+      if (d.provider) setProvider(d.provider)
+      if (d.mode)     setMode(d.mode)
+      if (d.rval != null) setRval(d.rval)
+      if (d.sent)     setSent(d.sent)
+      if (d.yrs != null || d.cl != null || d.cv != null || d.hcl != null) {
+        setSteppers(prev => ({
+          yrs: { ...prev.yrs, v: d.yrs ?? prev.yrs.v },
+          cl:  { ...prev.cl,  v: d.cl  ?? prev.cl.v  },
+          cv:  { ...prev.cv,  v: d.cv  ?? prev.cv.v  },
+          hcl: { ...prev.hcl, v: d.hcl ?? prev.hcl.v },
+        }))
+      }
+      setShowRestoreNotice(true)
+    } catch { /* ignore malformed draft */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
+
   // ── update track background ─────────────────────────────────────────────────
   const updateTrack = useCallback((v: number, mn: number, mx: number) => {
     const p = Math.round(((v - mn) / (mx - mn)) * 100)
@@ -266,7 +317,9 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     setMode('pct'); setRval(12); updateTrack(12, 0, 50)
     setSent(0); setSentErr(false); setNote(''); setConsent(false)
     setSubmitting(false); setAnimDone(false)
-    setNeighbourAvg(null); setCntYou(0); setCntNbr(0); setCntOnt(0)
+    setShowRestoreNotice(false)
+    setCompLoading(false); setAreaMed(null); setAreaMedCount(0); setOntMed(null)
+    setCntYou(0); setCntNbr(0); setCntOnt(0)
 
     // reset envelope DOM
     if (flapPolyRef.current)   flapPolyRef.current.setAttribute('points', '0,0 180,0 90,68')
@@ -290,6 +343,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   }, [updateTrack])
 
   const handleClose = useCallback(() => {
+    safeRemoveItem(DRAFT_KEY)
     onClose()
     setTimeout(resetAll, 420)
   }, [onClose, resetAll])
@@ -405,29 +459,31 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       created_at:         new Date().toISOString(),
     }
 
-    // Insert — fire-and-forget so it doesn't block the animation
-    supabase.from('submissions').insert(payload).then(async ({ error }) => {
-      if (error) {
-        console.error('[ShareRenewalModal] Supabase insert error:', error.message)
-        return
-      }
-      // Fetch aggregate for comparison card after successful write
-      const { data, error: fetchErr } = await supabase
-        .from('submissions')
-        .select('rate_change_pct')
-        .eq('fsa', fsaUpper)
-        .eq('insurance_type', insType)
-        .not('rate_change_pct', 'is', null)
-        .limit(200)
-      if (fetchErr) {
-        console.error('[ShareRenewalModal] Supabase aggregate fetch error:', fetchErr.message)
-        return
-      }
-      if (data && data.length >= 5) {
-        const avg = data.reduce((s: number, r: { rate_change_pct: number }) => s + r.rate_change_pct, 0) / data.length
-        setNeighbourAvg(Math.round(avg))
-      }
+    // Insert — fire-and-forget, does not block the animation
+    supabase.from('submissions').insert(payload).then(({ error }) => {
+      if (error) console.error('[ShareRenewalModal] Supabase insert error:', error.message)
     })
+
+    // Fetch real comparison data in parallel — resolves well before comparison card appears
+    safeRemoveItem(DRAFT_KEY)
+    setCompLoading(true);
+    (async () => {
+      try {
+        const [areaRes, ontRes] = await Promise.all([
+          supabase.from('submissions').select('rate_change_pct').eq('fsa', fsaUpper).not('rate_change_pct', 'is', null).limit(100),
+          supabase.from('submissions').select('rate_change_pct').not('rate_change_pct', 'is', null).limit(500),
+        ])
+        const areaPcts = (areaRes.data ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
+        const ontPcts  = (ontRes.data  ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
+        setAreaMed(medianOf(areaPcts))
+        setAreaMedCount(areaPcts.length)
+        setOntMed(medianOf(ontPcts))
+      } catch (err) {
+        console.error('[ShareRenewalModal] Comparison fetch error:', err)
+      } finally {
+        setCompLoading(false)
+      }
+    })()
 
     // Update nav state and surface the submission to the map immediately
     setNavState('unverified')
@@ -577,12 +633,12 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     setTimeout(() => setAnimDone(true), 300)
   }
 
-  // ── Count-up when animDone ───────────────────────────────────────────────────
+  // ── Count-up when animDone and data resolved ─────────────────────────────────
   useEffect(() => {
-    if (!animDone) return
+    if (!animDone || compLoading) return
     const targetYou = mode === 'pct' ? Math.min(rval, 50) : Math.round((rval / 2000) * 50)
-    const targetNbr = neighbourAvg ?? null
-    const targetOnt = ONTARIO_AVG
+    const targetNbr = areaMed !== null ? Math.round(areaMed) : null
+    const targetOnt = ontMed  !== null ? Math.round(ontMed)  : null
     const DUR = 1200
     let start: number | null = null
 
@@ -591,11 +647,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       const t = easeOutCubic(Math.min((ts - start) / DUR, 1))
       setCntYou(Math.round(t * targetYou))
       if (targetNbr !== null) setCntNbr(Math.round(t * targetNbr))
-      setCntOnt(Math.round(t * targetOnt))
+      if (targetOnt !== null) setCntOnt(Math.round(t * targetOnt))
       if (t < 1) requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
-  }, [animDone, rval, mode, neighbourAvg])
+  }, [animDone, compLoading, rval, mode, areaMed, ontMed])
 
   // ── Pioneer/early/established copy ──────────────────────────────────────────
   // ── Pioneer moment — chime + shimmer on first appearance ────────────────────
@@ -627,9 +683,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     ? `${daysRemaining} days left to contribute for your area.`
     : `${daysRemaining} days remaining in the current data window. The more neighbours contribute, the clearer the picture becomes.`
 
-  const userPctVal = mode === 'pct' ? Math.min(rval, 50) : Math.round((rval / 2000) * 50)
-  const hasNbrData = neighbourAvg !== null && (getFsaCount(fsa) >= 5)
-  const nbrAbove   = hasNbrData && neighbourAvg! < userPctVal
+  const userPctVal    = mode === 'pct' ? Math.min(rval, 50) : Math.round((rval / 2000) * 50)
+  const hasAreaData   = areaMed !== null && areaMedCount >= 3
+  const hasLimitedData = areaMed !== null && areaMedCount > 0 && areaMedCount < 3
+  const nbrAbove      = hasAreaData && areaMed! < userPctVal
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   const stepTitle = step === 1 ? 'Your policy' : step === 2 ? 'Your renewal' : ''
@@ -763,6 +820,27 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 {/* ════ STEP 1 ════ */}
                 {step === 1 && (
                   <div>
+                    {/* Draft restore notice */}
+                    {showRestoreNotice && (
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        background: '#EEEFFA', borderRadius: 8,
+                        padding: '8px 12px', marginBottom: 12,
+                        fontSize: 12, color: '#4A50B0',
+                      }}>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+                          <circle cx="6" cy="6" r="5" stroke="#4A50B0" strokeWidth="1"/>
+                          <path d="M6 3.5v3l1.5 1.5" stroke="#4A50B0" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span style={{ flex: 1 }}>We saved your progress.</span>
+                        <button
+                          type="button"
+                          onClick={() => { setShowRestoreNotice(false); safeRemoveItem(DRAFT_KEY) }}
+                          style={{ background: 'none', border: 'none', color: '#4A50B0', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}
+                          aria-label="Dismiss"
+                        >×</button>
+                      </div>
+                    )}
                     {/* FSA */}
                     <div style={{ marginBottom: 0 }}>
                       <label style={LABEL_STYLE}>FSA — First 3 characters of postal code</label>
@@ -1140,35 +1218,34 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       border: '1px solid #EEEDEA', borderRadius: 14, overflow: 'hidden', marginBottom: 14,
                     }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
-                        {[
-                          { val: `${cntYou}%`, label: 'you paid', sub: 'your renewal' },
-                          {
-                            val: hasNbrData ? `${cntNbr}%` : 'No data\nyet',
-                            label: 'your neighbours',
-                            sub: 'average increase',
-                            dim: !hasNbrData,
-                          },
-                          { val: `${cntOnt}%`, label: 'ontario', sub: 'province-wide' },
-                        ].map((col, i) => (
-                          <div
-                            key={i}
-                            style={{
-                              padding: '14px 12px', textAlign: 'center',
-                              borderRight: i < 2 ? '1px solid #EEEDEA' : 'none',
-                              background: i === 0 ? '#FAFAF8' : '#FFFFFF',
-                            }}
-                          >
-                            <div style={{ fontSize: 22, fontWeight: 600, color: col.dim ? '#D4D3CE' : '#1A1917', letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', whiteSpace: 'pre-line' }}>
-                              {col.val}
-                            </div>
-                            <div style={{ fontSize: 10, color: '#9A998F', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>
-                              {col.label}
-                            </div>
-                            <div style={{ fontSize: 10, color: '#B8B7B1' }}>{col.sub}</div>
+                        {/* You column */}
+                        <div style={{ padding: '14px 12px', textAlign: 'center', borderRight: '1px solid #EEEDEA', background: '#FAFAF8' }}>
+                          <div style={{ fontSize: 22, fontWeight: 600, color: '#1A1917', letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>
+                            {cntYou}%
                           </div>
-                        ))}
+                          <div style={{ fontSize: 10, color: '#9A998F', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>you paid</div>
+                          <div style={{ fontSize: 10, color: '#B8B7B1' }}>your renewal</div>
+                        </div>
+                        {/* Area column */}
+                        <div style={{ padding: '14px 12px', textAlign: 'center', borderRight: '1px solid #EEEDEA' }}>
+                          <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', color: compLoading ? '#D4D3CE' : (hasLimitedData ? '#9A998F' : (hasAreaData ? '#1A1917' : '#D4D3CE')) }}>
+                            {compLoading ? '–' : hasAreaData ? `${cntNbr}%` : hasLimitedData ? `${Math.round(areaMed!)}%*` : '–'}
+                          </div>
+                          <div style={{ fontSize: 10, color: '#9A998F', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>your area</div>
+                          <div style={{ fontSize: 10, color: '#B8B7B1' }}>
+                            {compLoading ? 'loading…' : hasAreaData ? 'area median' : hasLimitedData ? 'limited data' : 'no area data yet'}
+                          </div>
+                        </div>
+                        {/* Ontario column */}
+                        <div style={{ padding: '14px 12px', textAlign: 'center' }}>
+                          <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', color: compLoading || ontMed === null ? '#D4D3CE' : '#1A1917' }}>
+                            {compLoading ? '–' : ontMed !== null ? `${cntOnt}%` : '–'}
+                          </div>
+                          <div style={{ fontSize: 10, color: '#9A998F', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>ontario</div>
+                          <div style={{ fontSize: 10, color: '#B8B7B1' }}>province-wide</div>
+                        </div>
                       </div>
-                      {hasNbrData && (
+                      {hasAreaData && !compLoading && (
                         <div style={{ padding: '10px 14px', borderTop: '1px solid #EEEDEA', background: '#FAFAF8' }}>
                           <p style={{ fontSize: 12, color: '#7C7B72', lineHeight: 1.5 }}>
                             {nbrAbove
@@ -1178,6 +1255,33 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         </div>
                       )}
                     </div>
+
+                    {/* Zoom to my post link — only shown if FSA has a centroid */}
+                    {getCentroid(fsa.toUpperCase()) && (
+                      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px auto 12px' }}>
+                        <button
+                          type="button"
+                          onClick={() => { handleClose(); onZoomToPost?.(fsa.toUpperCase()) }}
+                          style={{
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontSize: 11, fontWeight: 500,
+                            color: '#9A998F', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 4,
+                            background: 'none', border: 'none', padding: 0,
+                            transition: 'color 150ms',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.color = '#5E5D56')}
+                          onMouseLeave={e => (e.currentTarget.style.color = '#9A998F')}
+                          onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
+                          onMouseUp={e => (e.currentTarget.style.transform = '')}
+                        >
+                          Zoom to my post
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                            <path d="M1 9L9 1M9 1H3M9 1v6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </div>
+                    )}
 
                     {/* Pioneer moment */}
                     {fsaCount < 5 && (

@@ -16,7 +16,7 @@ import FeatureRequestButton from '@/components/FeatureRequestButton'
 import { MapErrorBoundary } from '@/components/MapErrorBoundary'
 import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
-import { safeGetItem } from '@/lib/storage'
+import { safeGetItem, safeSetItem } from '@/lib/storage'
 
 // Leaflet requires browser APIs — skip SSR entirely
 const MapView = lazyLoad(() => import('@/components/MapView'), {
@@ -43,14 +43,18 @@ export default function Page() {
   const [hasSubmission, setHasSubmission] = useState(false)
   const [cohortResult, setCohortResult] = useState<CohortResult | null>(null)
 
-  // Read persisted profile on mount
+  // Read persisted profile + likeMeMode on mount
   useEffect(() => {
     const stored = safeGetItem('ratemap_user_profile')
     if (stored) {
       try {
         setUserProfile(JSON.parse(stored) as UserProfile)
         setHasSubmission(true)
+        const savedMode = safeGetItem('rateshock_like_me_mode')
+        if (savedMode === 'true') setLikeMeMode(true)
       } catch { /* ignore */ }
+    } else {
+      setLikeMeMode(false)
     }
   }, [])
 
@@ -76,6 +80,18 @@ export default function Page() {
   }, [])
 
   const handleFilterChange = useCallback((f: FilterState) => setFilters(f), [])
+
+  const handleLikeMeToggle = useCallback(() => {
+    setLikeMeMode(prev => {
+      const next = !prev
+      safeSetItem('rateshock_like_me_mode', next.toString())
+      return next
+    })
+  }, [])
+
+  const handleZoomToPost = useCallback((fsa: string) => {
+    setTimeout(() => mapHandle.current?.flyToFsa(fsa), 400)
+  }, [])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const stableFilters = useMemo(() => filters, [JSON.stringify(filters)])
@@ -128,7 +144,7 @@ export default function Page() {
         mapRef={leafletMapRef}
         hasSubmission={hasSubmission}
         likeMeMode={likeMeMode}
-        onLikeMeToggle={() => setLikeMeMode(m => !m)}
+        onLikeMeToggle={handleLikeMeToggle}
         userProfile={userProfile}
         cohortResult={cohortResult}
       />
@@ -146,6 +162,7 @@ export default function Page() {
         onClose={() => setModalOpen(false)}
         onVerify={handleVerify}
         onSubmitted={handleSubmitted}
+        onZoomToPost={handleZoomToPost}
       />
 
       <FeatureRequestButton />

@@ -744,9 +744,15 @@ export default function MapView({
     )
   }, [])
 
+  const flyToFsa = useCallback((fsa: string) => {
+    const centroid = getCentroid(fsa)
+    if (!centroid || !localMapRef.current) return
+    localMapRef.current.flyTo(centroid, 14, { duration: 1.2, easeLinearity: 0.1 })
+  }, [])
+
   useEffect(() => {
-    onReady?.({ prependSubmission })
-  }, [onReady, prependSubmission])
+    onReady?.({ prependSubmission, flyToFsa })
+  }, [onReady, prependSubmission, flyToFsa])
 
   // Fetch once on mount
   useEffect(() => {

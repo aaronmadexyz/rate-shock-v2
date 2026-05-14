@@ -16,3 +16,7 @@ export function safeSetItem(key: string, value: string): void {
     // Fail silently — localStorage unavailable (private browsing, storage quota, etc.)
   }
 }
+
+export function safeRemoveItem(key: string): void {
+  try { localStorage.removeItem(key) } catch {}
+}

@@ -38,6 +38,7 @@ export interface FilterState {
 
 export interface MapViewHandle {
   prependSubmission: (sub: Submission) => void
+  flyToFsa:          (fsa: string) => void
 }
 
 export interface UserProfile {

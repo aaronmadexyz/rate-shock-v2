@@ -11,6 +11,12 @@ import { safeGetItem } from '@/lib/storage'
 const SH_SM = '0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04)'
 const CHAR_LIMIT = 280
 
+const TOP_REQUESTS = [
+  'Renewal history over time',
+  'Provider rating breakdown',
+  'Email alerts for my area',
+]
+
 type UIState = 'idle' | 'loading' | 'success' | 'error'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -255,7 +261,7 @@ function FeatureRequestButton() {
                       color:      '#9A998F',
                       marginTop:  2,
                     }}>
-                      Your feedback shapes the roadmap.
+                      These are the top asks so far.
                     </p>
                   </div>
                   <button
@@ -281,8 +287,39 @@ function FeatureRequestButton() {
                   </button>
                 </div>
 
+                {/* Top requests — idle state only */}
+                {uiState !== 'loading' && (
+                  <div style={{ margin: '12px 0 14px' }}>
+                    <div style={{
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: 10, fontWeight: 500,
+                      letterSpacing: '0.06em', textTransform: 'uppercase',
+                      color: '#9A998F', marginBottom: 8,
+                    }}>
+                      Most requested
+                    </div>
+                    {TOP_REQUESTS.map((req, i) => (
+                      <div
+                        key={req}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '6px 0',
+                          borderBottom: i < TOP_REQUESTS.length - 1 ? '1px solid #EEEDEA' : 'none',
+                        }}
+                      >
+                        <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#D4D3CE', flexShrink: 0 }} />
+                        <span style={{
+                          fontFamily: "'Inter', system-ui, sans-serif",
+                          fontSize: 12, color: '#5E5D56', lineHeight: 1.4,
+                        }}>{req}</span>
+                      </div>
+                    ))}
+                    <div style={{ height: 1, background: '#EEEDEA', margin: '14px 0' }} />
+                  </div>
+                )}
+
                 {/* Textarea */}
-                <div style={{ marginTop: 14 }}>
+                <div style={{ marginTop: uiState === 'loading' ? 14 : 0 }}>
                   <style>{`
                     .frb-ta::placeholder { color: #D4D3CE; }
                     .frb-ta:focus {
