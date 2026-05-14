@@ -19,6 +19,7 @@ import { MapErrorBoundary } from '@/components/MapErrorBoundary'
 import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
 import { safeGetItem, safeSetItem } from '@/lib/storage'
+import OnboardingOverlay from '@/components/OnboardingOverlay'
 
 // Leaflet requires browser APIs — skip SSR entirely
 const MapView = lazyLoad(() => import('@/components/MapView'), {
@@ -37,6 +38,8 @@ const DEFAULT_FILTERS: FilterState = {
 }
 
 export default function Page() {
+  const [mounted,       setMounted]      = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [modalOpen,    setModalOpen]    = useState(false)
   const [filterOpen,   setFilterOpen]   = useState(false)
   const [filters,      setFilters]      = useState<FilterState>(DEFAULT_FILTERS)
@@ -44,6 +47,25 @@ export default function Page() {
   const [userProfile,  setUserProfile]  = useState<UserProfile | null>(null)
   const [hasSubmission, setHasSubmission] = useState(false)
   const [cohortResult, setCohortResult] = useState<CohortResult | null>(null)
+
+  // Mark mounted, then show onboarding after 800ms if not seen
+  useEffect(() => {
+    setMounted(true)
+    if (safeGetItem('rateshock_onboarding_seen')) return
+    const t = setTimeout(() => setShowOnboarding(true), 800)
+    return () => clearTimeout(t)
+  }, [])
+
+  const handleOnboardingDismiss = useCallback(() => {
+    safeSetItem('rateshock_onboarding_seen', 'true')
+    setShowOnboarding(false)
+  }, [])
+
+  const handleOnboardingSubmit = useCallback(() => {
+    safeSetItem('rateshock_onboarding_seen', 'true')
+    setShowOnboarding(false)
+    setModalOpen(true)
+  }, [])
 
   // Read persisted profile + likeMeMode on mount
   useEffect(() => {
@@ -218,6 +240,15 @@ export default function Page() {
 
       <MapLegend />
       <FeatureRequestButton />
+
+      {/* First-visit onboarding overlay */}
+      {mounted && (
+        <OnboardingOverlay
+          isVisible={showOnboarding}
+          onDismiss={handleOnboardingDismiss}
+          onSubmit={handleOnboardingSubmit}
+        />
+      )}
     </>
   )
 }
