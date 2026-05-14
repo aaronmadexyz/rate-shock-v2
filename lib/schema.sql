@@ -57,3 +57,32 @@ create policy "public select"
 create policy "public insert"
   on submissions for insert
   with check (true);
+
+-- ── Explicit grants required from May 30, 2025 ──
+-- Supabase no longer auto-grants public schema access.
+
+-- submissions
+GRANT SELECT, INSERT
+  ON public.submissions
+  TO anon;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON public.submissions
+  TO authenticated;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON public.submissions
+  TO service_role;
+
+-- feature_requests
+GRANT INSERT
+  ON public.feature_requests
+  TO anon;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON public.feature_requests
+  TO authenticated;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON public.feature_requests
+  TO service_role;

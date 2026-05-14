@@ -42,3 +42,19 @@ WHERE table_schema = 'public'
   AND grantee = 'anon'
 ORDER BY table_name, privilege_type;
 -- Expected: only INSERT and SELECT for anon — no UPDATE, no DELETE
+
+-- 4. Verify explicit grants exist (required from May 30 2025)
+SELECT grantee, table_name, privilege_type
+FROM information_schema.role_table_grants
+WHERE table_schema = 'public'
+  AND grantee IN ('anon', 'authenticated', 'service_role')
+ORDER BY table_name, grantee, privilege_type;
+
+-- Expected for submissions:
+--   anon → SELECT, INSERT
+--   authenticated → SELECT, INSERT, UPDATE, DELETE
+--   service_role → SELECT, INSERT, UPDATE, DELETE
+-- Expected for feature_requests:
+--   anon → INSERT only
+--   authenticated → SELECT, INSERT, UPDATE, DELETE
+--   service_role → SELECT, INSERT, UPDATE, DELETE
