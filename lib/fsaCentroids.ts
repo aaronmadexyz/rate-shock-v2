@@ -116,6 +116,9 @@ export const FSA_CENTROIDS: Record<string, [number, number]> = {
   M9V: [43.743, -79.590],
   M9W: [43.720, -79.601],
 
+  // Durham Region — L1
+  L1L: [43.8955, -78.8637],
+
   // York Region / Peel — L3
   L3P: [43.872, -79.269],
   L3R: [43.837, -79.321],
