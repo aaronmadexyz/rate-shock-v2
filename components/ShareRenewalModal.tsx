@@ -100,7 +100,7 @@ const LABEL_STYLE: React.CSSProperties = {
 }
 
 const SB_STYLE: React.CSSProperties = {
-  width: 34, height: 34, border: 'none', background: '#FFFFFF',
+  width: 40, height: 40, border: 'none', background: '#FFFFFF',
   cursor: 'pointer', fontSize: 17, color: '#9A998F',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   transition: 'background .12s', fontFamily: "'Inter', system-ui, sans-serif",
@@ -165,7 +165,7 @@ function Stepper({
             key={s.k}
             style={{
               minWidth: 40, textAlign: 'center', fontSize: 14, fontWeight: 500,
-              color: '#1A1917', lineHeight: '34px',
+              color: '#1A1917', lineHeight: '40px',
               background: '#FFFFFF', display: 'block',
               animation: anim,
             }}
@@ -556,6 +556,34 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     setStep('anim')
     setSubmitting(false)
     setTimeout(() => playAnim(), 50)
+  }
+
+  // ── Provider pill roving tabindex keyboard handler ───────────────────────────
+  function handleProvKeyDown(e: React.KeyboardEvent) {
+    const pills = Array.from(
+      document.querySelectorAll<HTMLElement>('#provGrid [role="radio"]')
+    )
+    const current = pills.indexOf(document.activeElement as HTMLElement)
+    if (current === -1) return
+
+    let next = current
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      next = (current + 1) % pills.length
+      e.preventDefault()
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      next = (current - 1 + pills.length) % pills.length
+      e.preventDefault()
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      setProvider(pills[current].textContent?.trim() ?? '')
+      setProvErr(false)
+      e.preventDefault()
+      return
+    } else {
+      return
+    }
+    pills[next].focus()
+    setProvider(pills[next].textContent?.trim() ?? '')
+    setProvErr(false)
   }
 
   // ── Note change with debounced counter aria-live ────────────────────────────
@@ -1063,12 +1091,21 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     {/* Provider */}
                     <div style={{ marginBottom: 4, marginTop: 20 }}>
                       <fieldset style={{ border: 'none', padding: 0, margin: 0 }} aria-invalid={provErr}>
-                        <legend className="fl">Your insurance provider</legend>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                          {PROVIDERS.map(p => (
+                        <legend id="provLegend" className="fl">Your insurance provider</legend>
+                        <div
+                          id="provGrid"
+                          role="radiogroup"
+                          aria-labelledby="provLegend"
+                          onKeyDown={handleProvKeyDown}
+                          style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}
+                        >
+                          {PROVIDERS.map((p, i) => (
                             <button
                               key={p}
                               type="button"
+                              role="radio"
+                              aria-checked={provider === p}
+                              tabIndex={provider === p ? 0 : (provider === '' && i === 0 ? 0 : -1)}
                               onClick={() => { setProvider(p); setProvErr(false) }}
                               style={{
                                 padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
@@ -1160,7 +1197,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               onClick={() => { setSent(n); setSentErr(false) }}
                               style={{
                                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                                padding: '9px 3px', borderRadius: 12,
+                                padding: '9px 3px', borderRadius: 12, minHeight: 72,
                                 border: `1.5px solid ${sent === n ? SC[n] : '#EEEDEA'}`,
                                 cursor: 'pointer', transition: 'all .22s cubic-bezier(.16,1,.3,1)',
                                 background: sent === n ? SC[n] + '28' : '#FFFFFF',
@@ -1169,11 +1206,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               aria-label={SENT_LABELS[n]}
                               aria-pressed={sent === n}
                             >
-                              {n === 1 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#3A9B55"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M10 21Q17 27 24 21" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                              {n === 2 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#93D1A2"/><circle cx="12" cy="14" r="2" fill="#1F6132"/><circle cx="22" cy="14" r="2" fill="#1F6132"/><path d="M12 21Q17 24.5 22 21" stroke="#1F6132" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                              {n === 3 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#D49316"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round"/></svg>}
-                              {n === 4 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#E87460"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 24Q17 20 22 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                              {n === 5 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#D4503A"/><circle cx="12" cy="13" r="2" fill="white"/><circle cx="22" cy="13" r="2" fill="white"/><path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              {n === 1 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Very happy face</title><circle cx="17" cy="17" r="15" fill="#3A9B55"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M10 21Q17 27 24 21" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              {n === 2 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Happy face</title><circle cx="17" cy="17" r="15" fill="#93D1A2"/><circle cx="12" cy="14" r="2" fill="#1F6132"/><circle cx="22" cy="14" r="2" fill="#1F6132"/><path d="M12 21Q17 24.5 22 21" stroke="#1F6132" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              {n === 3 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Neutral face</title><circle cx="17" cy="17" r="15" fill="#D49316"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round"/></svg>}
+                              {n === 4 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Sad face</title><circle cx="17" cy="17" r="15" fill="#E87460"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 24Q17 20 22 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              {n === 5 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Very sad face</title><circle cx="17" cy="17" r="15" fill="#D4503A"/><circle cx="12" cy="13" r="2" fill="white"/><circle cx="22" cy="13" r="2" fill="white"/><path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
                               <span aria-hidden="true" style={{ fontSize: 10, color: '#9A998F', textAlign: 'center', lineHeight: 1.3 }}>
                                 {n === 1 ? <>Very<br/>fair</> : n === 5 ? <>Very<br/>unfair</> : SENT_LABELS[n]}
                               </span>

@@ -144,6 +144,11 @@ function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangePr
         className="fs-rh"
         min={0} max={50} step={1}
         value={valueMin}
+        aria-label="Minimum rate increase"
+        aria-valuenow={valueMin}
+        aria-valuemin={0}
+        aria-valuemax={valueMax - MIN_GAP}
+        aria-valuetext={`${valueMin} percent`}
         onChange={e => {
           const newMin = parseInt(e.target.value)
           const clamped = Math.min(newMin, valueMax - MIN_GAP)
@@ -157,6 +162,11 @@ function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangePr
         className="fs-rh"
         min={0} max={50} step={1}
         value={valueMax}
+        aria-label="Maximum rate increase"
+        aria-valuenow={valueMax}
+        aria-valuemin={valueMin + MIN_GAP}
+        aria-valuemax={50}
+        aria-valuetext={valueMax >= 50 ? '50 percent or more' : `${valueMax} percent`}
         onChange={e => {
           const newMax = parseInt(e.target.value)
           const clamped = Math.max(newMax, valueMin + MIN_GAP)
@@ -462,7 +472,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                   {/* ── 5. Rate increase range ── */}
                   <motion.div variants={itemVariants}>
                     <span style={sectionLabel}>Rate increase</span>
-                    <div style={{ position: 'relative', paddingBottom: 4 }}>
+                    <div role="group" aria-label="Rate increase range filter" style={{ position: 'relative', paddingBottom: 4 }}>
 
                       {/* Values */}
                       <div style={{
