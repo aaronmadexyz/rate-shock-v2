@@ -822,7 +822,7 @@ export default function MapView({
     <>
       <MapContainer
         center={[43.651, -79.383]}
-        zoom={10}
+        zoom={12}
         maxBounds={[[41.6, -95.2], [56.9, -74.3]]}
         maxBoundsViscosity={1.0}
         minZoom={6}
