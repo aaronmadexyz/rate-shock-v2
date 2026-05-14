@@ -90,7 +90,7 @@ async function fetchFsaCount(fsa: string): Promise<number> {
     const { count, error } = await supabase
       .from('submissions')
       .select('*', { count: 'exact', head: true })
-      .eq('fsa', fsa)
+      .ilike('fsa', fsa)
     if (error) return 0
     return count ?? 0
   } catch {
