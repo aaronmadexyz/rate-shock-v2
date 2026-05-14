@@ -302,6 +302,28 @@ body {
   max-height: 92dvh;
 }
 
+/* ─── FIELDSET LEGEND LABEL ─────────────────────────────────────────────── */
+
+.fl {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #9A998F;
+  margin-bottom: 6px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 0;
+  float: none;
+}
+
+/* ─── CONSENT CHECKBOX FOCUS RING ───────────────────────────────────────── */
+
+input[type="checkbox"]:focus-visible + div,
+input[type="checkbox"]:focus + div {
+  outline: 3px solid #636AC5;
+  outline-offset: 2px;
+}
+
 /* ─── REDUCED MOTION ────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {

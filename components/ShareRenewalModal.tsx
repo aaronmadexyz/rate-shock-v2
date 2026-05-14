@@ -128,13 +128,14 @@ interface ShareRenewalModalProps {
 // ─── Stepper component ────────────────────────────────────────────────────────
 
 function Stepper({
-  s, min, max, label, onAdj,
+  s, min, max, label, onAdj, inputId,
 }: {
   s: StepperVal
   min: number
   max: number
   label: string
   onAdj: (d: 1 | -1) => void
+  inputId?: string
 }) {
   const displayVal = `${s.v}${s.v === max ? '+' : ''}`
   const anim = s.k > 0
@@ -143,7 +144,7 @@ function Stepper({
 
   return (
     <div>
-      <label style={LABEL_STYLE}>{label}</label>
+      <label htmlFor={inputId} style={LABEL_STYLE}>{label}</label>
       <div style={{
         display: 'flex', alignItems: 'center',
         border: '1px solid #EEEDEA', borderRadius: 10,
@@ -156,6 +157,7 @@ function Stepper({
           style={{ ...SB_STYLE, opacity: s.v <= min ? 0.4 : 1 }}
         >−</button>
         <span
+          id={inputId}
           key={s.k}
           style={{
             minWidth: 40, textAlign: 'center', fontSize: 14, fontWeight: 500,
@@ -780,7 +782,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#F5F4F1')}
                 onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}
-                aria-label="Close"
+                aria-label="Close modal"
               >
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
                   <path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke="#9A998F" strokeWidth="1.5" strokeLinecap="round"/>
@@ -843,13 +845,19 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     )}
                     {/* FSA */}
                     <div style={{ marginBottom: 0 }}>
-                      <label style={LABEL_STYLE}>FSA — First 3 characters of postal code</label>
+                      <label htmlFor="fsai" style={LABEL_STYLE}>FSA — First 3 characters of postal code</label>
                       <input
+                        id="fsai"
                         type="text"
                         value={fsa}
                         maxLength={3}
                         placeholder="M5V"
                         autoComplete="off"
+                        autoCapitalize="characters"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        inputMode="text"
+                        aria-invalid={fsaError}
                         onChange={e => onFsaInput(e.target.value)}
                         style={{
                           fontFamily: "'IBM Plex Mono', monospace",
@@ -880,7 +888,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         </AnimatePresence>
                       </div>
                       {fsaError && (
-                        <p style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>
+                        <p role="alert" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>
                           Please enter your 3-character FSA to continue
                         </p>
                       )}
@@ -896,7 +904,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
                     {/* Insurance type */}
                     <div style={{ marginBottom: 16 }}>
-                      <label style={LABEL_STYLE}>Insurance type</label>
+                      <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+                        <legend className="fl">Insurance type</legend>
                       <div style={{ display: 'flex', gap: 8 }}>
                         {(['auto', 'home'] as const).map(t => (
                           <button
@@ -930,6 +939,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           </button>
                         ))}
                       </div>
+                      </fieldset>
                     </div>
 
                     {/* Auto fields */}
@@ -939,11 +949,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       transition: 'max-height .5s cubic-bezier(.16,1,.3,1), opacity .35s',
                     }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                        <Stepper s={steppers.yrs} min={0} max={30} label="Years licensed (G)"      onAdj={d => adj('yrs', d)} />
-                        <Stepper s={steppers.cl}  min={0} max={5}  label="At-fault claims (6 yrs)" onAdj={d => adj('cl', d)} />
+                        <Stepper s={steppers.yrs} min={0} max={30} label="Years licensed (G)"      onAdj={d => adj('yrs', d)} inputId="yrsv" />
+                        <Stepper s={steppers.cl}  min={0} max={5}  label="At-fault claims (6 yrs)" onAdj={d => adj('cl', d)}  inputId="clv" />
                       </div>
                       <div style={{ marginBottom: 4 }}>
-                        <Stepper s={steppers.cv} min={0} max={3} label="Convictions (last 3 years)" onAdj={d => adj('cv', d)} />
+                        <Stepper s={steppers.cv} min={0} max={3} label="Convictions (last 3 years)" onAdj={d => adj('cv', d)} inputId="cvv" />
                       </div>
                     </div>
 
@@ -954,31 +964,33 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       transition: 'max-height .5s cubic-bezier(.16,1,.3,1), opacity .35s',
                     }}>
                       <div style={{ paddingBottom: 4 }}>
-                        <Stepper s={steppers.hcl} min={0} max={5} label="Number of claims" onAdj={d => adj('hcl', d)} />
+                        <Stepper s={steppers.hcl} min={0} max={5} label="Number of claims" onAdj={d => adj('hcl', d)} inputId="hclv" />
                       </div>
                     </div>
 
                     {/* Provider */}
                     <div style={{ marginBottom: 4, marginTop: 20 }}>
-                      <label style={LABEL_STYLE}>Insurance provider</label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {PROVIDERS.map(p => (
-                          <button
-                            key={p}
-                            type="button"
-                            onClick={() => { setProvider(p); setProvErr(false) }}
-                            style={{
-                              padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
-                              border: `1px solid ${provider === p ? '#1A1917' : '#EEEDEA'}`,
-                              background: provider === p ? '#1A1917' : '#FFFFFF',
-                              color: provider === p ? '#FFFFFF' : '#7C7B72',
-                              cursor: 'pointer', transition: 'all .15s',
-                              fontFamily: "'Inter', system-ui, sans-serif",
-                            }}
-                          >{p}</button>
-                        ))}
-                      </div>
-                      {provErr && <p style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>Please select your provider</p>}
+                      <fieldset style={{ border: 'none', padding: 0, margin: 0 }} aria-invalid={provErr}>
+                        <legend className="fl">Your insurance provider</legend>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {PROVIDERS.map(p => (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => { setProvider(p); setProvErr(false) }}
+                              style={{
+                                padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
+                                border: `1px solid ${provider === p ? '#1A1917' : '#EEEDEA'}`,
+                                background: provider === p ? '#1A1917' : '#FFFFFF',
+                                color: provider === p ? '#FFFFFF' : '#7C7B72',
+                                cursor: 'pointer', transition: 'all .15s',
+                                fontFamily: "'Inter', system-ui, sans-serif",
+                              }}
+                            >{p}</button>
+                          ))}
+                        </div>
+                        {provErr && <p role="alert" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>Please select your provider</p>}
+                      </fieldset>
                     </div>
                   </div>
                 )}
@@ -988,7 +1000,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                   <div>
                     {/* Slider */}
                     <div style={{ marginBottom: 16 }}>
-                      <label style={LABEL_STYLE}>Premium increase this renewal</label>
+                      <label htmlFor="rng" style={LABEL_STYLE}>Premium increase this renewal</label>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                         <span style={{ fontSize: 28, fontWeight: 600, color: '#1A1917', letterSpacing: '-.02em', fontVariantNumeric: 'tabular-nums' }}>
                           {formatSliderVal(rval, mode)}
@@ -1011,6 +1023,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         </div>
                       </div>
                       <input
+                        id="rng"
                         type="range"
                         min={0}
                         max={mode === 'pct' ? 50 : 2000}
@@ -1036,44 +1049,48 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
                     {/* Sentiment */}
                     <div style={{ marginBottom: 16 }}>
-                      <label style={LABEL_STYLE}>How do you feel about your renewal?</label>
-                      <div style={{ display: 'flex', gap: 5, marginBottom: 2 }}>
-                        {[1, 2, 3, 4, 5].map(n => (
-                          <button
-                            key={n}
-                            type="button"
-                            onClick={() => { setSent(n); setSentErr(false) }}
-                            style={{
-                              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                              padding: '9px 3px', borderRadius: 12,
-                              border: `1.5px solid ${sent === n ? SC[n] : '#EEEDEA'}`,
-                              cursor: 'pointer', transition: 'all .22s cubic-bezier(.16,1,.3,1)',
-                              background: sent === n ? SC[n] + '28' : '#FFFFFF',
-                              fontFamily: "'Inter', system-ui, sans-serif",
-                            }}
-                            aria-label={SENT_LABELS[n]}
-                          >
-                            {n === 1 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#3A9B55"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M10 21Q17 27 24 21" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                            {n === 2 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#93D1A2"/><circle cx="12" cy="14" r="2" fill="#1F6132"/><circle cx="22" cy="14" r="2" fill="#1F6132"/><path d="M12 21Q17 24.5 22 21" stroke="#1F6132" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                            {n === 3 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#D49316"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round"/></svg>}
-                            {n === 4 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#E87460"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 24Q17 20 22 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                            {n === 5 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#D4503A"/><circle cx="12" cy="13" r="2" fill="white"/><circle cx="22" cy="13" r="2" fill="white"/><path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                            <span style={{ fontSize: 10, color: '#9A998F', textAlign: 'center', lineHeight: 1.3 }}>
-                              {n === 1 ? <>Very<br/>fair</> : n === 5 ? <>Very<br/>unfair</> : SENT_LABELS[n]}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                      {sentErr && <p style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>Please select how you feel about your renewal</p>}
+                      <fieldset style={{ border: 'none', padding: 0, margin: 0 }} aria-invalid={sentErr}>
+                        <legend className="fl">How do you feel about your renewal?</legend>
+                        <div style={{ display: 'flex', gap: 5, marginBottom: 2 }}>
+                          {[1, 2, 3, 4, 5].map(n => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => { setSent(n); setSentErr(false) }}
+                              style={{
+                                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                                padding: '9px 3px', borderRadius: 12,
+                                border: `1.5px solid ${sent === n ? SC[n] : '#EEEDEA'}`,
+                                cursor: 'pointer', transition: 'all .22s cubic-bezier(.16,1,.3,1)',
+                                background: sent === n ? SC[n] + '28' : '#FFFFFF',
+                                fontFamily: "'Inter', system-ui, sans-serif",
+                              }}
+                              aria-label={SENT_LABELS[n]}
+                              aria-pressed={sent === n}
+                            >
+                              {n === 1 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#3A9B55"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M10 21Q17 27 24 21" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              {n === 2 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#93D1A2"/><circle cx="12" cy="14" r="2" fill="#1F6132"/><circle cx="22" cy="14" r="2" fill="#1F6132"/><path d="M12 21Q17 24.5 22 21" stroke="#1F6132" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              {n === 3 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#D49316"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round"/></svg>}
+                              {n === 4 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#E87460"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 24Q17 20 22 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              {n === 5 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="#D4503A"/><circle cx="12" cy="13" r="2" fill="white"/><circle cx="22" cy="13" r="2" fill="white"/><path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              <span aria-hidden="true" style={{ fontSize: 10, color: '#9A998F', textAlign: 'center', lineHeight: 1.3 }}>
+                                {n === 1 ? <>Very<br/>fair</> : n === 5 ? <>Very<br/>unfair</> : SENT_LABELS[n]}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                        {sentErr && <p role="alert" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>Please select how you feel about your renewal</p>}
+                      </fieldset>
                     </div>
 
                     {/* Note */}
                     <div style={{ marginBottom: 16 }}>
-                      <label style={LABEL_STYLE}>
+                      <label htmlFor="note" style={LABEL_STYLE}>
                         Additional comments{' '}
                         <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
                       </label>
                       <textarea
+                        id="note"
                         value={note}
                         maxLength={500}
                         placeholder="Anything your neighbours should know..."
@@ -1095,29 +1112,42 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     </div>
 
                     {/* Consent */}
-                    <div style={{ marginBottom: 8, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                      <button
-                        type="button"
-                        role="checkbox"
-                        aria-checked={consent}
-                        onClick={() => setConsent(c => !c)}
-                        style={{
-                          width: 18, height: 18, borderRadius: 4, flexShrink: 0, marginTop: 2,
-                          border: `1.5px solid ${consent ? '#1A1917' : '#D4D3CE'}`,
-                          background: consent ? '#1A1917' : '#FFFFFF',
-                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          transition: 'all .15s', padding: 0,
-                        }}
-                      >
-                        {consent && (
-                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" aria-hidden="true">
-                            <path d="M1 4l3 3 5-6" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                      </button>
-                      <p style={{ fontSize: 12, color: '#7C7B72', lineHeight: 1.55, margin: 0 }}>
-                        I confirm this information is accurate to the best of my knowledge. I understand my submission will be published anonymously and will never be sold or used for commercial purposes.
-                      </p>
+                    <div style={{ marginBottom: 8 }}>
+                      <label htmlFor="consent-input" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          id="consent-input"
+                          checked={consent}
+                          onChange={() => setConsent(c => !c)}
+                          style={{
+                            position: 'absolute',
+                            width: 1, height: 1,
+                            padding: 0, margin: -1,
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            borderWidth: 0,
+                          }}
+                        />
+                        <div
+                          aria-hidden="true"
+                          style={{
+                            width: 18, height: 18, borderRadius: 4,
+                            border: consent ? '1.5px solid #1A1917' : '1.5px solid #D4D3CE',
+                            background: consent ? '#1A1917' : '#FFFFFF',
+                            flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            marginTop: 2, transition: 'all .15s',
+                          }}
+                        >
+                          {consent && (
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none" aria-hidden="true">
+                              <path d="M1 4l3 3 5-6" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        <p style={{ fontSize: 12, color: '#7C7B72', lineHeight: 1.55, margin: 0 }}>
+                          I confirm this information is accurate to the best of my knowledge. I understand my submission will be published anonymously and will never be sold or used for commercial purposes.
+                        </p>
+                      </label>
                     </div>
                   </div>
                 )}
