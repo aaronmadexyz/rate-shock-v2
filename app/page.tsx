@@ -4,6 +4,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { getTimeOfDay, timeOfDayTokens } from '@/lib/timeOfDay'
 import lazyLoad from 'next/dynamic'
 import type { Map as LeafletMap } from 'leaflet'
@@ -119,6 +120,16 @@ export default function Page() {
     setModalOpen(false)
   }, [])
 
+  // Hero hint — shows once per session on first visit
+  const [heroVisible, setHeroVisible] = useState(false)
+  useEffect(() => {
+    if (sessionStorage.getItem('rateshock_hero_shown')) return
+    sessionStorage.setItem('rateshock_hero_shown', '1')
+    setHeroVisible(true)
+    const t = setTimeout(() => setHeroVisible(false), 4000)
+    return () => clearTimeout(t)
+  }, [])
+
   return (
     <>
       {/* Map — fills the viewport at z-index 0 */}
@@ -165,6 +176,44 @@ export default function Page() {
         onSubmitted={handleSubmitted}
         onZoomToPost={handleZoomToPost}
       />
+
+      {/* First-visit hero hint */}
+      <AnimatePresence>
+        {heroVisible && !modalOpen && !filterOpen && (
+          <motion.div
+            key="hero-hint"
+            initial={{ opacity: 0, y: -4, x: '-50%' }}
+            animate={{ opacity: 1, y: 0,  x: '-50%' }}
+            exit={{ opacity: 0, y: -4, x: '-50%', transition: { duration: 0.6, ease: 'easeOut' } }}
+            transition={{ type: 'spring', stiffness: 240, damping: 24, mass: 1 }}
+            style={{
+              position:      'fixed',
+              top:           80,
+              left:          '50%',
+              zIndex:        19,
+              pointerEvents: 'none',
+            }}
+          >
+            <div style={{
+              background:           'rgba(255,255,255,0.92)',
+              backdropFilter:       'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              border:               '1px solid #E2E1DD',
+              borderRadius:         9999,
+              padding:              '10px 20px',
+              fontFamily:           "'Inter', system-ui, sans-serif",
+              fontSize:             13,
+              fontWeight:           500,
+              color:                '#1A1917',
+              whiteSpace:           'nowrap',
+              boxShadow:            '0 1px 3px rgba(26,25,23,.06)',
+              pointerEvents:        'none',
+            }}>
+              See what Ontario drivers are really paying — tap an envelope to explore
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <MapLegend />
       <FeatureRequestButton />

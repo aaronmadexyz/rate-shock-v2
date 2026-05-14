@@ -506,16 +506,23 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
             RateShock
           </span>
 
-          <span
-            className="max-[680px]:hidden"
-            style={{
-              fontSize:      12,
-              fontWeight:    400,
-              color:         '#9A998F',
-              letterSpacing: '0.005em',   // ref: 0.005em
-              lineHeight:    1,
-            }}
-          >
+          <style>{`
+            .nav-subtitle {
+              display: block;
+              font-size: 12px;
+              font-weight: 400;
+              color: #9A998F;
+              letter-spacing: 0.005em;
+              line-height: 1;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            @media (max-width: 680px) {
+              .nav-subtitle { font-size: 10px; max-width: 160px; }
+            }
+          `}</style>
+          <span className="nav-subtitle">
             See what your neighbours are really paying.
           </span>
         </a>
