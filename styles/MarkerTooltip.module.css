@@ -121,15 +121,18 @@
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 14px;
   font-weight: 500;
-  padding: 9px 22px;
+  padding: 9px 16px;
   border-radius: 9999px;
   border: none;
   background: #3A3F8F;
   color: #FFFFFF;
   cursor: pointer;
   width: 100%;
-  text-align: center;
-  display: block;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   transition: background 150ms cubic-bezier(0.25, 0, 0.3, 1);
 }
 

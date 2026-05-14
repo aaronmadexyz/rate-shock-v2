@@ -137,28 +137,48 @@ function rateColor(sentiment: number): string {
   return '#B33C28'
 }
 
-// Multi-size sentiment face — viewBox 0 0 34 34, rendered at requested size
+// Sentiment face — exact filled-circle style from the submission form.
+// Panel uses size=32; preview uses size=20 (same SVG scaled down).
 function SentimentFace({ sentiment, size }: { sentiment: number; size: number }) {
-  const color = SENTIMENT_COLORS[sentiment] ?? '#9A998F'
-  const happy = sentiment <= 2
-  const sad   = sentiment >= 4
+  if (sentiment === 1) return (
+    <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
+      <circle cx="17" cy="17" r="15" fill="#3A9B55"/>
+      <circle cx="12" cy="14" r="2" fill="white"/>
+      <circle cx="22" cy="14" r="2" fill="white"/>
+      <path d="M10 21Q17 27 24 21" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
+    </svg>
+  )
+  if (sentiment === 2) return (
+    <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
+      <circle cx="17" cy="17" r="15" fill="#93D1A2"/>
+      <circle cx="12" cy="14" r="2" fill="#1F6132"/>
+      <circle cx="22" cy="14" r="2" fill="#1F6132"/>
+      <path d="M12 21Q17 24.5 22 21" stroke="#1F6132" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
+    </svg>
+  )
+  if (sentiment === 3) return (
+    <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
+      <circle cx="17" cy="17" r="15" fill="#D49316"/>
+      <circle cx="12" cy="14" r="2" fill="white"/>
+      <circle cx="22" cy="14" r="2" fill="white"/>
+      <path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
+    </svg>
+  )
+  if (sentiment === 4) return (
+    <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
+      <circle cx="17" cy="17" r="15" fill="#E87460"/>
+      <circle cx="12" cy="14" r="2" fill="white"/>
+      <circle cx="22" cy="14" r="2" fill="white"/>
+      <path d="M12 24Q17 20 22 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
+    </svg>
+  )
+  // sentiment 5
   return (
-    <svg width={size} height={size} viewBox="0 0 34 34" fill="none" aria-hidden="true">
-      <circle cx="17" cy="17" r="14" fill={color} fillOpacity="0.15" stroke={color} strokeWidth="1.4"/>
-      <circle cx="11.5" cy="15"  r="1.8" fill={color}/>
-      <circle cx="22.5" cy="15"  r="1.8" fill={color}/>
-      {happy && (
-        <path d="M11.5 21.5 Q17 26 22.5 21.5"
-          stroke={color} strokeWidth="1.6" strokeLinecap="round" fill="none"/>
-      )}
-      {sad && (
-        <path d="M11.5 25 Q17 20.5 22.5 25"
-          stroke={color} strokeWidth="1.6" strokeLinecap="round" fill="none"/>
-      )}
-      {!happy && !sad && (
-        <path d="M11.5 23 H22.5"
-          stroke={color} strokeWidth="1.6" strokeLinecap="round"/>
-      )}
+    <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
+      <circle cx="17" cy="17" r="15" fill="#D4503A"/>
+      <circle cx="12" cy="13" r="2" fill="white"/>
+      <circle cx="22" cy="13" r="2" fill="white"/>
+      <path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
     </svg>
   )
 }
@@ -381,7 +401,8 @@ function PanelContent({
           className={styles.ctaBtn}
           onClick={() => { onCtaClick(); onClose() }}
         >
-          See how yours compares →
+          <span>See how yours compares</span>
+          <span aria-hidden="true">→</span>
         </button>
       </motion.div>
     </AnimatePresence>
