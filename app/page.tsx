@@ -13,6 +13,7 @@ import FilterSheet, { countFilters } from '@/components/FilterSheet'
 import type { FilterState } from '@/lib/types'
 import ShareRenewalModal from '@/components/ShareRenewalModal'
 import FeatureRequestButton from '@/components/FeatureRequestButton'
+import MapLegend from '@/components/MapLegend'
 import { MapErrorBoundary } from '@/components/MapErrorBoundary'
 import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
@@ -165,6 +166,7 @@ export default function Page() {
         onZoomToPost={handleZoomToPost}
       />
 
+      <MapLegend />
       <FeatureRequestButton />
     </>
   )
