@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import { useReducedMotion } from '@/lib/motionSafety'
 
@@ -174,6 +174,32 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
   const dragControls = useDragControls()
   const { prefersReduced } = useReducedMotion()
+  const sheetRef  = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
+
+  // Focus management: store trigger, move focus in, return focus on close
+  useEffect(() => {
+    if (isOpen) {
+      triggerRef.current = document.activeElement as HTMLElement
+      setTimeout(() => {
+        const first = sheetRef.current?.querySelector<HTMLElement>(
+          'button:not([disabled]), input'
+        )
+        first?.focus()
+      }, 50)
+    } else {
+      triggerRef.current?.focus()
+    }
+  }, [isOpen])
+
+  // Escape key handler
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) onClose()
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [isOpen, onClose])
 
   const update = useCallback((next: FilterState) => {
     setFilters(next)
@@ -267,6 +293,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
 
             {/* ── Sheet ── */}
             <motion.div
+              ref={sheetRef}
               drag="y"
               dragControls={dragControls}
               dragListener={false}

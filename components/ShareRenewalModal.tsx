@@ -128,7 +128,7 @@ interface ShareRenewalModalProps {
 // ─── Stepper component ────────────────────────────────────────────────────────
 
 function Stepper({
-  s, min, max, label, onAdj, inputId,
+  s, min, max, label, onAdj, inputId, decreaseLabel, increaseLabel,
 }: {
   s: StepperVal
   min: number
@@ -136,6 +136,8 @@ function Stepper({
   label: string
   onAdj: (d: 1 | -1) => void
   inputId?: string
+  decreaseLabel?: string
+  increaseLabel?: string
 }) {
   const displayVal = `${s.v}${s.v === max ? '+' : ''}`
   const anim = s.k > 0
@@ -154,23 +156,26 @@ function Stepper({
           type="button"
           onClick={() => onAdj(-1)}
           disabled={s.v <= min}
+          aria-label={decreaseLabel}
           style={{ ...SB_STYLE, opacity: s.v <= min ? 0.4 : 1 }}
         >−</button>
-        <span
-          id={inputId}
-          key={s.k}
-          style={{
-            minWidth: 40, textAlign: 'center', fontSize: 14, fontWeight: 500,
-            color: '#1A1917', borderLeft: '1px solid #EEEDEA',
-            borderRight: '1px solid #EEEDEA', lineHeight: '34px',
-            background: '#FFFFFF', display: 'block',
-            animation: anim,
-          }}
-        >{displayVal}</span>
+        <div aria-live="polite" aria-atomic="true" style={{ borderLeft: '1px solid #EEEDEA', borderRight: '1px solid #EEEDEA' }}>
+          <span
+            id={inputId}
+            key={s.k}
+            style={{
+              minWidth: 40, textAlign: 'center', fontSize: 14, fontWeight: 500,
+              color: '#1A1917', lineHeight: '34px',
+              background: '#FFFFFF', display: 'block',
+              animation: anim,
+            }}
+          >{displayVal}</span>
+        </div>
         <button
           type="button"
           onClick={() => onAdj(1)}
           disabled={s.v >= max}
+          aria-label={increaseLabel}
           style={{ ...SB_STYLE, opacity: s.v >= max ? 0.4 : 1 }}
         >+</button>
       </div>
@@ -237,7 +242,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const { prefersReduced } = useReducedMotion()
   const prefersReducedRef  = useRef(prefersReduced)
   prefersReducedRef.current = prefersReduced
-  const lastSubmitRef = useRef<number>(0)
+  const lastSubmitRef      = useRef<number>(0)
+  const modalRef           = useRef<HTMLDivElement>(null)
+  const triggerRef         = useRef<HTMLElement | null>(null)
+  const counterRef         = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
@@ -300,6 +308,50 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     } catch { /* ignore malformed draft */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
+
+  // ── focus trap: save trigger and restore on close ───────────────────────────
+  useEffect(() => {
+    if (isOpen) {
+      triggerRef.current = document.activeElement as HTMLElement
+    } else {
+      triggerRef.current?.focus()
+    }
+  }, [isOpen])
+
+  // ── focus trap: move focus into modal on open ────────────────────────────────
+  useEffect(() => {
+    if (!isOpen) return
+    const t = setTimeout(() => {
+      const firstFocusable = modalRef.current?.querySelector<HTMLElement>(
+        'button, input, textarea, select, [tabindex]:not([tabindex="-1"])'
+      )
+      firstFocusable?.focus()
+    }, 50)
+    return () => clearTimeout(t)
+  }, [isOpen])
+
+  // ── focus trap: Tab key handler ──────────────────────────────────────────────
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== 'Tab') return
+    const modal = modalRef.current
+    if (!modal) return
+    const focusable = Array.from(
+      modal.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), textarea, select, [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter(el => !el.closest('[aria-hidden="true"]'))
+
+    const first = focusable[0]
+    const last  = focusable[focusable.length - 1]
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
 
   // ── update track background ─────────────────────────────────────────────────
   const updateTrack = useCallback((v: number, mn: number, mx: number) => {
@@ -506,6 +558,22 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     setTimeout(() => playAnim(), 50)
   }
 
+  // ── Note change with debounced counter aria-live ────────────────────────────
+  function handleNoteChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setNote(e.target.value)
+    const len = e.target.value.length
+    const cc = document.getElementById('cc')
+    if (cc) cc.setAttribute('aria-live', 'off')
+    if (counterRef.current) clearTimeout(counterRef.current)
+    counterRef.current = setTimeout(() => {
+      const el = document.getElementById('cc')
+      if (el) {
+        el.setAttribute('aria-live', 'polite')
+        el.setAttribute('aria-label', `${len} of 500 characters used`)
+      }
+    }, 800)
+  }
+
   // ── Animation ────────────────────────────────────────────────────────────────
 
   const animateFlap = useCallback(() => {
@@ -644,6 +712,12 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     const DUR = 1200
     let start: number | null = null
 
+    // Suppress live region announcements during count-up
+    ;['cmpYours', 'cmpArea', 'cmpOnt'].forEach(id => {
+      const el = document.getElementById(id)
+      if (el) el.setAttribute('aria-live', 'off')
+    })
+
     function tick(ts: number) {
       if (!start) start = ts
       const t = easeOutCubic(Math.min((ts - start) / DUR, 1))
@@ -653,6 +727,17 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       if (t < 1) requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
+
+    // Re-enable after count-up so final values are announced
+    setTimeout(() => {
+      ;['cmpYours', 'cmpArea', 'cmpOnt'].forEach(id => {
+        const el = document.getElementById(id)
+        if (el) {
+          el.setAttribute('aria-live', 'polite')
+          el.setAttribute('aria-atomic', 'true')
+        }
+      })
+    }, 1500)
   }, [animDone, compLoading, rval, mode, areaMed, ontMed])
 
   // ── Pioneer/early/established copy ──────────────────────────────────────────
@@ -716,6 +801,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
             aria-modal="true"
             aria-label={stepTitle || 'Submitting renewal'}
             className={isMobile ? 'modal-mobile' : undefined}
+            ref={modalRef}
+            onKeyDown={handleKeyDown}
             style={isMobile ? {
               position:     'fixed',
               bottom:       0,
@@ -792,7 +879,12 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
             {/* ── Dot progress ── */}
             {step !== 'anim' && (
-              <div style={{ display: 'flex', gap: 5, justifyContent: 'center', padding: '12px 0 0', flexShrink: 0 }}>
+              <div
+                role="status"
+                aria-live="polite"
+                aria-label={`Step ${step} of 2`}
+                style={{ display: 'flex', gap: 5, justifyContent: 'center', padding: '12px 0 0', flexShrink: 0 }}
+              >
                 {[1, 2].map(n => (
                   <div
                     key={n}
@@ -949,11 +1041,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       transition: 'max-height .5s cubic-bezier(.16,1,.3,1), opacity .35s',
                     }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                        <Stepper s={steppers.yrs} min={0} max={30} label="Years licensed (G)"      onAdj={d => adj('yrs', d)} inputId="yrsv" />
-                        <Stepper s={steppers.cl}  min={0} max={5}  label="At-fault claims (6 yrs)" onAdj={d => adj('cl', d)}  inputId="clv" />
+                        <Stepper s={steppers.yrs} min={0} max={30} label="Years licensed (G)"      onAdj={d => adj('yrs', d)} inputId="yrsv" decreaseLabel="Decrease years licensed"   increaseLabel="Increase years licensed" />
+                        <Stepper s={steppers.cl}  min={0} max={5}  label="At-fault claims (6 yrs)" onAdj={d => adj('cl', d)}  inputId="clv"  decreaseLabel="Decrease at-fault claims"  increaseLabel="Increase at-fault claims" />
                       </div>
                       <div style={{ marginBottom: 4 }}>
-                        <Stepper s={steppers.cv} min={0} max={3} label="Convictions (last 3 years)" onAdj={d => adj('cv', d)} inputId="cvv" />
+                        <Stepper s={steppers.cv} min={0} max={3} label="Convictions (last 3 years)" onAdj={d => adj('cv', d)} inputId="cvv" decreaseLabel="Decrease convictions" increaseLabel="Increase convictions" />
                       </div>
                     </div>
 
@@ -964,7 +1056,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       transition: 'max-height .5s cubic-bezier(.16,1,.3,1), opacity .35s',
                     }}>
                       <div style={{ paddingBottom: 4 }}>
-                        <Stepper s={steppers.hcl} min={0} max={5} label="Number of claims" onAdj={d => adj('hcl', d)} inputId="hclv" />
+                        <Stepper s={steppers.hcl} min={0} max={5} label="Number of claims" onAdj={d => adj('hcl', d)} inputId="hclv" decreaseLabel="Decrease number of claims" increaseLabel="Increase number of claims" />
                       </div>
                     </div>
 
@@ -1029,6 +1121,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         max={mode === 'pct' ? 50 : 2000}
                         step={mode === 'pct' ? 1 : 25}
                         value={rval}
+                        aria-label="Premium increase this renewal"
+                        aria-valuemin={0}
+                        aria-valuemax={mode === 'pct' ? 50 : 2000}
+                        aria-valuenow={rval}
+                        aria-valuetext={
+                          mode === 'pct'
+                            ? (rval >= 50 ? '50 percent or more' : `${rval} percent`)
+                            : (rval >= 2000 ? '$2000 or more' : `$${rval}`)
+                        }
                         onChange={e => onRange(Number(e.target.value))}
                         style={{
                           width: '100%', height: 4, borderRadius: 2, outline: 'none',
@@ -1044,7 +1145,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           {mode === 'pct' ? '50%+' : '$2,000+'}
                         </span>
                       </div>
-                      <p style={{ fontSize: 12, color: label.color, marginTop: 6, lineHeight: 1.5 }}>{label.text}</p>
+                      <p aria-live="polite" aria-atomic="true" style={{ fontSize: 12, color: label.color, marginTop: 6, lineHeight: 1.5 }}>{label.text}</p>
                     </div>
 
                     {/* Sentiment */}
@@ -1094,7 +1195,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         value={note}
                         maxLength={500}
                         placeholder="Anything your neighbours should know..."
-                        onChange={e => setNote(e.target.value)}
+                        onChange={handleNoteChange}
                         style={{
                           width: '100%', padding: '11px 13px',
                           fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
@@ -1106,7 +1207,12 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         onFocus={e => { e.currentTarget.style.borderColor = '#4A50B0'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,80,176,.09)' }}
                         onBlur={e => { e.currentTarget.style.borderColor = '#EEEDEA'; e.currentTarget.style.boxShadow = 'none' }}
                       />
-                      <div style={{ textAlign: 'right', fontSize: 11, color: '#B8B7B1', marginTop: 4 }}>
+                      <div
+                        id="cc"
+                        aria-live="off"
+                        aria-atomic="true"
+                        style={{ textAlign: 'right', fontSize: 11, color: '#B8B7B1', marginTop: 4 }}
+                      >
                         {note.length} / 500
                       </div>
                     </div>
@@ -1250,7 +1356,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
                         {/* You column */}
                         <div style={{ padding: '14px 12px', textAlign: 'center', borderRight: '1px solid #EEEDEA', background: '#FAFAF8' }}>
-                          <div style={{ fontSize: 22, fontWeight: 600, color: '#1A1917', letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>
+                          <div id="cmpYours" aria-live="off" style={{ fontSize: 22, fontWeight: 600, color: '#1A1917', letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>
                             {cntYou}%
                           </div>
                           <div style={{ fontSize: 10, color: '#9A998F', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>you paid</div>
@@ -1258,7 +1364,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         </div>
                         {/* Area column */}
                         <div style={{ padding: '14px 12px', textAlign: 'center', borderRight: '1px solid #EEEDEA' }}>
-                          <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', color: compLoading ? '#D4D3CE' : (hasLimitedData ? '#9A998F' : (hasAreaData ? '#1A1917' : '#D4D3CE')) }}>
+                          <div id="cmpArea" aria-live="off" style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', color: compLoading ? '#D4D3CE' : (hasLimitedData ? '#9A998F' : (hasAreaData ? '#1A1917' : '#D4D3CE')) }}>
                             {compLoading ? '–' : hasAreaData ? `${cntNbr}%` : hasLimitedData ? `${Math.round(areaMed!)}%*` : '–'}
                           </div>
                           <div style={{ fontSize: 10, color: '#9A998F', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>your area</div>
@@ -1268,7 +1374,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         </div>
                         {/* Ontario column */}
                         <div style={{ padding: '14px 12px', textAlign: 'center' }}>
-                          <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', color: compLoading || ontMed === null ? '#D4D3CE' : '#1A1917' }}>
+                          <div id="cmpOnt" aria-live="off" style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', color: compLoading || ontMed === null ? '#D4D3CE' : '#1A1917' }}>
                             {compLoading ? '–' : ontMed !== null ? `${cntOnt}%` : '–'}
                           </div>
                           <div style={{ fontSize: 10, color: '#9A998F', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>ontario</div>
