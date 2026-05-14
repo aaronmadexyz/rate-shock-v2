@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getAreaLabel } from '@/lib/fsaData'
-import { getFsaCount } from '@/lib/fsaCounts'
 import { supabase } from '@/lib/supabase'
 import { setNavState } from '@/components/Nav'
 import { useReducedMotion } from '@/lib/motionSafety'
@@ -308,7 +307,18 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     if (!raw) return
     try {
       const d = JSON.parse(raw)
-      if (d.fsa)      { setFsa(d.fsa); setAreaLabel(getAreaLabel(d.fsa)); setFsaCount(getFsaCount(d.fsa)) }
+      if (d.fsa) {
+        setFsa(d.fsa)
+        setAreaLabel(getAreaLabel(d.fsa))
+        if (d.fsa.length === 3) {
+          setFsaCountLoading(true)
+          setFsaCount(0)
+          fetchFsaCount(d.fsa).then(count => {
+            setFsaCount(count)
+            setFsaCountLoading(false)
+          })
+        }
+      }
       if (d.type)     setInsType(d.type)
       if (d.provider) setProvider(d.provider)
       if (d.mode)     setMode(d.mode)
