@@ -361,14 +361,7 @@ function PanelContent({
             }}>
               {pctString(sub.rate_change_pct)}
             </div>
-            <div style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize:   11,
-              fontWeight: 500,
-              color:      ctx.color,
-              marginTop:  4,
-              lineHeight: 1.4,
-            }}>
+            <div className={styles.contextLine} style={{ color: ctx.color }}>
               {ctx.text}
             </div>
           </div>
