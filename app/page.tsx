@@ -175,6 +175,7 @@ export default function Page() {
         onVerify={handleVerify}
         onSubmitted={handleSubmitted}
         onZoomToPost={handleZoomToPost}
+        onEnableLikeMe={() => setLikeMeMode(true)}
       />
 
       {/* First-visit hero hint */}

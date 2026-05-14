@@ -138,6 +138,7 @@ interface ShareRenewalModalProps {
   onVerify?: () => void
   onSubmitted?: (sub: Submission) => void
   onZoomToPost?: (fsa: string) => void
+  onEnableLikeMe?: () => void
 }
 
 // ─── Stepper component ────────────────────────────────────────────────────────
@@ -200,7 +201,7 @@ function Stepper({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitted, onZoomToPost }: ShareRenewalModalProps) {
+export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitted, onZoomToPost, onEnableLikeMe }: ShareRenewalModalProps) {
   // ── form state ──────────────────────────────────────────────────────────────
   const [step, setStep]           = useState<Step>(1)
   const [fsa, setFsa]             = useState('')
@@ -231,8 +232,9 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const [showRestoreNotice, setShowRestoreNotice] = useState(false)
 
   // ── post-anim state ─────────────────────────────────────────────────────────
-  const [animDone, setAnimDone]     = useState(false)
-  const [showVerify, setShowVerify] = useState(false)
+  const [animDone, setAnimDone]         = useState(false)
+  const [showVerify, setShowVerify]     = useState(false)
+  const [showLikeMeCard, setShowLikeMeCard] = useState(false)
   const [compLoading, setCompLoading] = useState(false)
   const [areaMed,    setAreaMed]    = useState<number | null>(null)
   const [areaMedCount, setAreaMedCount] = useState(0)
@@ -406,7 +408,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     })
     setMode('pct'); setRval(12); updateTrack(12, 0, 50)
     setSent(0); setSentErr(false); setNote(''); setConsent(false)
-    setSubmitting(false); setAnimDone(false); setShowVerify(false)
+    setSubmitting(false); setAnimDone(false); setShowVerify(false); setShowLikeMeCard(false)
     setShowRestoreNotice(false)
     setCompLoading(false); setAreaMed(null); setAreaMedCount(0); setOntMed(null)
     setCntYou(0); setCntNbr(0); setCntOnt(0)
@@ -822,6 +824,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     if (!animDone || compLoading) return
     const t = setTimeout(() => setShowVerify(true), 2800)
     return () => clearTimeout(t)
+  }, [animDone, compLoading])
+
+  // ── Profiles Like Me discovery card — show once per session ────────────────
+  useEffect(() => {
+    if (!animDone || compLoading) return
+    if (sessionStorage.getItem('rateshock_like_me_shown')) return
+    setShowLikeMeCard(true)
   }, [animDone, compLoading])
 
   // ── Pioneer/early/established copy ──────────────────────────────────────────
@@ -1575,6 +1584,66 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           </svg>
                         </button>
                       </div>
+                    )}
+
+                    {/* Profiles Like Me discovery card */}
+                    {showLikeMeCard && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ type: 'spring', stiffness: 240, damping: 24, mass: 1, delay: 0.3 }}
+                        style={{
+                          background:   '#EEEFFA',
+                          border:       '1px solid #B0B4E6',
+                          borderRadius: 10,
+                          padding:      '12px 14px',
+                          margin:       '10px 0',
+                          display:      'flex',
+                          alignItems:   'flex-start',
+                          gap:          10,
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }}>
+                          <circle cx="6" cy="4" r="2.5" stroke="#4A50B0" strokeWidth="1.2"/>
+                          <circle cx="11" cy="5" r="2" stroke="#4A50B0" strokeWidth="1.2"/>
+                          <path d="M1 13c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="#4A50B0" strokeWidth="1.2" strokeLinecap="round"/>
+                          <path d="M11 9c1.7.4 3 1.9 3 3.5" stroke="#4A50B0" strokeWidth="1.2" strokeLinecap="round"/>
+                        </svg>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: '#3A3F8F', marginBottom: 3, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                            Filter the map to drivers like you
+                          </div>
+                          <div style={{ fontSize: 12, color: '#4A50B0', lineHeight: 1.5, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                            See how your renewal compares to drivers with a similar profile and provider.
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              sessionStorage.setItem('rateshock_like_me_shown', 'true')
+                              onEnableLikeMe?.()
+                              handleClose()
+                            }}
+                            style={{
+                              display:        'inline-flex',
+                              alignItems:     'center',
+                              gap:            4,
+                              marginTop:      8,
+                              fontSize:       12,
+                              fontWeight:     500,
+                              color:          '#3A3F8F',
+                              background:     'none',
+                              border:         'none',
+                              cursor:         'pointer',
+                              padding:        0,
+                              fontFamily:     "'Inter', system-ui, sans-serif",
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.color = '#2D3170')}
+                            onMouseLeave={e => (e.currentTarget.style.color = '#3A3F8F')}
+                          >
+                            Try it on the map →
+                          </button>
+                        </div>
+                      </motion.div>
                     )}
 
                     {/* Pioneer moment */}
