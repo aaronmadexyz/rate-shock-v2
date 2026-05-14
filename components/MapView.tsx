@@ -15,10 +15,9 @@ import type { FilterState } from '@/lib/types'
 import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
 import { matchCohort } from '@/lib/cohortMatch'
 import type { CohortResult } from '@/lib/cohortMatch'
+import styles from '@/styles/MarkerTooltip.module.css'
 
 // ─── Leaflet default-icon fix ─────────────────────────────────────────────────
-// Next.js webpack can't resolve the default icon paths that Leaflet hard-codes.
-// We use only divIcons, but the fix must be applied globally to prevent warnings.
 import _iconUrl       from 'leaflet/dist/images/marker-icon.png'
 import _iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import _shadowUrl     from 'leaflet/dist/images/marker-shadow.png'
@@ -37,6 +36,7 @@ L.Icon.Default.mergeOptions({
 })
 
 // ─── Marker icon factory ──────────────────────────────────────────────────────
+// UNCHANGED — do not modify anything in this section
 
 function sealColor(sentiment: number): string {
   if (sentiment <= 2) return '#3A9B55'
@@ -51,8 +51,6 @@ function markerScale(pct: number | null): number {
 
 function buildIcon(fill: string, seal: string, scale: number, duration = 0, delay = 0): L.DivIcon {
   const W = 40, H = 28
-  // Bob animation on .envelope-marker so translateY doesn't fight the size-scale transform.
-  // .env-hover-wrap is the outermost layer — CSS :hover scale lives there (globals.css).
   const bobStyle = duration > 0
     ? `animation:envelopeBob ${duration}ms ease-in-out infinite;animation-delay:${delay}ms;`
     : ''
@@ -65,27 +63,23 @@ function buildIcon(fill: string, seal: string, scale: number, duration = 0, dela
     `<polygon points="0,0 40,0 20,15" fill="#E8E4DD" opacity="0.8"/>` +
     `<circle cx="20" cy="6.5" r="4" fill="${seal}"/>` +
     `</svg></div></div></div>`
-  return L.divIcon({
-    html,
-    className:  '',
-    iconSize:   [W * scale, H * scale],
-    iconAnchor: [(W * scale) / 2, H * scale],
-  })
+  return L.divIcon({ html, className: '', iconSize: [W * scale, H * scale], iconAnchor: [(W * scale) / 2, H * scale] })
 }
 
 function makeIcon(s: Submission, duration: number, delay: number): L.DivIcon {
   return buildIcon('#F0EDE8', sealColor(s.sentiment), markerScale(s.rate_change_pct), duration, delay)
 }
 
-const SKELETON_ICON = buildIcon('#EEEDEA', '#D4D3CE', 1.0) // no animation
+const SKELETON_ICON = buildIcon('#EEEDEA', '#D4D3CE', 1.0)
 
-// ─── Skeleton coordinates — spread across Toronto for visual feedback ─────────
+// ─── Skeleton coordinates ─────────────────────────────────────────────────────
 const SKELETON_COORDS: Array<[number, number]> = [
   [43.651, -79.383], [43.660, -79.395], [43.642, -79.371], [43.670, -79.410],
   [43.633, -79.420], [43.680, -79.355], [43.645, -79.440], [43.655, -79.365],
 ]
 
 // ─── Filter matching ──────────────────────────────────────────────────────────
+// UNCHANGED
 
 function getMarkerMatchState(s: Submission, f: FilterState): boolean {
   if (!f.types.auto && s.insurance_type === 'auto') return false
@@ -97,9 +91,8 @@ function getMarkerMatchState(s: Submission, f: FilterState): boolean {
   return true
 }
 
-// ─── Map setup — inside MapContainer ─────────────────────────────────────────
-// Captures the Leaflet instance, forwards it to callers, and registers
-// click/pan/zoom events that dismiss the tooltip.
+// ─── Map setup ────────────────────────────────────────────────────────────────
+// UNCHANGED
 
 function MapSetup({
   onExternalReady,
@@ -135,11 +128,7 @@ function MapSetup({
 // ─── Tooltip helpers ──────────────────────────────────────────────────────────
 
 const SENTIMENT_COLORS: Record<number, string> = {
-  1: '#3A9B55',
-  2: '#93D1A2',
-  3: '#D49316',
-  4: '#E87460',
-  5: '#D4503A',
+  1: '#3A9B55', 2: '#93D1A2', 3: '#D49316', 4: '#E87460', 5: '#D4503A',
 }
 
 function rateColor(sentiment: number): string {
@@ -148,26 +137,27 @@ function rateColor(sentiment: number): string {
   return '#B33C28'
 }
 
-function SentimentFace28({ sentiment }: { sentiment: number }) {
+// Multi-size sentiment face — viewBox 0 0 34 34, rendered at requested size
+function SentimentFace({ sentiment, size }: { sentiment: number; size: number }) {
   const color = SENTIMENT_COLORS[sentiment] ?? '#9A998F'
   const happy = sentiment <= 2
   const sad   = sentiment >= 4
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-      <circle cx="14" cy="14" r="12" fill={color} fillOpacity="0.15" stroke={color} strokeWidth="1.2"/>
-      <circle cx="9.5"  cy="12.5" r="1.5" fill={color}/>
-      <circle cx="18.5" cy="12.5" r="1.5" fill={color}/>
+    <svg width={size} height={size} viewBox="0 0 34 34" fill="none" aria-hidden="true">
+      <circle cx="17" cy="17" r="14" fill={color} fillOpacity="0.15" stroke={color} strokeWidth="1.4"/>
+      <circle cx="11.5" cy="15"  r="1.8" fill={color}/>
+      <circle cx="22.5" cy="15"  r="1.8" fill={color}/>
       {happy && (
-        <path d="M9.5 17.5 Q14 21 18.5 17.5"
-          stroke={color} strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+        <path d="M11.5 21.5 Q17 26 22.5 21.5"
+          stroke={color} strokeWidth="1.6" strokeLinecap="round" fill="none"/>
       )}
       {sad && (
-        <path d="M9.5 20.5 Q14 17 18.5 20.5"
-          stroke={color} strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+        <path d="M11.5 25 Q17 20.5 22.5 25"
+          stroke={color} strokeWidth="1.6" strokeLinecap="round" fill="none"/>
       )}
       {!happy && !sad && (
-        <path d="M9.5 19 H18.5"
-          stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+        <path d="M11.5 23 H22.5"
+          stroke={color} strokeWidth="1.6" strokeLinecap="round"/>
       )}
     </svg>
   )
@@ -190,185 +180,380 @@ function getContextLine(
   return { text: 'Around the area average', color: '#9A998F' }
 }
 
-// ─── Tooltip ─────────────────────────────────────────────────────────────────
-
-interface TooltipState {
-  sub:      Submission
-  x:        number
-  y:        number
-  animated: boolean  // true only for the first ever tooltip in this session
+function pctString(pct: number | null): string {
+  if (pct == null) return '–'
+  return pct >= 0 ? `+${pct}%` : `${pct}%`
 }
 
-interface EnvelopeTooltipProps {
-  data:          TooltipState
-  fsaMedians:    Map<string, FsaStats>
-  viewerFsa:     string | null
-  onCtaClick?:   () => void
-  onFirstShown?: () => void
+// ─── Tooltip state ────────────────────────────────────────────────────────────
+
+type TooltipMode = 'preview' | 'locked'
+
+interface ActiveTooltip {
+  sub:  Submission
+  x:    number
+  y:    number
+  mode: TooltipMode
 }
 
-function EnvelopeTooltip({ data, fsaMedians, viewerFsa, onCtaClick, onFirstShown }: EnvelopeTooltipProps) {
-  const { sub, x, y, animated } = data
-  const { prefersReduced } = useReducedMotion()
+// ─── HoverPreview — Mode 1 (desktop only, auto-dismisses) ────────────────────
 
-  const isViewerArea  = viewerFsa != null && sub.fsa.toUpperCase() === viewerFsa.toUpperCase()
-  const displayLabel  = isViewerArea ? 'Your area' : getAreaLabel(sub.fsa)
-  const contextLabel  = getAreaLabel(sub.fsa)
-  const pct           = sub.rate_change_pct
-  const pctStr        = pct != null ? (pct >= 0 ? `+${pct}%` : `${pct}%`) : '–'
-  const ctx           = getContextLine(sub, fsaMedians.get(sub.fsa), contextLabel)
+interface HoverPreviewProps {
+  sub:            Submission
+  x:              number
+  y:              number
+  isFirst:        boolean
+  prefersReduced: boolean
+  onMouseEnter:   () => void
+  onMouseLeave:   () => void
+  onFirstShown:   () => void
+}
 
-  const rawComment    = sub.comment_raw?.trim() ?? ''
+function HoverPreview({
+  sub, x, y, isFirst, prefersReduced, onMouseEnter, onMouseLeave, onFirstShown,
+}: HoverPreviewProps) {
+  const label  = getAreaLabel(sub.fsa)
+  const pct    = pctString(sub.rate_change_pct)
+
+  return (
+    <motion.div
+      className={styles.preview}
+      style={{
+        position:        'fixed',
+        left:            x,
+        top:             y - 8,
+        transform:       'translateX(-50%) translateY(-100%)',
+        transformOrigin: 'bottom center',
+        zIndex:          300,
+      }}
+      initial={isFirst && !prefersReduced
+        ? { opacity: 0, scale: 0.95, y: 4 }
+        : { opacity: 0 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0,
+              transition: { duration: prefersReduced ? 0.15 : 0.08,
+                            ease: [0.4, 0, 1, 1] as [number,number,number,number] } }}
+      transition={isFirst && !prefersReduced
+        ? { type: 'spring', stiffness: 400, damping: 28, mass: 0.8, delay: 0.1 }
+        : { duration: 0 }}
+      onAnimationComplete={() => { if (isFirst) onFirstShown() }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <SentimentFace sentiment={sub.sentiment} size={20} />
+      <span style={{
+        fontVariationSettings: "'opsz' 32",
+        fontSize:              15,
+        fontWeight:            700,
+        letterSpacing:         '-0.02em',
+        fontVariantNumeric:    'tabular-nums',
+        marginLeft:            6,
+        color:                 rateColor(sub.sentiment),
+      }}>
+        {pct}
+      </span>
+      <span style={{ fontSize: 12, fontWeight: 400, color: '#9A998F', marginLeft: 8 }}>
+        {label}
+      </span>
+      <span style={{
+        fontFamily: "'IBM Plex Mono', monospace",
+        fontSize:   10,
+        color:      '#B8B7B1',
+        marginLeft: 6,
+      }}>
+        · click for details
+      </span>
+      {/* 12px invisible bridge — prevents dismiss flicker when cursor crosses gap */}
+      <div
+        className={styles.bridge}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      />
+    </motion.div>
+  )
+}
+
+// ─── PanelContent — shared between desktop panel + mobile sheet ───────────────
+
+interface PanelContentProps {
+  sub:            Submission
+  fsaMedians:     Map<string, FsaStats>
+  viewerFsa:      string | null
+  prefersReduced: boolean
+  onClose:        () => void
+  onCtaClick:     () => void
+}
+
+function PanelContent({
+  sub, fsaMedians, viewerFsa, prefersReduced, onClose, onCtaClick,
+}: PanelContentProps) {
+  const isViewerArea   = viewerFsa != null && sub.fsa.toUpperCase() === viewerFsa.toUpperCase()
+  const displayLabel   = isViewerArea ? 'Your area' : getAreaLabel(sub.fsa)
+  const shortLabel     = getAreaLabel(sub.fsa).replace(/\s*\(.*\)/, '')
+  const ctx            = getContextLine(sub, fsaMedians.get(sub.fsa), shortLabel)
+  const rawComment     = sub.comment_raw?.trim() ?? ''
   const commentExcerpt = rawComment
-    ? (rawComment.length > 60 ? rawComment.substring(0, 60) + '…' : rawComment)
+    ? (rawComment.length > 80 ? rawComment.substring(0, 80) + '…' : rawComment)
     : null
 
   return (
-    <div style={{
-      position:        'fixed',
-      left:            x,
-      top:             y - 8,
-      transform:       'translateX(-50%) translateY(-100%)',
-      transformOrigin: 'bottom center',
-      zIndex:          300,
-      pointerEvents:   'none',
-      willChange:      'transform',
-    }}>
+    // Rule 7 — blur crossfade when active submission changes while panel stays open
+    <AnimatePresence mode="wait">
       <motion.div
-        initial={animated && !prefersReduced
-          ? { opacity: 0, scale: 0.95, y: 4 }
-          : false}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, transition: { duration: prefersReduced ? 0 : 0.08, ease: [0.4, 0, 1, 1] as [number, number, number, number] } }}
-        transition={animated && !prefersReduced
-          ? { type: 'spring', stiffness: 400, damping: 28, mass: 0.8, delay: 0.1 }
-          : { duration: 0 }}
-        onAnimationComplete={() => onFirstShown?.()}
-        style={{
-          transformOrigin: 'bottom center',
-          background:      '#FFFFFF',
-          borderTop:       '1px solid #E2E1DD',
-          borderRight:     '1px solid #E2E1DD',
-          borderBottom:    '1px solid #E2E1DD',
-          borderLeft:      isViewerArea ? '3px solid #4A50B0' : '1px solid #E2E1DD',
-          borderRadius:    12,
-          padding:         '12px 14px',
-          paddingLeft:     isViewerArea ? 11 : 14,
-          boxShadow:       '0 4px 12px rgba(26,25,23,.06), 0 1px 3px rgba(26,25,23,.04)',
-          minWidth:        200,
-          maxWidth:        240,
-          fontFamily:      "'Inter', system-ui, sans-serif",
-          letterSpacing:   '-0.01em',
-          fontSize:        13,
-          color:           '#1A1917',
-        }}
+        key={sub.id}
+        initial={{ filter: 'blur(2px)', opacity: 0 }}
+        animate={{ filter: 'blur(0px)', opacity: 1,
+                   transition: { duration: prefersReduced ? 0 : 0.1 } }}
+        exit={{ filter: 'blur(2px)', opacity: 0,
+                transition: { duration: prefersReduced ? 0 : 0.06 } }}
       >
-        {/* Rule 7 — blur crossfade when content changes between markers */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={sub.id}
-            initial={{ filter: 'blur(2px)', opacity: 0 }}
-            animate={{ filter: 'blur(0px)', opacity: 1 }}
-            exit={{ filter: 'blur(2px)', opacity: 0 }}
-            transition={{ duration: prefersReduced ? 0 : 0.06 }}
-          >
-            {/* Section 1 — Header */}
+        {/* Section 1 — Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ marginRight: 8 }}>
             <div style={{ fontSize: 13, fontWeight: 500, color: '#1A1917', lineHeight: 1.2 }}>
               {displayLabel}
             </div>
             <div style={{ fontSize: 11, color: '#9A998F', fontWeight: 400, marginTop: 2 }}>
               {sub.provider} · {sub.insurance_type === 'auto' ? 'Auto' : 'Home'}
             </div>
+          </div>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close panel">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path d="M1.5 1.5l7 7M8.5 1.5l-7 7"
+                    stroke="#9A998F" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
 
-            {/* Section 2 — Number */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 10 }}>
-              <SentimentFace28 sentiment={sub.sentiment} />
-              <div>
-                <div style={{
-                  fontSize:              26,
-                  fontWeight:            700,
-                  fontVariationSettings: "'opsz' 32",
-                  letterSpacing:         '-0.02em',
-                  fontVariantNumeric:    'tabular-nums',
-                  color:                 rateColor(sub.sentiment),
-                  lineHeight:            1,
-                }}>
-                  {pctStr}
-                </div>
-                <div style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize:   11,
-                  fontWeight: 500,
-                  color:      ctx.color,
-                  marginTop:  4,
-                  lineHeight: 1.4,
-                }}>
-                  {ctx.text}
-                </div>
-              </div>
+        {/* Section 2 — Rate + context */}
+        <div className={styles.divider} />
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <SentimentFace sentiment={sub.sentiment} size={32} />
+          <div>
+            <div style={{
+              fontVariationSettings: "'opsz' 32",
+              fontSize:              26,
+              fontWeight:            700,
+              letterSpacing:         '-0.02em',
+              fontVariantNumeric:    'tabular-nums',
+              color:                 rateColor(sub.sentiment),
+              lineHeight:            1,
+            }}>
+              {pctString(sub.rate_change_pct)}
             </div>
-
-            {/* Section 3 — Comment excerpt */}
-            {commentExcerpt && (
-              <div style={{
-                borderTop:  '1px solid #EEEDEA',
-                paddingTop: 8,
-                marginTop:  8,
-                fontSize:   12,
-                color:      '#5E5D56',
-                lineHeight: 1.5,
-                fontStyle:  'italic',
-              }}>
-                &#8220;{commentExcerpt}
-              </div>
-            )}
-
-            {/* Verified badge */}
-            {sub.verified && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                  <path d="M2 6l3 3 5-5" stroke="#1F6132"
-                        strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span style={{ fontSize: 11, fontWeight: 500, color: '#1F6132' }}>
-                  Verified renewal
-                </span>
-              </div>
-            )}
-
-            {/* CTA */}
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={onCtaClick}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onCtaClick?.() }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#3A3F8F' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#9A998F' }}
-              style={{ fontSize: 11, color: '#9A998F', marginTop: 8, cursor: 'pointer', pointerEvents: 'all' }}
-            >
-              See how yours compares →
+            <div style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize:   11,
+              fontWeight: 500,
+              color:      ctx.color,
+              marginTop:  4,
+              lineHeight: 1.4,
+            }}>
+              {ctx.text}
             </div>
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Section 3 — Comment (conditional) */}
+        {commentExcerpt && (
+          <>
+            <div className={styles.divider} />
+            <div style={{ fontSize: 12, color: '#5E5D56', lineHeight: 1.55, fontStyle: 'italic' }}>
+              <span style={{ color: '#B8B7B1' }}>&#8220;</span>{commentExcerpt}
+            </div>
+          </>
+        )}
+
+        {/* Section 4 — Verified badge (conditional) */}
+        {sub.verified && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M2 6l3 3 5-5" stroke="#1F6132"
+                    strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span style={{ fontSize: 11, fontWeight: 500, color: '#1F6132' }}>Verified renewal</span>
+          </div>
+        )}
+
+        {/* Section 5 — CTA */}
+        <div className={styles.divider} />
+        <button
+          className={styles.ctaBtn}
+          onClick={() => { onCtaClick(); onClose() }}
+        >
+          See how yours compares →
+        </button>
       </motion.div>
-    </div>
+    </AnimatePresence>
   )
 }
 
-// ─── Individual marker — handles match/dim class updates via DOM ref ──────────
+// ─── LockedPanel — Mode 2 (desktop panel + mobile sheet) ─────────────────────
 
-interface MapMarkerProps {
-  s:           Submission
-  icon:        L.DivIcon
-  pos:         [number, number]
-  isMatch:     boolean
-  delay:       number
-  mapRef:      React.MutableRefObject<L.Map | null>
-  showTooltip: (sub: Submission, x: number, y: number) => void
-  onHideStart: () => void
+interface LockedPanelProps {
+  sub:            Submission
+  x:              number
+  y:              number
+  fsaMedians:     Map<string, FsaStats>
+  viewerFsa:      string | null
+  prefersReduced: boolean
+  isMobile:       boolean
+  onClose:        () => void
+  onCtaClick:     () => void
 }
 
-function MapMarker({ s, icon, pos, isMatch, delay, mapRef, showTooltip, onHideStart }: MapMarkerProps) {
+function LockedPanel({
+  sub, x, y, fsaMedians, viewerFsa, prefersReduced, isMobile, onClose, onCtaClick,
+}: LockedPanelProps) {
+  const sheetRef      = useRef<HTMLDivElement>(null)
+  const touchStartY   = useRef(0)
+  const touchDelta    = useRef(0)
+
+  // Escape key dismisses on desktop
+  useEffect(() => {
+    if (isMobile) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isMobile, onClose])
+
+  const isViewerArea = viewerFsa != null && sub.fsa.toUpperCase() === viewerFsa.toUpperCase()
+
+  const borderLeft  = isViewerArea ? '3px solid #4A50B0' : '1px solid #E2E1DD'
+  const paddingLeft = isViewerArea ? 11 : 16
+
+  // Touch gesture handlers for swipe-down dismissal
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+    touchDelta.current  = 0
+    if (sheetRef.current) sheetRef.current.style.transition = ''
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    const delta = e.touches[0].clientY - touchStartY.current
+    touchDelta.current = delta
+    if (delta > 0 && sheetRef.current) {
+      sheetRef.current.style.transform = `translateY(${delta}px)`
+      e.stopPropagation()
+    }
+  }
+
+  const onTouchEnd = () => {
+    if (touchDelta.current > 80) {
+      onClose()
+    } else if (sheetRef.current) {
+      sheetRef.current.style.transition =
+        'transform 300ms cubic-bezier(0.16, 1, 0.3, 1)'
+      sheetRef.current.style.transform = 'translateY(0)'
+      const el = sheetRef.current
+      setTimeout(() => { if (el) el.style.transition = '' }, 300)
+    }
+  }
+
+  const content = (
+    <PanelContent
+      sub={sub}
+      fsaMedians={fsaMedians}
+      viewerFsa={viewerFsa}
+      prefersReduced={prefersReduced}
+      onClose={onClose}
+      onCtaClick={onCtaClick}
+    />
+  )
+
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile backdrop */}
+        <motion.div
+          className={styles.backdrop}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: prefersReduced ? 0 : 0.15, ease: [0.25, 0, 0.3, 1] as [number,number,number,number] }}
+          onTouchEnd={onClose}
+          onClick={onClose}
+          style={{ zIndex: 199 }}
+        />
+        {/* Mobile bottom sheet */}
+        <motion.div
+          ref={sheetRef}
+          className={styles.sheet}
+          style={{
+            zIndex:      200,
+            borderLeft,
+            paddingLeft,
+          }}
+          initial={prefersReduced ? false : { y: '100%' }}
+          animate={{ y: 0 }}
+          exit={prefersReduced
+            ? { opacity: 0, transition: { duration: 0.15 } }
+            : { y: '100%' }}
+          transition={prefersReduced
+            ? { duration: 0 }
+            : { type: 'spring', stiffness: 240, damping: 24, mass: 1.0 }}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          <div className={styles.dragHandle} />
+          {content}
+        </motion.div>
+      </>
+    )
+  }
+
+  // Desktop panel
+  return (
+    <motion.div
+      className={styles.panel}
+      style={{
+        position:        'fixed',
+        left:            x,
+        top:             y - 8,
+        transform:       'translateX(-50%) translateY(-100%)',
+        transformOrigin: 'bottom center',
+        zIndex:          200,
+        borderTop:       '1px solid #E2E1DD',
+        borderRight:     '1px solid #E2E1DD',
+        borderBottom:    '1px solid #E2E1DD',
+        borderLeft,
+        paddingLeft,
+      }}
+      initial={prefersReduced
+        ? false
+        : { opacity: 0, scale: 0.97, y: 8 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={prefersReduced
+        ? { opacity: 0, transition: { duration: 0.15 } }
+        : { opacity: 0, scale: 0.97, y: 4 }}
+      transition={prefersReduced
+        ? { duration: 0 }
+        : { type: 'spring', stiffness: 240, damping: 24, mass: 1.0 }}
+    >
+      {content}
+    </motion.div>
+  )
+}
+
+// ─── MapMarker ────────────────────────────────────────────────────────────────
+
+interface MapMarkerProps {
+  s:              Submission
+  icon:           L.DivIcon
+  pos:            [number, number]
+  isMatch:        boolean
+  staggerDelay:   number
+  mapRef:         React.MutableRefObject<L.Map | null>
+  onMarkerEnter:  (sub: Submission, x: number, y: number) => void
+  onMarkerLeave:  () => void
+  onMarkerClick:  (sub: Submission, x: number, y: number) => void
+}
+
+function MapMarker({
+  s, icon, pos, isMatch, staggerDelay, mapRef,
+  onMarkerEnter, onMarkerLeave, onMarkerClick,
+}: MapMarkerProps) {
   const markerRef    = useRef<L.Marker>(null)
   const prevMatchRef = useRef<boolean | null>(null)
 
@@ -380,16 +565,15 @@ function MapMarker({ s, icon, pos, isMatch, delay, mapRef, showTooltip, onHideSt
     const wasMatch = prevMatchRef.current
     prevMatchRef.current = isMatch
 
-    wrap.style.transitionDelay = `${delay}ms`
+    wrap.style.transitionDelay = `${staggerDelay}ms`
 
     if (isMatch) {
       el.style.pointerEvents = ''
       wrap.classList.remove('marker-dim')
       wrap.classList.add('marker-match')
-      // Entrance pulse only when transitioning dim → match (not on initial mount)
       if (wasMatch === false) {
         wrap.classList.remove('marker-pulse')
-        void wrap.offsetWidth // force reflow to restart animation
+        void wrap.offsetWidth
         wrap.classList.add('marker-pulse')
         const t = setTimeout(() => wrap.classList.remove('marker-pulse'), 350)
         return () => clearTimeout(t)
@@ -399,7 +583,15 @@ function MapMarker({ s, icon, pos, isMatch, delay, mapRef, showTooltip, onHideSt
       wrap.classList.remove('marker-match', 'marker-pulse')
       wrap.classList.add('marker-dim')
     }
-  }, [isMatch, delay])
+  }, [isMatch, staggerDelay])
+
+  const getScreenCoords = () => {
+    const map = mapRef.current
+    if (!map) return null
+    const pt   = map.latLngToContainerPoint(pos)
+    const rect = map.getContainer().getBoundingClientRect()
+    return { x: rect.left + pt.x, y: rect.top + pt.y }
+  }
 
   return (
     <Marker
@@ -408,50 +600,76 @@ function MapMarker({ s, icon, pos, isMatch, delay, mapRef, showTooltip, onHideSt
       icon={icon}
       eventHandlers={{
         mouseover: () => {
-          const map = mapRef.current
-          if (!map) return
-          const pt   = map.latLngToContainerPoint(pos)
-          const rect = map.getContainer().getBoundingClientRect()
-          showTooltip(s, rect.left + pt.x, rect.top + pt.y)
+          const coords = getScreenCoords()
+          if (coords) onMarkerEnter(s, coords.x, coords.y)
         },
-        mouseout: onHideStart,
+        mouseout: onMarkerLeave,
+        click: () => {
+          const coords = getScreenCoords()
+          if (coords) onMarkerClick(s, coords.x, coords.y)
+        },
       }}
     />
   )
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── MapViewProps ─────────────────────────────────────────────────────────────
 
 interface MapViewProps {
-  filters:          FilterState
-  onReady?:         (handle: MapViewHandle) => void
-  onLeafletReady?:  (map: L.Map) => void
-  likeMeMode?:      boolean
-  userProfile?:     UserProfile | null
-  onCohortResult?:  (result: CohortResult | null) => void
-  onCtaClick?:      () => void
+  filters:         FilterState
+  onReady?:        (handle: MapViewHandle) => void
+  onLeafletReady?: (map: L.Map) => void
+  likeMeMode?:     boolean
+  userProfile?:    UserProfile | null
+  onCohortResult?: (result: CohortResult | null) => void
+  onCtaClick?:     () => void
 }
 
-export default function MapView({ filters, onReady, onLeafletReady, likeMeMode = false, userProfile = null, onCohortResult, onCtaClick }: MapViewProps) {
-  const [submissions,  setSubmissions]  = useState<Submission[]>([])
-  const [isLoading,    setIsLoading]    = useState(true)
-  const [tooltipState, setTooltipState] = useState<TooltipState | null>(null)
-  const [viewerFsa,    setViewerFsa]    = useState<string | null>(null)
+// ─── MapView ──────────────────────────────────────────────────────────────────
 
-  const localMapRef       = useRef<L.Map | null>(null)
-  const tooltipVisibleRef = useRef(false)
-  const hideTimerRef      = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const tooltipEverShown  = useRef(false)
+export default function MapView({
+  filters, onReady, onLeafletReady,
+  likeMeMode = false, userProfile = null,
+  onCohortResult, onCtaClick,
+}: MapViewProps) {
+  const [submissions, setSubmissions] = useState<Submission[]>([])
+  const [isLoading,   setIsLoading]   = useState(true)
+  const [viewerFsa,   setViewerFsa]   = useState<string | null>(null)
+  const [isMobile,    setIsMobile]    = useState(false)
 
-  // isInitialLoad: true during the first Supabase fetch, false thereafter.
-  // Guards playChime so it only fires for new user-submitted markers, not map load.
-  const isInitialLoad     = useRef(true)
+  // Single state drives all tooltip rendering
+  const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip | null>(null)
+  const tooltipRef = useRef<ActiveTooltip | null>(null)
+  tooltipRef.current = activeTooltip
+
+  const localMapRef      = useRef<L.Map | null>(null)
+  const hideTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tooltipEverShown = useRef(false)
+  const isInitialLoad    = useRef(true)
+
   const { prefersReduced } = useReducedMotion()
   const prefersReducedRef  = useRef(prefersReduced)
   prefersReducedRef.current = prefersReduced
 
-  // Per-marker bob timing + icon cache — keyed by submission id.
-  // Computed once on first encounter so filter changes don't reset the animation.
+  // Treat every preview as "subsequent" when reduced motion is on
+  useEffect(() => {
+    if (prefersReduced) tooltipEverShown.current = true
+  }, [prefersReduced])
+
+  // Mobile breakpoint detection
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 680px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  // Read viewer FSA from localStorage (client-side only)
+  useEffect(() => {
+    setViewerFsa(safeGetItem('ratemap_last_fsa'))
+  }, [])
+
   const markerCache = useRef<Map<string, L.DivIcon>>(new Map())
   function getCachedIcon(s: Submission): L.DivIcon {
     let icon = markerCache.current.get(s.id)
@@ -464,41 +682,47 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
     return icon
   }
 
-  // Read viewer FSA from localStorage (client-side only)
-  useEffect(() => {
-    setViewerFsa(safeGetItem('ratemap_last_fsa'))
-  }, [])
-
-  // Dismiss immediately — used by map click / pan / zoom
-  const clearTooltip = useCallback(() => {
+  const dismissAll = useCallback(() => {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
-    setTooltipState(null)
-    tooltipVisibleRef.current = false
+    setActiveTooltip(null)
   }, [])
 
-  // Show tooltip at marker's screen-space anchor.
-  // animated = true only for the very first tooltip in this session (Rule 3).
-  const showTooltip = useCallback((sub: Submission, x: number, y: number) => {
-    if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
-    setTooltipState({
-      sub,
-      x,
-      y,
-      animated: !tooltipEverShown.current && !prefersReducedRef.current,
-    })
-    tooltipVisibleRef.current = true
+  const cancelHideTimer = useCallback(() => {
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current)
+      hideTimerRef.current = null
+    }
   }, [])
 
-  // 50ms grace period — cancelled if user moves to another marker before it fires.
-  // This prevents a flicker when moving directly between adjacent markers.
-  const startHideTooltip = useCallback(() => {
-    hideTimerRef.current = setTimeout(() => {
-      setTooltipState(null)
-      tooltipVisibleRef.current = false
-    }, 50)
+  const startHideTimer = useCallback(() => {
+    hideTimerRef.current = setTimeout(() => setActiveTooltip(null), 150)
   }, [])
 
-  // Stable handle exposed via onReady — lets page.tsx prepend without a re-fetch
+  // Mouse enters a marker
+  const onMarkerEnter = useCallback((sub: Submission, x: number, y: number) => {
+    cancelHideTimer()
+    const current = tooltipRef.current
+    if (current?.mode === 'locked') {
+      // While locked: update content with blur crossfade, keep locked
+      setActiveTooltip({ sub, x, y, mode: 'locked' })
+    } else {
+      // Show hover preview
+      setActiveTooltip({ sub, x, y, mode: 'preview' })
+    }
+  }, [cancelHideTimer])
+
+  // Mouse leaves a marker
+  const onMarkerLeave = useCallback(() => {
+    if (tooltipRef.current?.mode === 'locked') return // locked panel ignores mouse-leave
+    startHideTimer()
+  }, [startHideTimer])
+
+  // Click / tap on a marker — always locks the panel
+  const onMarkerClick = useCallback((sub: Submission, x: number, y: number) => {
+    cancelHideTimer()
+    setActiveTooltip({ sub, x, y, mode: 'locked' })
+  }, [cancelHideTimer])
+
   const prependSubmission = useCallback((sub: Submission) => {
     if (!isInitialLoad.current && !prefersReducedRef.current) playChime()
     setSubmissions(prev =>
@@ -510,18 +734,22 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
     onReady?.({ prependSubmission })
   }, [onReady, prependSubmission])
 
-  // Fetch once on mount — all filtering done in-memory from here on
+  // Fetch once on mount
   useEffect(() => {
-    const fetchSubmissions = async () => {
+    const fetch = async () => {
       try {
         const { data, error } = await supabase
           .from('submissions')
-          .select('id, fsa, provider, insurance_type, rate_change_pct, sentiment, verified, created_at, comment_raw, years_licensed, at_fault_claims, convictions, home_claims')
+          .select(
+            'id, fsa, provider, insurance_type, rate_change_pct, sentiment, ' +
+            'verified, created_at, comment_raw, years_licensed, at_fault_claims, ' +
+            'convictions, home_claims',
+          )
           .order('created_at', { ascending: false })
           .limit(500)
 
         if (error) console.error('Supabase fetch error:', error)
-        if (data) setSubmissions(data as Submission[])
+        if (data) setSubmissions(data as unknown as Submission[])
       } catch (err) {
         console.error('Unexpected error fetching submissions:', err)
       } finally {
@@ -529,11 +757,10 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
         isInitialLoad.current = false
       }
     }
-
-    fetchSubmissions()
+    fetch()
   }, [])
 
-  // FSA median map — used by tooltip context line
+  // FSA median map for context lines
   const fsaMedians = useMemo(() => {
     const byFsa = new Map<string, number[]>()
     for (const s of submissions) {
@@ -555,14 +782,11 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
     return result
   }, [submissions])
 
-  // All loaded submissions that have a known centroid — rendered regardless of filter state.
-  // Match/dim treatment is applied via DOM class updates in MapMarker.
   const allWithCentroid = useMemo(
     () => submissions.filter(s => getCentroid(s.fsa) !== null),
     [submissions],
   )
 
-  // Cohort result — recomputed whenever submissions, mode, or profile changes.
   const cohortResult = useMemo(() => {
     if (!likeMeMode || !userProfile) return null
     return matchCohort(userProfile, submissions)
@@ -571,6 +795,8 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
   useEffect(() => {
     onCohortResult?.(cohortResult)
   }, [cohortResult, onCohortResult])
+
+  const at = activeTooltip
 
   return (
     <>
@@ -591,25 +817,21 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
           maxZoom={19}
         />
 
-        {/* Captures map instance, forwards to external caller, dismisses tooltip on map interaction */}
         <MapSetup
           onExternalReady={onLeafletReady}
           onLocalMap={m => { localMapRef.current = m }}
-          onDismiss={clearTooltip}
+          onDismiss={dismissAll}
         />
 
-        {/* Skeleton markers while fetch is in flight */}
         {isLoading && SKELETON_COORDS.map((pos, i) => (
           <Marker key={`sk-${i}`} position={pos} icon={SKELETON_ICON} interactive={false} />
         ))}
 
-        {/* Real markers once loaded — all are rendered; non-matching ones are dimmed */}
         {!isLoading && allWithCentroid.map((s, idx) => {
           const pos     = getCentroid(s.fsa)! as [number, number]
           const isMatch = (likeMeMode && cohortResult)
             ? cohortResult.ids.has(s.id)
             : getMarkerMatchState(s, filters)
-          const delay   = Math.min(idx * 8, 200)
           return (
             <MapMarker
               key={s.id}
@@ -617,28 +839,47 @@ export default function MapView({ filters, onReady, onLeafletReady, likeMeMode =
               icon={getCachedIcon(s)}
               pos={pos}
               isMatch={isMatch}
-              delay={delay}
+              staggerDelay={Math.min(idx * 8, 200)}
               mapRef={localMapRef}
-              showTooltip={showTooltip}
-              onHideStart={startHideTooltip}
+              onMarkerEnter={onMarkerEnter}
+              onMarkerLeave={onMarkerLeave}
+              onMarkerClick={onMarkerClick}
             />
           )
         })}
       </MapContainer>
 
-      {/* Tooltip rendered outside MapContainer so it isn't clipped by the map */}
+      {/* Mode 1 — hover preview (desktop only, auto-dismisses) */}
       <AnimatePresence>
-        {tooltipState && (
-          // Stable key so the card never exits/enters when moving between markers.
-          // Content blur-crossfades inside via AnimatePresence key={sub.id} (Rule 7).
-          // The card itself only exits when tooltipState becomes null.
-          <EnvelopeTooltip
-            key="map-tooltip"
-            data={tooltipState}
+        {at?.mode === 'preview' && (
+          <HoverPreview
+            key="hover-preview"
+            sub={at.sub}
+            x={at.x}
+            y={at.y}
+            isFirst={!tooltipEverShown.current}
+            prefersReduced={prefersReduced}
+            onMouseEnter={cancelHideTimer}
+            onMouseLeave={startHideTimer}
+            onFirstShown={() => { tooltipEverShown.current = true }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mode 2 — locked detail panel (desktop positioned + mobile sheet) */}
+      <AnimatePresence>
+        {at?.mode === 'locked' && (
+          <LockedPanel
+            key="locked-panel"
+            sub={at.sub}
+            x={at.x}
+            y={at.y}
             fsaMedians={fsaMedians}
             viewerFsa={viewerFsa}
-            onCtaClick={onCtaClick}
-            onFirstShown={() => { tooltipEverShown.current = true }}
+            prefersReduced={prefersReduced}
+            isMobile={isMobile}
+            onClose={dismissAll}
+            onCtaClick={() => { dismissAll(); onCtaClick?.() }}
           />
         )}
       </AnimatePresence>

@@ -113,6 +113,7 @@ export default function Page() {
           likeMeMode={likeMeMode}
           userProfile={userProfile}
           onCohortResult={handleCohortResult}
+          onCtaClick={() => setModalOpen(true)}
         />
       </MapErrorBoundary>
 
