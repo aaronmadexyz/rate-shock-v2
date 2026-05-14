@@ -202,6 +202,15 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
     }
   }, [isOpen])
 
+  // Viewport: re-enable pinch zoom when sheet is open so content is readable
+  useEffect(() => {
+    const VP_MAP   = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
+    const VP_MODAL = 'width=device-width, initial-scale=1, viewport-fit=cover'
+    const vp = document.querySelector('meta[name=viewport]')
+    vp?.setAttribute('content', isOpen ? VP_MODAL : VP_MAP)
+    return () => { vp?.setAttribute('content', VP_MAP) }
+  }, [isOpen])
+
   // Escape key handler
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -324,6 +333,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                 maxHeight: '72vh',
                 display: 'flex',
                 flexDirection: 'column',
+                touchAction: 'none',
               }}
             >
 
@@ -377,30 +387,57 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                     fontSize: 15, fontWeight: 500,
                     color: '#1A1917',
                     letterSpacing: '-0.01em',
+                    fontFamily: "'Inter', system-ui, sans-serif",
                   }}>
                     Filter
                   </span>
-                  <button
-                    type="button"
-                    onClick={hasFilters ? clearAll : undefined}
-                    style={{
-                      fontFamily: 'inherit',
-                      fontSize: 13, fontWeight: 500,
-                      color: hasFilters ? '#3A3F8F' : '#B8B7B1',
-                      background: 'none', border: 'none',
-                      cursor: hasFilters ? 'pointer' : 'default',
-                      padding: 4,
-                      letterSpacing: '-0.01em',
-                      pointerEvents: hasFilters ? 'all' : 'none',
-                      transition: 'color .15s',
-                    }}
-                  >
-                    Clear all
-                  </button>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={hasFilters ? clearAll : undefined}
+                      style={{
+                        fontFamily: 'inherit',
+                        fontSize: 13, fontWeight: 500,
+                        color: hasFilters ? '#3A3F8F' : '#B8B7B1',
+                        background: 'none', border: 'none',
+                        cursor: hasFilters ? 'pointer' : 'default',
+                        padding: 4,
+                        letterSpacing: '-0.01em',
+                        pointerEvents: hasFilters ? 'all' : 'none',
+                        transition: 'color .15s',
+                      }}
+                    >
+                      Clear all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      aria-label="Close filter"
+                      style={{
+                        width: 26, height: 26,
+                        borderRadius: '50%',
+                        border: '1px solid #EEEDEA',
+                        background: '#FFFFFF',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        transition: 'background .15s',
+                        padding: 0,
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#F5F4F1')}
+                      onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                        <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="#9A998F" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
                 </motion.div>
 
                 {/* ── Scrollable body ── */}
-                <div style={{ overflowY: 'auto', padding: '0 20px 32px', flex: 1 }}>
+                <div style={{ overflowY: 'auto', padding: '0 20px 32px', flex: 1, touchAction: 'pan-y', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
 
                   {/* ── 3. Insurance type ── */}
                   <motion.div variants={itemVariants}>

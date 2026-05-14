@@ -17,6 +17,9 @@ const SC = ['', '#3A9B55', '#93D1A2', '#D49316', '#E87460', '#D4503A']
 const SENT_LABELS = ['', 'Very fair', 'Fair', 'Neutral', 'Unfair', 'Very unfair']
 const DRAFT_KEY = 'rateshock_form_draft'
 
+const VP_MAP   = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
+const VP_MODAL = 'width=device-width, initial-scale=1, viewport-fit=cover'
+
 const PROVIDERS = [
   'Intact', 'Aviva', 'TD Insurance', 'Desjardins', 'Belairdirect',
   'CAA Insurance', 'Economical', 'Wawanesa', 'Travelers', 'Co-operators',
@@ -273,20 +276,25 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   }, [])
 
   // Lock body scroll when modal is open (prevents map pan-through on mobile)
+  // Also re-enable pinch zoom inside the modal so content is readable.
   useEffect(() => {
+    const vp = document.querySelector('meta[name=viewport]')
     if (isOpen) {
       document.body.style.overflow  = 'hidden'
       document.body.style.position  = 'fixed'
       document.body.style.width     = '100%'
+      vp?.setAttribute('content', VP_MODAL)
     } else {
       document.body.style.overflow  = ''
       document.body.style.position  = ''
       document.body.style.width     = ''
+      vp?.setAttribute('content', VP_MAP)
     }
     return () => {
       document.body.style.overflow  = ''
       document.body.style.position  = ''
       document.body.style.width     = ''
+      vp?.setAttribute('content', VP_MAP)
     }
   }, [isOpen])
 

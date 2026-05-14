@@ -828,7 +828,7 @@ export default function MapView({
         minZoom={6}
         maxZoom={16}
         zoomControl={false}
-        style={{ position: 'fixed', inset: 0, zIndex: 0, width: '100vw', height: '100vh' }}
+        style={{ position: 'fixed', inset: 0, zIndex: 0, width: '100vw', height: '100dvh', touchAction: 'none' }}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
