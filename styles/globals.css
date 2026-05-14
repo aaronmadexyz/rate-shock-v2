@@ -324,6 +324,68 @@ input[type="checkbox"]:focus + div {
   outline-offset: 2px;
 }
 
+/* ─── MOBILE SHEET GRADIENT ─────────────────────────────────────────────── */
+
+.sheet-gradient-top {
+  position: sticky;
+  top: 0;
+  height: 20px;
+  margin-bottom: -20px;
+  background: linear-gradient(to bottom, #FFFFFF 30%, transparent);
+  pointer-events: none;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+/* ─── SLIDER DRAG AFFORDANCE ─────────────────────────────────────────────── */
+
+.rng {
+  cursor: grab;
+}
+.rng:active {
+  cursor: grabbing;
+}
+.rng::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #9A998F 0px, #9A998F 1px,
+      transparent 1px, transparent 3px
+    ) center / 12px 8px no-repeat,
+    #FFFFFF;
+  border: 1.5px solid #B8B7B1;
+  box-shadow: 0 1px 4px rgba(26,25,23,.14);
+  cursor: grab;
+  transition: border-color .15s, transform .1s;
+}
+.rng::-webkit-slider-thumb:hover {
+  border-color: #5E5D56;
+  transform: scale(1.1);
+}
+.rng:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.15);
+}
+.rng::-moz-range-thumb {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1.5px solid #B8B7B1;
+  box-shadow: 0 1px 4px rgba(26,25,23,.14);
+  cursor: grab;
+}
+@media (pointer: coarse) {
+  .rng::-webkit-slider-thumb {
+    width: 28px; height: 28px;
+  }
+  .rng::-moz-range-thumb {
+    width: 28px; height: 28px;
+  }
+}
+
 /* ─── REDUCED MOTION ────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {

@@ -404,8 +404,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
 
                   {/* ── 3. Insurance type ── */}
                   <motion.div variants={itemVariants}>
-                    <span style={sectionLabel}>Insurance type</span>
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
                       {(['auto', 'home'] as const).map(t => {
                         const on = filters.types[t]
                         return (
@@ -434,12 +433,13 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                         )
                       })}
                     </div>
+                    <div style={{ height: 1, background: '#EEEDEA', marginTop: 16 }} />
                   </motion.div>
 
                   {/* ── 4. Provider pills ── */}
-                  <motion.div variants={itemVariants}>
+                  <motion.div variants={itemVariants} style={{ marginTop: 20 }}>
                     <span style={sectionLabel}>Provider</span>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                       {PROVIDERS.map(name => {
                         const on = filters.provs.includes(name)
                         return (
@@ -535,19 +535,19 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
 
                   {/* ── 6. Verified only ── */}
                   <motion.div variants={itemVariants}>
-                    <span style={sectionLabel}>Trust</span>
+                    <span style={{ ...sectionLabel, color: '#B8B7B1' }}>Trust</span>
                     <div style={{
                       display: 'flex', alignItems: 'center',
-                      justifyContent: 'space-between', padding: '12px 0',
+                      justifyContent: 'space-between', padding: '10px 0',
                     }}>
                       <div>
                         <div style={{
-                          fontSize: 14, fontWeight: 500,
-                          color: '#2C2B27', letterSpacing: '-0.01em',
+                          fontSize: 13, fontWeight: 500,
+                          color: '#5E5D56', letterSpacing: '-0.01em',
                         }}>
                           Verified posts only
                         </div>
-                        <div style={{ fontSize: 12, color: '#9A998F', marginTop: 2, lineHeight: 1.4 }}>
+                        <div style={{ fontSize: 11, color: '#9A998F', marginTop: 2, lineHeight: 1.4 }}>
                           Show only posts backed by a renewal letter
                         </div>
                       </div>

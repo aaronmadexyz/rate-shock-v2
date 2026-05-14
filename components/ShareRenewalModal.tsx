@@ -962,6 +962,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                   overscrollBehavior:        'contain',
                 } : {}),
               }}>
+                {isMobile && <div className="sheet-gradient-top" />}
 
                 {/* ════ STEP 1 ════ */}
                 {step === 1 && (
@@ -1221,6 +1222,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       </div>
                       <input
                         id="rng"
+                        className="rng"
                         type="range"
                         min={0}
                         max={mode === 'pct' ? 50 : 2000}
@@ -1299,7 +1301,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         id="note"
                         value={note}
                         maxLength={500}
-                        placeholder="Anything your neighbours should know..."
+                        placeholder="What would you want your neighbours to know?"
                         onChange={handleNoteChange}
                         style={{
                           width: '100%', padding: '11px 13px',
@@ -1489,9 +1491,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       {hasAreaData && !compLoading && (
                         <div style={{ padding: '10px 14px', borderTop: '1px solid #EEEDEA', background: '#FAFAF8' }}>
                           <p style={{ fontSize: 12, color: '#7C7B72', lineHeight: 1.5 }}>
-                            {nbrAbove
-                              ? `Your renewal is above the ${areaLabel || fsa} average. Worth checking if you can do better.`
-                              : `Your renewal is at or below the ${areaLabel || fsa} average.`}
+                            {nbrAbove ? (
+                              <><strong style={{ fontWeight: 600, color: '#1A1917' }}>{provider || 'Other'} customers in your area are typically seeing lower increases.</strong>{' '}Yours is on the higher end — worth a closer look.</>
+                            ) : (
+                              <><strong style={{ fontWeight: 600, color: '#1A1917' }}>Your renewal is at or below the {areaLabel || fsa} average.</strong></>
+                            )}
                           </p>
                         </div>
                       )}
