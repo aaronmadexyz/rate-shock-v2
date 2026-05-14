@@ -209,11 +209,14 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const [consent, setConsent]     = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
+  const [provSearch, setProvSearch] = useState('')
+
   // ── draft rescue state ──────────────────────────────────────────────────────
   const [showRestoreNotice, setShowRestoreNotice] = useState(false)
 
   // ── post-anim state ─────────────────────────────────────────────────────────
   const [animDone, setAnimDone]     = useState(false)
+  const [showVerify, setShowVerify] = useState(false)
   const [compLoading, setCompLoading] = useState(false)
   const [areaMed,    setAreaMed]    = useState<number | null>(null)
   const [areaMedCount, setAreaMedCount] = useState(0)
@@ -362,7 +365,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   // ── reset ───────────────────────────────────────────────────────────────────
   const resetAll = useCallback(() => {
     setStep(1); setFsa(''); setFsaError(false); setAreaLabel(''); setFsaCount(0)
-    setInsType('auto'); setProvider(''); setProvErr(false)
+    setInsType('auto'); setProvider(''); setProvErr(false); setProvSearch('')
     setSteppers({
       yrs: { v: 0, k: 0, dir: 'up' }, cl:  { v: 0, k: 0, dir: 'up' },
       cv:  { v: 0, k: 0, dir: 'up' },
@@ -370,7 +373,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     })
     setMode('pct'); setRval(12); updateTrack(12, 0, 50)
     setSent(0); setSentErr(false); setNote(''); setConsent(false)
-    setSubmitting(false); setAnimDone(false)
+    setSubmitting(false); setAnimDone(false); setShowVerify(false)
     setShowRestoreNotice(false)
     setCompLoading(false); setAreaMed(null); setAreaMedCount(0); setOntMed(null)
     setCntYou(0); setCntNbr(0); setCntOnt(0)
@@ -768,6 +771,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     }, 1500)
   }, [animDone, compLoading, rval, mode, areaMed, ontMed])
 
+  // ── Delay verify prompt 2800ms after comparison card is ready ──────────────
+  useEffect(() => {
+    if (!animDone || compLoading) return
+    const t = setTimeout(() => setShowVerify(true), 2800)
+    return () => clearTimeout(t)
+  }, [animDone, compLoading])
+
   // ── Pioneer/early/established copy ──────────────────────────────────────────
   // ── Pioneer moment — chime + shimmer on first appearance ────────────────────
   useEffect(() => {
@@ -908,10 +918,14 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
             {/* ── Dot progress ── */}
             {step !== 'anim' && (
               <div
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: 8, padding: '12px 0 0', flexShrink: 0,
+                }}
                 role="status"
                 aria-live="polite"
                 aria-label={`Step ${step} of 2`}
-                style={{ display: 'flex', gap: 5, justifyContent: 'center', padding: '12px 0 0', flexShrink: 0 }}
+                id="dotrow"
               >
                 {[1, 2].map(n => (
                   <div
@@ -924,6 +938,16 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     }}
                   />
                 ))}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: 10, fontWeight: 500, letterSpacing: '0.04em',
+                    color: '#9A998F', textTransform: 'uppercase', marginLeft: 4,
+                  }}
+                >
+                  {step === 1 ? '1 of 2' : '2 of 2'}
+                </span>
               </div>
             )}
 
@@ -991,7 +1015,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         onFocus={e => { e.currentTarget.style.borderColor = '#4A50B0'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,80,176,.09)' }}
                         onBlur={e => { e.currentTarget.style.borderColor = fsaError ? '#D4503A' : '#EEEDEA'; e.currentTarget.style.boxShadow = 'none' }}
                       />
-                      <div style={{ marginTop: 4, marginBottom: 0 }}>
+                      <div style={{ marginTop: 4, marginBottom: 0, minHeight: 32 }}>
                         <AnimatePresence mode="wait">
                           {fsaHint && !fsaError && (
                             <motion.p
@@ -1000,7 +1024,12 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0 }}
                               transition={{ duration: prefersReduced ? 0 : 0.12, ease: 'easeInOut' }}
-                              style={{ fontSize: 12, color: '#4A50B0', fontWeight: 500, margin: 0, display: 'block' }}
+                              style={{
+                                fontSize: 12, color: '#4A50B0', fontWeight: 500, margin: 0,
+                                lineHeight: 1.4, overflow: 'hidden',
+                                display: '-webkit-box', WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                              }}
                             >
                               {fsaHint}
                             </motion.p>
@@ -1092,6 +1121,30 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     <div style={{ marginBottom: 4, marginTop: 20 }}>
                       <fieldset style={{ border: 'none', padding: 0, margin: 0 }} aria-invalid={provErr}>
                         <legend id="provLegend" className="fl">Your insurance provider</legend>
+                        {/* Search input — hidden once a provider is selected */}
+                        <input
+                          type="search"
+                          placeholder="Search providers..."
+                          value={provSearch}
+                          onChange={e => setProvSearch(e.target.value)}
+                          autoComplete="off"
+                          style={{
+                            display: provSearch === '' && provider ? 'none' : 'block',
+                            width: '100%',
+                            fontFamily: "'Inter', system-ui, sans-serif",
+                            fontSize: 13,
+                            padding: '8px 12px',
+                            border: '1.5px solid #EEEDEA',
+                            borderRadius: 8,
+                            background: '#FFFFFF',
+                            color: '#1A1917',
+                            outline: 'none',
+                            marginBottom: 10,
+                            boxSizing: 'border-box',
+                          }}
+                          onFocus={e => { e.target.style.borderColor = '#636AC5'; e.target.style.boxShadow = '0 0 0 3px rgba(74,80,176,.09)' }}
+                          onBlur={e => { e.target.style.borderColor = '#EEEDEA'; e.target.style.boxShadow = 'none' }}
+                        />
                         <div
                           id="provGrid"
                           role="radiogroup"
@@ -1099,24 +1152,39 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           onKeyDown={handleProvKeyDown}
                           style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}
                         >
-                          {PROVIDERS.map((p, i) => (
-                            <button
-                              key={p}
-                              type="button"
-                              role="radio"
-                              aria-checked={provider === p}
-                              tabIndex={provider === p ? 0 : (provider === '' && i === 0 ? 0 : -1)}
-                              onClick={() => { setProvider(p); setProvErr(false) }}
-                              style={{
-                                padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
-                                border: `1px solid ${provider === p ? '#1A1917' : '#EEEDEA'}`,
-                                background: provider === p ? '#1A1917' : '#FFFFFF',
-                                color: provider === p ? '#FFFFFF' : '#7C7B72',
-                                cursor: 'pointer', transition: 'all .15s',
-                                fontFamily: "'Inter', system-ui, sans-serif",
-                              }}
-                            >{p}</button>
-                          ))}
+                          {(() => {
+                            const filtered = PROVIDERS.filter(p =>
+                              p.toLowerCase().includes(provSearch.toLowerCase().trim())
+                            )
+                            if (filtered.length === 0) {
+                              return (
+                                <p style={{
+                                  fontSize: 12, color: '#9A998F', textAlign: 'center',
+                                  padding: '8px 0', fontStyle: 'italic', width: '100%', margin: 0,
+                                }}>
+                                  No providers match &ldquo;{provSearch}&rdquo;
+                                </p>
+                              )
+                            }
+                            return filtered.map((p, i) => (
+                              <button
+                                key={p}
+                                type="button"
+                                role="radio"
+                                aria-checked={provider === p}
+                                tabIndex={provider === p ? 0 : (provider === '' && i === 0 ? 0 : -1)}
+                                onClick={() => { setProvider(p); setProvErr(false); setProvSearch('') }}
+                                style={{
+                                  padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
+                                  border: `1px solid ${provider === p ? '#1A1917' : '#EEEDEA'}`,
+                                  background: provider === p ? '#1A1917' : '#FFFFFF',
+                                  color: provider === p ? '#FFFFFF' : '#7C7B72',
+                                  cursor: 'pointer', transition: 'all .15s',
+                                  fontFamily: "'Inter', system-ui, sans-serif",
+                                }}
+                              >{p}</button>
+                            ))
+                          })()}
                         </div>
                         {provErr && <p role="alert" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>Please select your provider</p>}
                       </fieldset>
@@ -1255,7 +1323,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     </div>
 
                     {/* Consent */}
-                    <div style={{ marginBottom: 8 }}>
+                    <div id="consentRow" style={{ marginBottom: 8 }}>
                       <label htmlFor="consent-input" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
                         <input
                           type="checkbox"
@@ -1475,8 +1543,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       </div>
                     )}
 
-                    {/* Verify prompt */}
-                    <div style={{ marginBottom: 4 }}>
+                    {/* Verify prompt — appears 2800ms after comparison card */}
+                    {showVerify && <div style={{ marginBottom: 4 }}>
                       <p style={{ fontSize: 13, fontWeight: 500, color: '#1A1917', marginBottom: 6 }}>
                         Add your letter. Make it official.
                       </p>
@@ -1498,15 +1566,18 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           onClick={handleClose}
                           style={{
                             fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, fontWeight: 500,
-                            padding: '9px 20px', borderRadius: 999,
-                            border: '1px solid #D4D3CE', background: '#FFFFFF', color: '#7C7B72',
-                            cursor: 'pointer', transition: 'background .15s',
+                            padding: '6px 16px', borderRadius: 9999,
+                            border: 'none', background: 'none', color: '#9A998F',
+                            cursor: 'pointer', transition: 'background .15s, color .15s',
+                            display: 'block', width: '100%', textAlign: 'center',
                           }}
-                          onMouseEnter={e => (e.currentTarget.style.background = '#F5F4F1')}
-                          onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#F5F4F1'; e.currentTarget.style.color = '#5E5D56' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#9A998F' }}
+                          onMouseDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)' }}
+                          onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = '' }}
                         >Skip for now</button>
                       </div>
-                    </div>
+                    </div>}
                   </div>
                 )}
               </div>
@@ -1541,6 +1612,16 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                   type="button"
                   onClick={goNext}
                   disabled={step === 2 && !consent}
+                  title={step === 2 && !consent ? 'Please confirm the consent statement above' : undefined}
+                  onMouseDown={() => {
+                    if (step === 2 && !consent) {
+                      const row = document.getElementById('consentRow')
+                      if (!row) return
+                      row.style.transition = 'background .15s'
+                      row.style.background = '#FEF6E8'
+                      setTimeout(() => { row.style.background = '' }, 600)
+                    }
+                  }}
                   style={{
                     fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
                     padding: '11px 0', borderRadius: 999,
