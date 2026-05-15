@@ -1,27 +1,27 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import type { Map as LeafletMap } from 'leaflet'
 import { springs } from '@/lib/springs'
 import { safeGetItem, safeSetItem } from '@/lib/storage'
 import { supabase } from '@/lib/supabase'
+import { getCentroid } from '@/lib/fsaCentroids'
+import { getAreaLabel } from '@/lib/fsaData'
 import type { NavState } from '@/lib/types'
+import styles from '@/styles/Nav.module.css'
 
 // ─── Types & constants ────────────────────────────────────────────────────────
 
 type SubmissionState = NavState
+type SearchStatus = 'idle' | 'loading' | 'valid' | 'pioneer' | 'invalid'
 
 const LS_KEY     = 'ratemap_submission_state'
 const LS_PIONEER = 'ratemap_is_pioneer'
 const LS_POSTED  = 'ratemap_posted_at'
 const NAV_EVENT  = 'ratemap:nav-state'
 
-// Shadow tokens — exact values from /lib/tokens.ts
-const SH_SM = '0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04)'
-const SH_XS = '0 1px 2px rgba(26,25,23,.04)'
-
-// Shared whileTap config — snappy spring per spec
-const TAP = { scale: 0.97, transition: { type: 'spring', stiffness: 500, damping: 30, mass: 0.7 } } as const
+const ONTARIO_PREFIXES = new Set(['K', 'L', 'M', 'N', 'P'])
 
 // ─── Exported API ─────────────────────────────────────────────────────────────
 
@@ -29,67 +29,189 @@ export function setNavState(state: SubmissionState | string): void {
   if (typeof window === 'undefined') return
   const s = state as SubmissionState
   safeSetItem(LS_KEY, s)
-  if (s === 'unverified') {
-    safeSetItem(LS_POSTED, new Date().toISOString())
-  }
+  if (s === 'unverified') safeSetItem(LS_POSTED, new Date().toISOString())
   window.dispatchEvent(new CustomEvent(NAV_EVENT, { detail: s }))
+}
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
+
+function PlusIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <path d="M6.5 1v11M1 6.5h11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <path d="M1.5 6.5l3.5 4L11 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function ShareCheckIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <path d="M1 6l3.5 3.5L11 1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function LightbulbIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <path
+        d="M6.5 1.5a3.5 3.5 0 0 1 2 6.4V9.5a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5V7.9a3.5 3.5 0 0 1 2-6.4Z"
+        stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"
+      />
+      <path d="M5 11h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M5.5 11.5h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function SearchSvg() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.3"/>
+      <path d="M9.5 9.5L13 13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function ClockIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <circle cx="6.5" cy="6.5" r="5.5" stroke="#D49316" strokeWidth="1.1"/>
+      <path d="M6.5 4v2.5l1.5 1.5" stroke="#D49316" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+async function fetchFsaCount(fsa: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from('submissions')
+      .select('*', { count: 'exact', head: true })
+      .ilike('fsa', fsa)
+    if (error) return 0
+    return count ?? 0
+  } catch {
+    return 0
+  }
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+interface NavProps {
+  isPioneer?:            boolean
+  onCtaClick?:           () => void
+  mapRef?:               React.MutableRefObject<LeafletMap | null>
+  onOpenFeatureRequest?: () => void
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-interface NavProps {
-  isPioneer?: boolean
-  onCtaClick?: () => void
-}
-
-export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: NavProps) {
-  const [state,        setState]        = useState<SubmissionState>('new')
-  const [isPioneer,    setIsPioneer]    = useState(false)
-  const [daysLeft,     setDaysLeft]     = useState(30)
-  const [drawerOpen,   setDrawerOpen]   = useState(false)
-  const [shareToast,   setShareToast]   = useState(false)
-  const [mounted,      setMounted]      = useState(false)
+export default function Nav({
+  isPioneer: pioneeredProp = false,
+  onCtaClick,
+  mapRef,
+  onOpenFeatureRequest,
+}: NavProps) {
+  // ── Submission state ───────────────────────────────────────────────────────
+  const [state,         setState]         = useState<SubmissionState>('new')
+  const [isPioneer,     setIsPioneer]     = useState(false)
+  const [daysLeft,      setDaysLeft]      = useState(30)
+  const [drawerOpen,    setDrawerOpen]    = useState(false)
+  const [shareToast,    setShareToast]    = useState(false)
+  const [mounted,       setMounted]       = useState(false)
   const [activityCount, setActivityCount] = useState(0)
 
-  const burgerRef = useRef<HTMLButtonElement>(null)
-  const drawerRef = useRef<HTMLDivElement>(null)
+  // ── Strip stats ────────────────────────────────────────────────────────────
+  const [stripCount,  setStripCount]  = useState<number | null>(null)
+  const [stripAvg,    setStripAvg]    = useState<number | null>(null)
+  const [stripLoaded, setStripLoaded] = useState(false)
 
-  // ── Mount: read localStorage ──────────────────────────────────────────────
+  // ── Search ─────────────────────────────────────────────────────────────────
+  const [searchValue,  setSearchValue]  = useState('')
+  const [searchStatus, setSearchStatus] = useState<SearchStatus>('idle')
+
+  const burgerRef      = useRef<HTMLButtonElement>(null)
+  const drawerRef      = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const pendingFsaRef  = useRef<string>('')
+
+  const prefersReduced = useReducedMotion()
+  const tapSpring      = { type: 'spring' as const, ...springs.snappy }
+  const tapTransition  = prefersReduced ? {} : { scale: 0.97, transition: tapSpring }
+
+  // ── Blur crossfade (Rule 7) ────────────────────────────────────────────────
+  const blurEnter = prefersReduced
+    ? { opacity: 0 }
+    : { opacity: 0, filter: 'blur(2px)', scale: 0.97 }
+  const blurShow = prefersReduced
+    ? { opacity: 1, transition: { duration: 0.01 } }
+    : { opacity: 1, filter: 'blur(0px)', scale: 1, transition: { duration: 0.1 } }
+  const blurExit = prefersReduced
+    ? { opacity: 0, transition: { duration: 0.01 } }
+    : { opacity: 0, filter: 'blur(2px)', scale: 0.97, transition: { duration: 0.06, ease: [0.4, 0, 1, 1] } }
+
+  // ── Mount ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     const stored = safeGetItem(LS_KEY) as SubmissionState | null
-    if (stored === 'new' || stored === 'unverified' || stored === 'verified') {
-      setState(stored)
-    }
+    if (stored === 'new' || stored === 'unverified' || stored === 'verified') setState(stored)
+
     if (pioneeredProp) {
       setIsPioneer(true)
       safeSetItem(LS_PIONEER, 'true')
     } else if (safeGetItem(LS_PIONEER) === 'true') {
       setIsPioneer(true)
     }
+
     const postedAt = safeGetItem(LS_POSTED)
     if (postedAt) {
       const elapsed = Math.floor((Date.now() - new Date(postedAt).getTime()) / 86_400_000)
       setDaysLeft(Math.max(0, 30 - elapsed))
     }
 
-    // Neighbourhood activity badge — check for new posts in user's FSA since last visit
+    // Neighbourhood activity badge
     const storedFsa   = safeGetItem('ratemap_last_fsa')
     const lastVisit   = safeGetItem('rateshock_last_visit')
     safeSetItem('rateshock_last_visit', Date.now().toString())
-    const currentState = (safeGetItem(LS_KEY) ?? 'new') as SubmissionState
-    if (storedFsa && lastVisit && (currentState === 'unverified' || currentState === 'verified')) {
+    const currentSt   = (safeGetItem(LS_KEY) ?? 'new') as SubmissionState
+    if (storedFsa && lastVisit && (currentSt === 'unverified' || currentSt === 'verified')) {
       supabase
         .from('submissions')
         .select('*', { count: 'exact', head: true })
         .eq('fsa', storedFsa)
         .gt('created_at', new Date(parseInt(lastVisit)).toISOString())
-        .then(({ count }) => {
-          if (count && count > 0) setActivityCount(count)
-        })
+        .then(({ count }) => { if (count && count > 0) setActivityCount(count) })
     }
 
-    const onNavEvent = (e: Event) =>
-      setState((e as CustomEvent<SubmissionState>).detail)
+    // Strip stats
+    Promise.all([
+      supabase.from('submissions').select('*', { count: 'exact', head: true }),
+      supabase
+        .from('submissions')
+        .select('rate_change_pct')
+        .not('rate_change_pct', 'is', null)
+        .limit(500)
+        .order('created_at', { ascending: false }),
+    ]).then(([countRes, avgRes]) => {
+      setStripCount(countRes.count ?? 0)
+      if (avgRes.data && avgRes.data.length > 0) {
+        const vals = (avgRes.data as { rate_change_pct: number }[]).map(r => r.rate_change_pct)
+        const avg  = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10
+        setStripAvg(avg)
+      }
+      setStripLoaded(true)
+    })
+
+    const onNavEvent = (e: Event) => setState((e as CustomEvent<SubmissionState>).detail)
     window.addEventListener(NAV_EVENT, onNavEvent)
     setMounted(true)
     return () => window.removeEventListener(NAV_EVENT, onNavEvent)
@@ -109,14 +231,14 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
     return () => document.removeEventListener('mousedown', handler)
   }, [drawerOpen])
 
-  // ── Close drawer when viewport widens past 680px ──────────────────────────
+  // ── Close drawer when viewport widens ─────────────────────────────────────
   useEffect(() => {
     const onResize = () => { if (window.innerWidth > 680) setDrawerOpen(false) }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  // ── navigator.share → clipboard fallback ─────────────────────────────────
+  // ── Share ──────────────────────────────────────────────────────────────────
   const handleShare = useCallback(async () => {
     const url  = window.location.origin
     const text = 'I shared my renewal on RateShock – see what your neighbours are really paying.'
@@ -128,488 +250,390 @@ export default function Nav({ isPioneer: pioneeredProp = false, onCtaClick }: Na
         setShareToast(true)
         setTimeout(() => setShareToast(false), 2200)
       }
-    } catch {
-      /* user cancelled */
-    }
+    } catch { /* user cancelled */ }
   }, [])
 
-  // ─── Leading icon per state ───────────────────────────────────────────────
-  const ctaIcon = () => {
+  // ── Search ─────────────────────────────────────────────────────────────────
+  async function handleSearch(raw: string) {
+    const v = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3)
+    setSearchValue(v)
+    setSearchStatus('idle')
+
+    if (v.length !== 3) {
+      pendingFsaRef.current = ''
+      return
+    }
+
+    if (!ONTARIO_PREFIXES.has(v[0])) {
+      pendingFsaRef.current = ''
+      setSearchStatus('invalid')
+      return
+    }
+
+    const centroid = getCentroid(v)
+    if (centroid && mapRef?.current) {
+      mapRef.current.flyTo(centroid, 13, { duration: 1.2, easeLinearity: 0.1 })
+    }
+
+    pendingFsaRef.current = v
+    setSearchStatus('loading')
+    const count = await fetchFsaCount(v)
+
+    if (pendingFsaRef.current !== v) return // stale
+
+    const s: SearchStatus = count > 0 ? 'valid' : 'pioneer'
+    setSearchStatus(s)
+
+    if (s === 'valid') {
+      setTimeout(() => {
+        setSearchValue('')
+        setSearchStatus('idle')
+        pendingFsaRef.current = ''
+      }, 400)
+    }
+  }
+
+  // ── CTA click ──────────────────────────────────────────────────────────────
+  const handleCtaClick = useCallback(() => {
+    setActivityCount(0)
+    onCtaClick?.()
+  }, [onCtaClick])
+
+  // ── Derived ────────────────────────────────────────────────────────────────
+  const isUrgent        = state === 'unverified' && daysLeft <= 7 && daysLeft > 0
+  const neighbourhood   = searchValue.length === 3 ? getAreaLabel(searchValue) : ''
+  const showSearchStatus = searchStatus === 'pioneer' || searchStatus === 'invalid'
+  const badgeLabel      = activityCount > 9 ? '9+' : String(activityCount)
+  const stripEmpty      = stripLoaded && !stripCount
+
+  // ── CTA content ───────────────────────────────────────────────────────────
+
+  function ctaContent(drawer = false) {
     if (state === 'new') {
       return (
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-          <path d="M6.5 1v11M1 6.5h11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-        </svg>
+        <span className={styles.ctaInner}>
+          <PlusIcon />
+          {drawer ? 'Compare my renewal' : 'See how your renewal compares'}
+        </span>
       )
     }
     if (state === 'unverified') {
       return (
-        <span
-          aria-hidden="true"
-          style={{
-            width: 7, height: 7, borderRadius: '50%',
-            background: '#D49316', flexShrink: 0,
-            animation: 'dotPulse 2.4s ease-in-out infinite',
-          }}
-        />
+        <span className={styles.ctaInner}>
+          <span className={styles.dot} />
+          {drawer ? 'Verify my post' : 'Verify your post'}
+          {daysLeft > 0 && (
+            <span className={isUrgent ? `${styles.urgencyBadge} ${styles.urgent}` : styles.urgencyBadge}>
+              {daysLeft}d
+            </span>
+          )}
+        </span>
       )
     }
     return (
-      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-        <path d="M1.5 6.5l3.5 4L11 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
+      <span className={styles.ctaInner}>
+        <CheckIcon />
+        {drawer ? 'Post again' : 'Post another renewal'}
+      </span>
     )
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Activity badge dot
-  // ─────────────────────────────────────────────────────────────────────────
-  const renderBadge = () => {
-    if (!activityCount) return null
-    const label = activityCount > 9 ? '9+' : String(activityCount)
-    return (
-      <motion.span
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.7 }}
-        style={{
-          position: 'absolute', top: -4, right: -4,
-          minWidth: 18, height: 18, borderRadius: 9999,
-          background: '#D4503A', color: '#FFFFFF',
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: 10, fontWeight: 500,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '0 4px', border: '2px solid #FFFFFF',
-          pointerEvents: 'none',
-        }}
-      >{label}</motion.span>
-    )
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // CTA button
-  // ─────────────────────────────────────────────────────────────────────────
-  const renderCta = (drawer = false) => {
-    // Base shape — pixel-exact match to .nav-cta / .drawer-cta in reference
-    const base: React.CSSProperties = {
-      fontFamily:    'inherit',
-      fontWeight:    500,
-      fontSize:      drawer ? 14 : 14,          // 14px — matches design system base button font-size
-      lineHeight:    1,
-      letterSpacing: '-0.01em',
-      whiteSpace:    'nowrap',
-      cursor:        'pointer',
-      display:       'flex',
-      alignItems:    'center',
-      justifyContent: drawer ? 'center' : undefined,
-      gap:           drawer ? 8 : 7,            // ref: drawer-cta gap:8, nav-cta gap:7
-      width:         drawer ? '100%' : undefined,
-      padding:       drawer ? '13px 24px' : '13px 24px',  // 13px 24px — identical height/weight on both
-      borderRadius:  9999,                       // r-full — all buttons at every breakpoint
-    }
-
-    const handleCtaClick = () => {
-      setActivityCount(0)
-      onCtaClick?.()
-    }
-
-    // ── State: new ─────────────────────────────────────────────────────────
-    if (state === 'new') {
-      return (
-        <div style={{ position: 'relative', display: 'inline-flex' }}>
-          <motion.button
-            type="button"
-            onClick={handleCtaClick}
-            style={{ ...base, backgroundColor: 'var(--tod-cta, #3A3F8F)', color: '#FFFFFF', boxShadow: SH_SM }}
-            whileHover={{ backgroundColor: '#2D3170' }}
-            whileTap={TAP}
-          >
-            {ctaIcon()}
-            See how your renewal compares
-          </motion.button>
-          {renderBadge()}
-        </div>
-      )
-    }
-
-    // ── State: unverified ──────────────────────────────────────────────────
-    if (state === 'unverified') {
-      const isUrgent = daysLeft <= 7 && daysLeft > 0
-      return (
-        <div style={{ position: 'relative', display: 'inline-flex' }}>
-          <motion.button
-            type="button"
-            onClick={handleCtaClick}
-            style={{
-              ...base,
-              backgroundColor: drawer ? '#F5F4F1' : '#FFFFFF',
-              color:           '#2C2B27',
-              borderWidth:     1,
-              borderStyle:     'solid',
-              borderColor:     '#D4D3CE',
-              boxShadow:       SH_SM,
-            }}
-            whileHover={{
-              backgroundColor: drawer ? '#EEEDEA' : '#FAFAF8',
-              borderColor:     '#B8B7B1',
-            }}
-            whileTap={TAP}
-          >
-            {ctaIcon()}
-            Verify your post
-            {daysLeft > 0 && (
-              <span
-                style={{
-                  fontFamily:      "'IBM Plex Mono', monospace",
-                  fontSize:        10,
-                  fontWeight:      500,
-                  letterSpacing:   '0.02em',
-                  lineHeight:      1.4,
-                  color:           isUrgent ? '#7A4E08' : '#92600A',
-                  backgroundColor: isUrgent ? 'rgba(212,147,22,.22)' : 'rgba(212,147,22,.14)',
-                  padding:         '2px 7px',
-                  borderRadius:    999,
-                  whiteSpace:      'nowrap',
-                  flexShrink:      0,
-                }}
-              >
-                {daysLeft}d
-              </span>
-            )}
-          </motion.button>
-          {renderBadge()}
-        </div>
-      )
-    }
-
-    // ── State: verified ────────────────────────────────────────────────────
-    return (
-      <div style={{ position: 'relative', display: 'inline-flex' }}>
-        <motion.button
-          type="button"
-          onClick={handleCtaClick}
-          style={{
-            ...base,
-            backgroundColor: '#EDF7F0',
-            color:           '#1F6132',
-            border:          '1px solid rgba(58,155,85,.2)',
-            boxShadow:       SH_SM,
-          }}
-          whileHover={{ backgroundColor: '#e0f2e6' }}
-          whileTap={TAP}
-        >
-          {ctaIcon()}
-          Post another renewal
-        </motion.button>
-        {renderBadge()}
-      </div>
-    )
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Pioneer share nudge
-  // ─────────────────────────────────────────────────────────────────────────
-  const renderPioneerNudge = (drawer = false) => {
-    if (!isPioneer || state === 'new') return null
-
-    // SVG check icon — matches reference exactly
-    const checkIcon = (
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-        <path d="M1 6l3.5 3.5L11 1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    )
-
-    if (drawer) {
-      return (
-        <>
-          <motion.button
-            type="button"
-            onClick={() => { void handleShare(); setDrawerOpen(false) }}
-            style={{
-              fontFamily:      'inherit',
-              fontSize:        15,
-              fontWeight:      500,
-              color:           '#43423D',
-              backgroundColor: 'transparent',
-              border:          'none',
-              cursor:          'pointer',
-              padding:         '12px 12px',
-              borderRadius:    10,
-              textAlign:       'left',
-              display:         'flex',
-              alignItems:      'center',
-              gap:             8,
-              letterSpacing:   '-0.01em',
-              width:           '100%',
-            }}
-            whileHover={{ backgroundColor: '#F5F4F1' }}
-            whileTap={TAP}
-          >
-            {checkIcon}
-            Share with neighbours
-          </motion.button>
-          <div style={{ height: 1, background: '#EEEDEA', margin: '4px 0' }} />
-        </>
-      )
-    }
-
-    // Desktop — 3px nudge-sep dot between text segments
-    const sep = (
-      <span
-        aria-hidden="true"
-        style={{
-          width: 3, height: 3,
-          borderRadius: '50%',
-          background: '#B8B7B1',  // ref: n-300
-          flexShrink: 0,
-          display: 'inline-block',
-        }}
-      />
-    )
-
-    return (
-      <div style={{ position: 'relative' }}>
-        <motion.button
-          type="button"
-          onClick={() => void handleShare()}
-          style={{
-            fontFamily:      'inherit',
-            fontSize:        13,
-            fontWeight:      500,
-            color:           '#7C7B72',   // ref: n-500
-            backgroundColor: 'transparent',
-            border:          'none',
-            cursor:          'pointer',
-            padding:         '6px 10px',  // ref: 6px 10px
-            borderRadius:    8,           // ref: 8px (not full pill)
-            whiteSpace:      'nowrap',
-            display:         'flex',
-            alignItems:      'center',
-            gap:             6,
-          }}
-          whileHover={{ color: '#43423D', backgroundColor: 'rgba(26,25,23,.05)' }}
-          whileTap={TAP}
-        >
-          {checkIcon}
-          You&apos;re on the map
-          {sep}
-          Share with neighbours
-        </motion.button>
-
-        {shareToast && (
-          <div
-            role="status"
-            aria-live="polite"
-            style={{
-              position:      'absolute',
-              top:           'calc(100% + 6px)',
-              left:          '50%',
-              transform:     'translateX(-50%)',
-              fontFamily:    "'IBM Plex Mono', monospace",
-              fontSize:      11,
-              background:    '#1A1917',
-              color:         '#FFFFFF',
-              padding:       '5px 14px',
-              borderRadius:  999,
-              pointerEvents: 'none',
-              whiteSpace:    'nowrap',
-              zIndex:        10,
-            }}
-          >
-            Link copied
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  // ─── Drawer status note ───────────────────────────────────────────────────
-  const drawerStatusNote = state !== 'new' ? (
-    <p
-      style={{
-        fontSize:   12,
-        color:      state === 'unverified' && daysLeft <= 7 && daysLeft > 0 ? '#845A0C' : '#9A998F',
-        fontWeight: state === 'unverified' && daysLeft <= 7 && daysLeft > 0 ? 500 : 400,
-        textAlign:  'center',
-        padding:    '10px 4px 4px',
-        lineHeight: 1.5,
-        margin:     0,
-      }}
-    >
-      {state === 'unverified'
-        ? (daysLeft <= 7 && daysLeft > 0
-            ? `Your renewal window closes in ${daysLeft} day${daysLeft === 1 ? '' : 's'}. Verify before it lapses.`
-            : 'Your renewal is on the map — verify it to make it count more.')
-        : "You're verified and on the map."}
-    </p>
-  ) : null
-
-  // ─── Hamburger bar base style ─────────────────────────────────────────────
-  const spanBase: React.CSSProperties = {
-    display:         'block',
-    width:           14,
-    height:          1.5,
-    background:      '#1A1917',
-    borderRadius:    2,
-    transformOrigin: 'center',
-    transition:      'transform .25s cubic-bezier(.16,1,.3,1), opacity .2s ease',
-  }
-
-  // ─── JSX ─────────────────────────────────────────────────────────────────
+  // ── JSX ───────────────────────────────────────────────────────────────────
 
   return (
-    <nav
-      style={{
-        position:      'fixed',
-        top: 0, left: 0, right: 0,
-        zIndex:        100,
-        background:    'transparent',
-        pointerEvents: 'none',
-      }}
-    >
-      {/* ── Main row ────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          width:          '100%',
-          padding:        '16px 24px',    // ref: 16px 24px
-          display:        'flex',
-          alignItems:     'center',       // ref: center (not flex-start)
-          justifyContent: 'space-between',
-          gap:            16,
-          pointerEvents:  'none',
-        }}
-      >
+    <>
+      {/* ── Data strip ─────────────────────────────────────────────────────── */}
+      <div className={stripEmpty ? `${styles.strip} ${styles.stripEmpty}` : styles.strip}>
+        {!stripLoaded ? (
+          <>
+            <span className={styles.stripSkeleton} style={{ width: 120 }} />
+            <span className={styles.stripSkeleton} style={{ width: 80 }} />
+          </>
+        ) : (
+          <>
+            <span className={styles.stripStat}>
+              <span className={styles.stripAccent}>
+                {(stripCount ?? 0).toLocaleString()}
+              </span>
+              {' '}renewals shared
+            </span>
+            <span className={styles.stripSep} aria-hidden="true">·</span>
+            {stripAvg !== null && (
+              <span className={styles.stripStat}>
+                avg increase{' '}
+                <span className={styles.stripAccent}>+{stripAvg}%</span>
+              </span>
+            )}
+          </>
+        )}
+      </div>
 
-        {/* ── Brand — left ─────────────────────────────────────────────────── */}
-        <a
-          href="/"
-          style={{
-            pointerEvents:  'all',
-            textDecoration: 'none',
-            display:        'flex',
-            flexDirection:  'column',
-            gap:            3,
-            flexShrink:     0,
-          }}
-        >
-          <span
-            style={{
-              fontFamily:           "'Inter', system-ui, sans-serif",
-              fontVariationSettings: "'opsz' 32",
-              fontSize:             18,
-              fontWeight:           600,
-              color:                '#1A1917',
-              lineHeight:           1.1,
-              letterSpacing:        '-0.03em',  // ref: -0.03em
-            }}
-          >
-            RateShock
-          </span>
+      {/* ── Main bar ───────────────────────────────────────────────────────── */}
+      <div className={styles.bar}>
+        <div className={styles.barInner}>
 
-          <style>{`
-            .nav-subtitle {
-              display: block;
-              font-size: 12px;
-              font-weight: 400;
-              color: #9A998F;
-              letter-spacing: 0.005em;
-              line-height: 1;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-            }
-            @media (max-width: 680px) {
-              .nav-subtitle { font-size: 10px; max-width: 160px; }
-            }
-          `}</style>
-          <span className="nav-subtitle">
-            See what your neighbours are really paying.
-          </span>
-        </a>
+          {/* Brand */}
+          <a href="/" className={styles.brand}>
+            <div className={styles.brandWords}>
+              <span className={styles.brandName}>RateShock</span>
+              <span className={styles.brandSub}>See what your neighbours are really paying.</span>
+            </div>
+          </a>
 
-        {/* ── Desktop actions — right ──────────────────────────────────────── */}
-        {/* gap:16 matches reference's nav-inner gap between nudge and CTA */}
-        <div
-          className="flex items-center max-[680px]:hidden"
-          style={{
-            pointerEvents: 'all',
-            gap:           16,            // ref: all nav-inner siblings use gap:16
-            flexShrink:    0,
-          }}
-        >
-          {mounted ? renderPioneerNudge() : null}
-          {mounted
-            ? renderCta()
-            : <div style={{ width: 220, height: 38, borderRadius: 9999, background: '#E2E1DD', opacity: 0.5 }} />
-          }
+          {/* Search */}
+          <div className={styles.searchWrap}>
+            <label htmlFor="nav-fsa-search" className={styles.searchLabel}>
+              Jump to postal area
+            </label>
+            <span className={styles.searchIcon}>
+              <SearchSvg />
+            </span>
+            <input
+              ref={searchInputRef}
+              id="nav-fsa-search"
+              type="search"
+              className={styles.searchInput}
+              value={searchValue}
+              maxLength={3}
+              placeholder="Postal area — M5V"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              onChange={e => void handleSearch(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Escape') {
+                  setSearchValue('')
+                  setSearchStatus('idle')
+                  pendingFsaRef.current = ''
+                  searchInputRef.current?.blur()
+                }
+              }}
+            />
+
+            {/* Status popup — above the input */}
+            <AnimatePresence>
+              {showSearchStatus && (
+                <motion.div
+                  key={searchStatus}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  transition={prefersReduced ? { duration: 0 } : { duration: 0.12 }}
+                  className={styles.searchStatus}
+                >
+                  {searchStatus === 'pioneer' && (
+                    <div className={styles.searchStatusPioneer}>
+                      <ClockIcon />
+                      <span className={styles.searchStatusPioneerText}>
+                        No reports in {neighbourhood} yet.{' '}
+                        <button
+                          type="button"
+                          className={styles.searchStatusPioneerBtn}
+                          onClick={handleCtaClick}
+                        >
+                          Be the first.
+                        </button>
+                      </span>
+                    </div>
+                  )}
+                  {searchStatus === 'invalid' && (
+                    <span className={styles.searchStatusInvalid}>
+                      Try a valid Ontario postal code — like M5V or L6T
+                    </span>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Right cluster */}
+          <div className={styles.rightCluster}>
+
+            {/* Pioneer nudge — desktop only (CSS hides on mobile) */}
+            {mounted && isPioneer && state !== 'new' && (
+              <div style={{ position: 'relative' }}>
+                <motion.button
+                  type="button"
+                  onClick={() => void handleShare()}
+                  className={styles.nudge}
+                  whileTap={tapTransition}
+                >
+                  <ShareCheckIcon />
+                  You&apos;re on the map
+                  <span className={styles.nudgeSep} aria-hidden="true" />
+                  Share with neighbours
+                </motion.button>
+                {shareToast && (
+                  <div role="status" aria-live="polite" className={styles.shareToast}>
+                    Link copied
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Lightbulb — desktop only (CSS hides on mobile) */}
+            <motion.button
+              type="button"
+              aria-label="Share a feature request"
+              onClick={() => onOpenFeatureRequest?.()}
+              className={styles.iconBtn}
+              whileTap={tapTransition}
+            >
+              <LightbulbIcon />
+            </motion.button>
+
+            {/* CTA — desktop only (CSS hides on mobile) */}
+            {mounted ? (
+              <div className={styles.ctaWrap}>
+                <motion.button
+                  type="button"
+                  data-state={state}
+                  className={styles.cta}
+                  onClick={handleCtaClick}
+                  whileTap={tapTransition}
+                >
+                  {/* Rule 7: blur crossfade on state change */}
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.span
+                      key={state}
+                      initial={blurEnter}
+                      animate={blurShow}
+                      exit={blurExit}
+                    >
+                      {ctaContent()}
+                    </motion.span>
+                  </AnimatePresence>
+                </motion.button>
+
+                {/* Activity badge — Rule 5: origin-aware (top right) */}
+                {activityCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', ...springs.snappy }}
+                    style={{ transformOrigin: 'top right' }}
+                    className={styles.badge}
+                  >
+                    {badgeLabel}
+                  </motion.span>
+                )}
+              </div>
+            ) : (
+              <div style={{ width: 180, height: 34, borderRadius: 9999, background: '#E2E1DD', opacity: 0.5 }} />
+            )}
+
+            {/* Hamburger — mobile only (CSS shows on mobile) */}
+            <motion.button
+              ref={burgerRef}
+              type="button"
+              onClick={() => setDrawerOpen(o => !o)}
+              aria-label={drawerOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={drawerOpen}
+              className={styles.burger}
+              whileTap={tapTransition}
+            >
+              <span
+                className={styles.burgerBar}
+                style={{ transform: drawerOpen ? 'translateY(6.5px) rotate(45deg)' : undefined }}
+              />
+              <span
+                className={styles.burgerBar}
+                style={{
+                  transform: drawerOpen ? 'scaleX(0)' : undefined,
+                  opacity:   drawerOpen ? 0 : undefined,
+                }}
+              />
+              <span
+                className={styles.burgerBar}
+                style={{ transform: drawerOpen ? 'translateY(-6.5px) rotate(-45deg)' : undefined }}
+              />
+            </motion.button>
+
+          </div>
         </div>
+      </div>
 
-        {/* ── Hamburger — mobile only ──────────────────────────────────────── */}
-        <motion.button
-          ref={burgerRef}
-          type="button"
-          className="hidden max-[680px]:flex flex-col items-center justify-center"
-          onClick={() => setDrawerOpen(o => !o)}
-          aria-label={drawerOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={drawerOpen}
-          style={{
-            pointerEvents:   'all',
-            width:           36,
-            height:          36,
-            gap:             5,
-            flexShrink:      0,
-            borderRadius:    999,
-            border:          '1px solid #D4D3CE',  // ref: n-200 solid token
-            backgroundColor: '#FFFFFF',
-            cursor:          'pointer',
-            boxShadow:       SH_XS,                // ref: sh-xs
-            padding:         0,
-          }}
-          whileHover={{ backgroundColor: '#FAFAF8' }}   // ref: n-25 on hover
-          whileTap={TAP}
-        >
-          <span style={{ ...spanBase, transform: drawerOpen ? 'translateY(6.5px) rotate(45deg)'  : 'none' }} />
-          <span style={{ ...spanBase, transform: drawerOpen ? 'scaleX(0)' : 'none', opacity: drawerOpen ? 0 : 1 }} />
-          <span style={{ ...spanBase, transform: drawerOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }} />
-        </motion.button>
-
-      </div>{/* /nav-inner */}
-
-      {/* ── Mobile drawer — Framer Motion ────────────────────────────────────── */}
+      {/* ── Mobile drawer ──────────────────────────────────────────────────── */}
       <AnimatePresence>
         {drawerOpen && (
           <motion.div
             ref={drawerRef}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ type: 'spring', ...springs.gentle }}
-            style={{
-              overflow:        'hidden',
-              pointerEvents:   'all',
-              margin:          '0 16px',              // ref: 16px
-              backgroundColor: '#FFFFFF',
-              border:          '1px solid #D4D3CE',   // ref: n-200 solid token
-              borderRadius:    14,
-              boxShadow:       '0 4px 12px rgba(26,25,23,.06), 0 1px 3px rgba(26,25,23,.04)',
-            }}
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={prefersReduced ? { duration: 0 } : { type: 'spring', ...springs.gentle }}
+            className={styles.drawerWrap}
           >
-            <div
-              style={{
-                display:       'flex',
-                flexDirection: 'column',
-                gap:           2,
-                padding:       12,                    // ref: drawer-inner padding:12px
-              }}
-            >
-              {drawerStatusNote}
-              {renderPioneerNudge(true)}
-              {renderCta(true)}
+            <div className={styles.drawerInner}>
+
+              {/* Status note */}
+              {state !== 'new' && (
+                <p
+                  className={styles.drawerStatus}
+                  style={{
+                    color:      isUrgent ? '#845A0C' : undefined,
+                    fontWeight: isUrgent ? 500      : undefined,
+                  }}
+                >
+                  {state === 'unverified'
+                    ? (isUrgent
+                        ? `Your renewal window closes in ${daysLeft} day${daysLeft === 1 ? '' : 's'}. Verify before it lapses.`
+                        : 'Your renewal is on the map — verify it to make it count more.')
+                    : "You're verified and on the map."}
+                </p>
+              )}
+
+              {/* Pioneer nudge — mobile */}
+              {isPioneer && state !== 'new' && (
+                <>
+                  <motion.button
+                    type="button"
+                    onClick={() => { void handleShare(); setDrawerOpen(false) }}
+                    className={styles.drawerNudge}
+                    whileTap={tapTransition}
+                  >
+                    <ShareCheckIcon />
+                    Share with neighbours
+                  </motion.button>
+                  <div style={{ height: 1, background: '#EEEDEA', margin: '2px 0' }} />
+                </>
+              )}
+
+              {/* Drawer CTA */}
+              <motion.button
+                type="button"
+                data-state={state}
+                className={styles.drawerCta}
+                onClick={() => { handleCtaClick(); setDrawerOpen(false) }}
+                whileTap={tapTransition}
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={state}
+                    initial={blurEnter}
+                    animate={blurShow}
+                    exit={blurExit}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+                  >
+                    {ctaContent(true)}
+                  </motion.span>
+                </AnimatePresence>
+              </motion.button>
+
+              {/* Feature request row */}
+              <button
+                type="button"
+                className={styles.drawerFr}
+                onClick={() => { onOpenFeatureRequest?.(); setDrawerOpen(false) }}
+              >
+                <LightbulbIcon />
+                What should we build next?
+              </button>
+
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-    </nav>
+    </>
   )
 }

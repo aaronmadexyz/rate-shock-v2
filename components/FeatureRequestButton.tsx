@@ -21,19 +21,6 @@ type UIState = 'idle' | 'loading' | 'success' | 'error'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
-function LightbulbIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <path
-        d="M6.5 1.5a3.5 3.5 0 0 1 2 6.4V9.5a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5V7.9a3.5 3.5 0 0 1 2-6.4Z"
-        stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"
-      />
-      <path d="M5 11h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-      <path d="M5.5 11.5h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-    </svg>
-  )
-}
-
 function CheckIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -52,8 +39,12 @@ function CloseIcon() {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-function FeatureRequestButton() {
-  const [open,     setOpen]     = useState(false)
+interface FeatureRequestButtonProps {
+  isOpen:  boolean
+  onClose: () => void
+}
+
+function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonProps) {
   const [message,  setMessage]  = useState('')
   const [uiState,  setUiState]  = useState<UIState>('idle')
   const [isMobile, setIsMobile] = useState(false)
@@ -73,7 +64,7 @@ function FeatureRequestButton() {
   useEffect(() => {
     if (uiState === 'success') {
       closeTimerRef.current = setTimeout(() => {
-        setOpen(false)
+        onClose()
         // Reset after exit animation completes
         setTimeout(() => {
           setUiState('idle')
@@ -84,11 +75,11 @@ function FeatureRequestButton() {
     return () => {
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     }
-  }, [uiState])
+  }, [uiState, onClose])
 
   function handleClose() {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
-    setOpen(false)
+    onClose()
     setTimeout(() => {
       setUiState('idle')
       setMessage('')
@@ -153,7 +144,7 @@ function FeatureRequestButton() {
     boxShadow:    '0 8px 28px rgba(26,25,23,.1), 0 2px 6px rgba(26,25,23,.05)',
     padding:      20,
     zIndex:       500,
-    transformOrigin: 'bottom right',
+    transformOrigin: 'top right',
   }
 
   const isEmpty = !message.trim()
@@ -411,40 +402,6 @@ function FeatureRequestButton() {
         )}
       </AnimatePresence>
 
-      {/* Trigger button — circle icon, no fixed positioning (lives in bottom bar) */}
-      <motion.button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        aria-label={open ? 'Close feature request' : "What's next?"}
-        whileTap={{ scale: 0.97, transition: tapTransition }}
-        style={{
-          width:          40,
-          height:         40,
-          borderRadius:   9999,
-          border:         '1px solid #D4D3CE',
-          background:     '#FFFFFF',
-          color:          '#5E5D56',
-          boxShadow:      SH_SM,
-          cursor:         'pointer',
-          display:        'flex',
-          alignItems:     'center',
-          justifyContent: 'center',
-          flexShrink:     0,
-          transition:     'background .15s, border-color .15s',
-        }}
-        onMouseEnter={e => {
-          const el = e.currentTarget as HTMLButtonElement
-          el.style.background  = '#FAFAF8'
-          el.style.borderColor = '#B8B7B1'
-        }}
-        onMouseLeave={e => {
-          const el = e.currentTarget as HTMLButtonElement
-          el.style.background  = '#FFFFFF'
-          el.style.borderColor = '#D4D3CE'
-        }}
-      >
-        <LightbulbIcon />
-      </motion.button>
     </>
   )
 }

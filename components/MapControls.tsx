@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import type { Map as LeafletMap } from 'leaflet'
 import { springs } from '@/lib/springs'
-import PostalCodeSearch from '@/components/PostalCodeSearch'
 import type { UserProfile } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
 
@@ -131,8 +129,8 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
 interface MapControlsProps {
   activeCount:    number
   onClick:        () => void
-  onCtaClick:     () => void
-  mapRef:         React.MutableRefObject<LeafletMap | null>
+  onCtaClick?:    () => void
+  mapRef?:        React.MutableRefObject<unknown>
   hasSubmission:  boolean
   likeMeMode:     boolean
   onLikeMeToggle: () => void
@@ -141,7 +139,7 @@ interface MapControlsProps {
 }
 
 function MapControls({
-  activeCount, onClick, onCtaClick, mapRef,
+  activeCount, onClick,
   hasSubmission, likeMeMode, onLikeMeToggle, userProfile, cohortResult,
 }: MapControlsProps) {
   const isActive      = activeCount > 0
@@ -267,8 +265,6 @@ function MapControls({
         </motion.button>
       )}
 
-      {/* Search */}
-      <PostalCodeSearch mapRef={mapRef} onCtaClick={onCtaClick} />
     </>
   )
 }

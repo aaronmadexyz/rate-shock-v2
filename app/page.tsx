@@ -42,6 +42,7 @@ export default function Page() {
   const [mounted,       setMounted]      = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [modalOpen,    setModalOpen]    = useState(false)
+  const [frOpen,       setFrOpen]       = useState(false)
   const [filterOpen,   setFilterOpen]   = useState(false)
   const [filters,      setFilters]      = useState<FilterState>(DEFAULT_FILTERS)
   const [likeMeMode,   setLikeMeMode]   = useState(false)
@@ -168,8 +169,12 @@ export default function Page() {
         />
       </MapErrorBoundary>
 
-      {/* Fixed nav — above the map via z-index in globals.css (--z-nav: 100) */}
-      <Nav onCtaClick={() => setModalOpen(true)} />
+      {/* Two-tier nav: data strip (z:101) + main bar (z:100) */}
+      <Nav
+        onCtaClick={() => setModalOpen(true)}
+        mapRef={leafletMapRef}
+        onOpenFeatureRequest={() => setFrOpen(true)}
+      />
 
       {/* Bottom control bar */}
       <div className={mcStyles.bottomBar}>
@@ -177,8 +182,6 @@ export default function Page() {
           <MapControls
             activeCount={activeFilterCount}
             onClick={() => setFilterOpen(true)}
-            onCtaClick={() => setModalOpen(true)}
-            mapRef={leafletMapRef}
             hasSubmission={hasSubmission}
             likeMeMode={likeMeMode}
             onLikeMeToggle={handleLikeMeToggle}
@@ -188,7 +191,6 @@ export default function Page() {
         </div>
         <div className={mcStyles.bottomRight}>
           <LegendButton />
-          <FeatureRequestButton />
         </div>
       </div>
 
@@ -198,6 +200,9 @@ export default function Page() {
         onClose={() => setFilterOpen(false)}
         onChange={handleFilterChange}
       />
+
+      {/* Feature request modal — controlled from nav lightbulb */}
+      <FeatureRequestButton isOpen={frOpen} onClose={() => setFrOpen(false)} />
 
       {/* Renewal modal */}
       <ShareRenewalModal
@@ -220,7 +225,7 @@ export default function Page() {
             transition={{ type: 'spring', stiffness: 240, damping: 24, mass: 1 }}
             style={{
               position:      'fixed',
-              top:           80,
+              top:           92,
               left:          '50%',
               zIndex:        19,
               pointerEvents: 'none',
