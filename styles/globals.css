@@ -373,6 +373,18 @@ input[type="checkbox"]:focus + div {
   }
 }
 
+/* ─── LEAFLET ATTRIBUTION — clear of bottom bar ─────────────────────────── */
+
+.leaflet-bottom.leaflet-right {
+  bottom: 80px !important;
+}
+
+@media (max-width: 680px) {
+  .leaflet-bottom.leaflet-right {
+    bottom: 72px !important;
+  }
+}
+
 /* ─── REDUCED MOTION ────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {

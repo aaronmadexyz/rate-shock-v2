@@ -142,9 +142,6 @@ function FeatureRequestButton() {
 
   // ── Positioning ─────────────────────────────────────────────────────────────
 
-  const btnBottom = isMobile ? 20 : 28
-  const btnRight  = isMobile ? 16 : 24
-
   const cardStyle: React.CSSProperties = {
     position:     'fixed',
     bottom:       isMobile ? 72 : 80,
@@ -414,23 +411,15 @@ function FeatureRequestButton() {
         )}
       </AnimatePresence>
 
-      {/* Trigger button */}
+      {/* Trigger button — circle icon, no fixed positioning (lives in bottom bar) */}
       <motion.button
         type="button"
         onClick={() => setOpen(o => !o)}
         aria-label={open ? 'Close feature request' : "What's next?"}
         whileTap={{ scale: 0.97, transition: tapTransition }}
         style={{
-          position:       'fixed',
-          bottom:         btnBottom,
-          right:          btnRight,
-          zIndex:         99,
-          fontFamily:     "'Inter', system-ui, sans-serif",
-          fontSize:       13,
-          fontWeight:     500,
-          padding:        isMobile ? 0 : '9px 16px',
-          width:          isMobile ? 36 : 'auto',
-          height:         isMobile ? 36 : 'auto',
+          width:          40,
+          height:         40,
           borderRadius:   9999,
           border:         '1px solid #D4D3CE',
           background:     '#FFFFFF',
@@ -439,23 +428,22 @@ function FeatureRequestButton() {
           cursor:         'pointer',
           display:        'flex',
           alignItems:     'center',
-          justifyContent: isMobile ? 'center' : undefined,
-          gap:            isMobile ? 0 : 7,
+          justifyContent: 'center',
+          flexShrink:     0,
           transition:     'background .15s, border-color .15s',
         }}
         onMouseEnter={e => {
           const el = e.currentTarget as HTMLButtonElement
-          el.style.background    = '#FAFAF8'
-          el.style.borderColor   = '#B8B7B1'
+          el.style.background  = '#FAFAF8'
+          el.style.borderColor = '#B8B7B1'
         }}
         onMouseLeave={e => {
           const el = e.currentTarget as HTMLButtonElement
-          el.style.background    = '#FFFFFF'
-          el.style.borderColor   = '#D4D3CE'
+          el.style.background  = '#FFFFFF'
+          el.style.borderColor = '#D4D3CE'
         }}
       >
         <LightbulbIcon />
-        {!isMobile && "What's next?"}
       </motion.button>
     </>
   )

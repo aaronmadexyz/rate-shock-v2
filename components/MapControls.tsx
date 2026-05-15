@@ -1,23 +1,16 @@
 'use client'
 
-import React from 'react'
-import { motion } from 'framer-motion'
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import type { Map as LeafletMap } from 'leaflet'
 import { springs } from '@/lib/springs'
 import PostalCodeSearch from '@/components/PostalCodeSearch'
 import type { UserProfile } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
 const SH_SM = '0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04)'
 
-const TAP = {
-  scale: 0.97,
-  transition: { type: 'spring' as const, ...springs.snappy },
-} as const
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
+const TAP_SNAPPY = { type: 'spring' as const, ...springs.snappy }
 
 function FilterIcon() {
   return (
@@ -38,8 +31,6 @@ function ProfilesIcon({ active }: { active?: boolean }) {
   )
 }
 
-// ─── Cohort card ──────────────────────────────────────────────────────────────
-
 function CohortCard({ result, profile }: { result: CohortResult | null; profile: UserProfile | null }) {
   if (!result) {
     return (
@@ -55,14 +46,14 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
           <ProfilesIcon />
           <span style={{
             fontFamily: "'Inter', system-ui, sans-serif",
-            fontSize:   12, fontWeight: 500, color: '#7C7B72',
+            fontSize: 12, fontWeight: 500, color: '#7C7B72',
           }}>
             Not enough similar profiles yet
           </span>
         </div>
         <p style={{
           fontFamily: "'Inter', system-ui, sans-serif",
-          fontSize:   11, color: '#9A998F', lineHeight: 1.5, margin: 0,
+          fontSize: 11, color: '#9A998F', lineHeight: 1.5, margin: 0,
         }}>
           Need 8+ to build a cohort. Showing all{' '}
           {profile?.insurance_type ?? ''} renewals.
@@ -137,8 +128,6 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
   )
 }
 
-// ─── Props ────────────────────────────────────────────────────────────────────
-
 interface MapControlsProps {
   activeCount:    number
   onClick:        () => void
@@ -151,119 +140,135 @@ interface MapControlsProps {
   cohortResult:   CohortResult | null
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 function MapControls({
   activeCount, onClick, onCtaClick, mapRef,
   hasSubmission, likeMeMode, onLikeMeToggle, userProfile, cohortResult,
 }: MapControlsProps) {
-  const isActive = activeCount > 0
+  const isActive      = activeCount > 0
+  const prefersReduced = useReducedMotion()
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 680px)')
+    setIsMobile(mq.matches)
+    const h = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', h)
+    return () => mq.removeEventListener('change', h)
+  }, [])
+
+  // Correction 4: cohort card scales from bottom-left corner
+  const cohortTransition = prefersReduced
+    ? { duration: 0 }
+    : { type: 'spring' as const, ...springs.snappy }
+
+  // Correction 6: tap spring respects reduced motion
+  const tapTransition = prefersReduced
+    ? { duration: 0 }
+    : TAP_SNAPPY
 
   return (
     <>
-      <style>{`
-        @media (max-width: 680px) {
-          .mc-wrap { bottom: 20px !important; left: 16px !important; }
-        }
-      `}</style>
-
-      <div
-        className="mc-wrap"
-        style={{
-          position:      'fixed',
-          bottom:        28,
-          left:          24,
-          zIndex:        99,
-          display:       'flex',
-          flexDirection: 'column',
-          alignItems:    'flex-start',
-          gap:           8,
-        }}
-      >
-        {/* Cohort card — only when Like Me mode is active */}
+      {/* Cohort card — absolutely positioned above the bottom-left group */}
+      {/* position: absolute resolves against .bottomLeft (position: relative) */}
+      <AnimatePresence>
         {likeMeMode && hasSubmission && (
-          <CohortCard result={cohortResult} profile={userProfile} />
-        )}
-
-        {/* Button row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Filter pill */}
-          <motion.button
-            type="button"
-            onClick={onClick}
+          <motion.div
+            key="cohort-card"
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={cohortTransition}
             style={{
-              fontFamily:      "'Inter', system-ui, sans-serif",
-              fontSize:        13,
-              fontWeight:      500,
-              letterSpacing:   '-0.01em',
-              lineHeight:      1,
-              cursor:          'pointer',
-              display:         'inline-flex',
-              alignItems:      'center',
-              gap:             7,
-              padding:         '8px 14px',
-              borderRadius:    9999,
-              border:          isActive ? '1px solid #B0B4E6' : '1px solid #D4D3CE',
-              backgroundColor: isActive ? '#EEEFFA' : '#FFFFFF',
-              color:           isActive ? '#3A3F8F' : '#2C2B27',
-              boxShadow:       SH_SM,
+              position:        'absolute',
+              bottom:          'calc(100% + 8px)',
+              left:            0,
+              transformOrigin: 'bottom left',  // Correction 4
             }}
-            whileHover={isActive ? {} : { backgroundColor: '#FAFAF8', borderColor: '#B8B7B1' }}
-            whileTap={TAP}
           >
-            <FilterIcon />
-            Filter
-            {isActive && (
-              <span style={{
-                fontFamily:      "'IBM Plex Mono', monospace",
-                fontSize:        10,
-                fontWeight:      500,
-                lineHeight:      1.4,
-                backgroundColor: '#3A3F8F',
-                color:           '#FFFFFF',
-                padding:         '2px 6px',
-                borderRadius:    999,
-              }}>
-                {activeCount}
-              </span>
-            )}
-          </motion.button>
+            <CohortCard result={cohortResult} profile={userProfile} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* Like Me toggle — only shown after user has submitted */}
-          {hasSubmission && (
-            <motion.button
-              type="button"
-              onClick={onLikeMeToggle}
-              aria-pressed={likeMeMode}
-              style={{
-                fontFamily:      "'Inter', system-ui, sans-serif",
-                fontSize:        13,
-                fontWeight:      500,
-                letterSpacing:   '-0.01em',
-                lineHeight:      1,
-                cursor:          'pointer',
-                display:         'inline-flex',
-                alignItems:      'center',
-                gap:             7,
-                padding:         '8px 14px',
-                borderRadius:    9999,
-                border:          likeMeMode ? '1px solid #B0B4E6' : '1px solid #D4D3CE',
-                backgroundColor: likeMeMode ? '#EEEFFA' : '#FFFFFF',
-                color:           likeMeMode ? '#3A3F8F' : '#2C2B27',
-                boxShadow:       SH_SM,
-              }}
-              whileHover={likeMeMode ? {} : { backgroundColor: '#FAFAF8', borderColor: '#B8B7B1' }}
-              whileTap={TAP}
-            >
-              <ProfilesIcon active={likeMeMode} />
-              Like me
-            </motion.button>
-          )}
+      {/* Filter pill */}
+      <motion.button
+        type="button"
+        onClick={onClick}
+        style={{
+          fontFamily:      "'Inter', system-ui, sans-serif",
+          fontSize:        13,
+          fontWeight:      500,
+          letterSpacing:   '-0.01em',
+          lineHeight:      1,
+          cursor:          'pointer',
+          display:         'inline-flex',
+          alignItems:      'center',
+          gap:             7,
+          height:          40,
+          padding:         '0 14px',
+          borderRadius:    9999,
+          border:          isActive ? '1px solid #B0B4E6' : '1px solid #D4D3CE',
+          backgroundColor: isActive ? '#EEEFFA' : '#FFFFFF',
+          color:           isActive ? '#3A3F8F' : '#2C2B27',
+          boxShadow:       SH_SM,
+        }}
+        whileHover={isActive ? {} : { backgroundColor: '#FAFAF8', borderColor: '#B8B7B1' }}
+        whileTap={{ scale: 0.97, transition: tapTransition }}
+      >
+        <FilterIcon />
+        Filter
+        {isActive && (
+          <span style={{
+            fontFamily:      "'IBM Plex Mono', monospace",
+            fontSize:        10,
+            fontWeight:      500,
+            lineHeight:      1.4,
+            backgroundColor: '#3A3F8F',
+            color:           '#FFFFFF',
+            padding:         '2px 6px',
+            borderRadius:    999,
+          }}>
+            {activeCount}
+          </span>
+        )}
+      </motion.button>
 
-          {/* Postal code search */}
-          <PostalCodeSearch mapRef={mapRef} onCtaClick={onCtaClick} />
-        </div>
-      </div>
+      {/* Like Me toggle — only after submission */}
+      {hasSubmission && (
+        <motion.button
+          type="button"
+          onClick={onLikeMeToggle}
+          aria-pressed={likeMeMode}
+          style={{
+            cursor:          'pointer',
+            display:         'inline-flex',
+            alignItems:      'center',
+            justifyContent:  'center',
+            gap:             isMobile ? 0 : 7,
+            height:          40,
+            width:           isMobile ? 40 : 'auto',
+            padding:         isMobile ? 0 : '0 14px',
+            borderRadius:    9999,
+            border:          likeMeMode ? '1px solid #B0B4E6' : '1px solid #D4D3CE',
+            backgroundColor: likeMeMode ? '#EEEFFA' : '#FFFFFF',
+            color:           likeMeMode ? '#3A3F8F' : '#2C2B27',
+            boxShadow:       SH_SM,
+            fontFamily:      "'Inter', system-ui, sans-serif",
+            fontSize:        13,
+            fontWeight:      500,
+            letterSpacing:   '-0.01em',
+            lineHeight:      1,
+          }}
+          whileHover={likeMeMode ? {} : { backgroundColor: '#FAFAF8', borderColor: '#B8B7B1' }}
+          whileTap={{ scale: 0.97, transition: tapTransition }}
+        >
+          <ProfilesIcon active={likeMeMode} />
+          {!isMobile && <span style={{ marginLeft: 7 }}>Like me</span>}
+        </motion.button>
+      )}
+
+      {/* Search */}
+      <PostalCodeSearch mapRef={mapRef} onCtaClick={onCtaClick} />
     </>
   )
 }

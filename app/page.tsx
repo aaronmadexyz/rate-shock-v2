@@ -14,8 +14,9 @@ import FilterSheet, { countFilters } from '@/components/FilterSheet'
 import type { FilterState } from '@/lib/types'
 import ShareRenewalModal from '@/components/ShareRenewalModal'
 import FeatureRequestButton from '@/components/FeatureRequestButton'
-import MapLegend from '@/components/MapLegend'
+import LegendButton from '@/components/LegendButton'
 import { MapErrorBoundary } from '@/components/MapErrorBoundary'
+import mcStyles from '@/styles/MapControls.module.css'
 import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
 import { safeGetItem, safeSetItem } from '@/lib/storage'
@@ -170,18 +171,26 @@ export default function Page() {
       {/* Fixed nav — above the map via z-index in globals.css (--z-nav: 100) */}
       <Nav onCtaClick={() => setModalOpen(true)} />
 
-      {/* Filter button — bottom-left */}
-      <MapControls
-        activeCount={activeFilterCount}
-        onClick={() => setFilterOpen(true)}
-        onCtaClick={() => setModalOpen(true)}
-        mapRef={leafletMapRef}
-        hasSubmission={hasSubmission}
-        likeMeMode={likeMeMode}
-        onLikeMeToggle={handleLikeMeToggle}
-        userProfile={userProfile}
-        cohortResult={cohortResult}
-      />
+      {/* Bottom control bar */}
+      <div className={mcStyles.bottomBar}>
+        <div className={mcStyles.bottomLeft}>
+          <MapControls
+            activeCount={activeFilterCount}
+            onClick={() => setFilterOpen(true)}
+            onCtaClick={() => setModalOpen(true)}
+            mapRef={leafletMapRef}
+            hasSubmission={hasSubmission}
+            likeMeMode={likeMeMode}
+            onLikeMeToggle={handleLikeMeToggle}
+            userProfile={userProfile}
+            cohortResult={cohortResult}
+          />
+        </div>
+        <div className={mcStyles.bottomRight}>
+          <LegendButton />
+          <FeatureRequestButton />
+        </div>
+      </div>
 
       {/* Filter sheet */}
       <FilterSheet
@@ -238,8 +247,6 @@ export default function Page() {
         )}
       </AnimatePresence>
 
-      <MapLegend />
-      <FeatureRequestButton />
 
       {/* First-visit onboarding overlay */}
       {mounted && (

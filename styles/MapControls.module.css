@@ -1,0 +1,33 @@
+.bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 24px max(28px, env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+
+.bottomLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: all;
+  position: relative;
+}
+
+.bottomRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: all;
+}
+
+@media (max-width: 680px) {
+  .bottomBar {
+    padding: 0 16px max(20px, env(safe-area-inset-bottom));
+  }
+}
