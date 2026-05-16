@@ -428,7 +428,19 @@ input[type="checkbox"]:focus + div {
   }
 }
 
-/* ─── LEAFLET ATTRIBUTION — repositioned via JS (AttributionFix in MapView) ─ */
+/* ─── LEAFLET ATTRIBUTION — bottom-left, above Filter pill ──────────────────── */
+
+.leaflet-bottom.leaflet-left {
+  bottom: 80px !important;
+  left: 0 !important;
+  padding-left: 8px !important;
+}
+
+@media (max-width: 680px) {
+  .leaflet-bottom.leaflet-left {
+    bottom: 72px !important;
+  }
+}
 
 /* ─── HERO HINT PILL — responsive text ───────────────────────────────────── */
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMap, AttributionControl } from 'react-leaflet'
 import { AnimatePresence, motion } from 'framer-motion'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -89,27 +89,6 @@ function getMarkerMatchState(s: Submission, f: FilterState): boolean {
   if (pct < f.rMin || pct > f.rMax) return false
   if (f.verified && !s.verified) return false
   return true
-}
-
-// ─── Attribution fix ──────────────────────────────────────────────────────────
-
-function AttributionFix() {
-  const map = useMap()
-  useEffect(() => {
-    const container = map.attributionControl?.getContainer()
-    if (!container) return
-    const el = container as HTMLElement
-    const offset = window.innerWidth <= 680 ? 72 : 80
-    el.style.marginBottom = `${offset}px`
-    el.style.position = 'relative'
-    el.style.zIndex = '20'
-    function onResize() {
-      el.style.marginBottom = `${window.innerWidth <= 680 ? 72 : 80}px`
-    }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [map])
-  return null
 }
 
 // ─── Map setup ────────────────────────────────────────────────────────────────
@@ -849,6 +828,7 @@ export default function MapView({
         minZoom={6}
         maxZoom={16}
         zoomControl={false}
+        attributionControl={false}
         style={{ position: 'fixed', inset: 0, zIndex: 0, width: '100vw', height: '100dvh', touchAction: 'none' }}
       >
         <TileLayer
@@ -858,7 +838,7 @@ export default function MapView({
           maxZoom={19}
         />
 
-        <AttributionFix />
+        <AttributionControl position="bottomleft" prefix={false} />
 
         <MapSetup
           onExternalReady={onLeafletReady}
