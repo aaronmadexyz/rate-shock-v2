@@ -44,12 +44,16 @@
                      0 0 0 10px rgba(99,106,197,0); }
 }
 
-.nudgeActive {
+/* Wrapper span — receives the ring animation instead of the button so it doesn't
+   conflict with the button's inline boxShadow (inline styles override CSS animations) */
+.nudgeRing {
+  display: inline-flex;
+  border-radius: 9999px;
   animation: filterNudgePulse 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nudgeActive {
+  .nudgeRing {
     animation: none;
   }
 }

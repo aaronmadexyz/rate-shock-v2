@@ -322,6 +322,8 @@ function MapControls({
             : ''}
         </div>
 
+        {/* nudgeRing span: wrapper for the pulse ring so it doesn't conflict with button's inline boxShadow */}
+        <span className={nudgeActive ? styles.nudgeRing : undefined}>
         <motion.button
           type="button"
           onClick={handleFilterClick}
@@ -329,7 +331,6 @@ function MapControls({
           aria-haspopup="true"
           aria-controls="filter-panel"
           aria-describedby={nudgeVisible ? 'filter-nudge-tooltip' : undefined}
-          className={nudgeActive ? styles.nudgeActive : undefined}
           style={{
             fontFamily:      "'Inter', system-ui, sans-serif",
             fontSize:        13,
@@ -371,6 +372,7 @@ function MapControls({
             </span>
           )}
         </motion.button>
+        </span>
       </div>
 
       {/* Like Me toggle — only after submission */}
