@@ -15,7 +15,8 @@ import type { Submission } from '@/lib/types'
 
 const SC = ['', '#3A9B55', '#93D1A2', '#D49316', '#E87460', '#D4503A']
 const SENT_LABELS = ['', 'Very fair', 'Fair', 'Neutral', 'Unfair', 'Very unfair']
-const DRAFT_KEY = 'rateshock_form_draft'
+const DRAFT_KEY       = 'rateshock_form_draft'
+const DRAFT_SHOWN_KEY = 'rateshock_draft_shown'
 
 const VP_MAP   = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
 const VP_MODAL = 'width=device-width, initial-scale=1, viewport-fit=cover'
@@ -300,9 +301,17 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     }
   }, [isOpen])
 
-  // ── draft rescue: save after every field change ─────────────────────────────
+  // ── draft rescue: save after every field change (only when meaningful) ────────
   useEffect(() => {
     if (!isOpen || step === 'anim') return
+    const meaningful =
+      fsa.length > 0 ||
+      provider.length > 0 ||
+      insType !== 'auto' ||
+      step === 2 ||
+      steppers.yrs.v !== 0 || steppers.cl.v !== 0 ||
+      steppers.cv.v !== 0  || steppers.hcl.v !== 0
+    if (!meaningful) return
     safeSetItem(DRAFT_KEY, JSON.stringify({
       fsa, type: insType, provider, mode,
       rval, yrs: steppers.yrs.v, cl: steppers.cl.v,
@@ -317,6 +326,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     if (!raw) return
     try {
       const d = JSON.parse(raw)
+
+      // Only restore if the draft contains meaningful content
+      const meaningful =
+        d.fsa?.length > 0 ||
+        d.provider?.length > 0 ||
+        d.type !== 'auto' ||
+        d.yrs !== 0 || d.cl !== 0 || d.cv !== 0 || d.hcl !== 0
+      if (!meaningful) return
+
       if (d.fsa) {
         setFsa(d.fsa)
         setAreaLabel(getAreaLabel(d.fsa))
@@ -342,7 +360,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
           hcl: { ...prev.hcl, v: d.hcl ?? prev.hcl.v },
         }))
       }
-      setShowRestoreNotice(true)
+
+      // Show banner only if it hasn't been shown and dismissed this session
+      if (!safeGetItem(DRAFT_SHOWN_KEY)) {
+        setShowRestoreNotice(true)
+      }
     } catch { /* ignore malformed draft */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
@@ -410,6 +432,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     setSent(0); setSentErr(false); setNote(''); setConsent(false)
     setSubmitting(false); setAnimDone(false); setShowVerify(false); setShowLikeMeCard(false)
     setShowRestoreNotice(false)
+    safeRemoveItem(DRAFT_KEY)
+    safeRemoveItem(DRAFT_SHOWN_KEY)
     setCompLoading(false); setAreaMed(null); setAreaMedCount(0); setOntMed(null)
     setCntYou(0); setCntNbr(0); setCntOnt(0)
 
@@ -435,7 +459,6 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   }, [updateTrack])
 
   const handleClose = useCallback(() => {
-    safeRemoveItem(DRAFT_KEY)
     onClose()
     setTimeout(resetAll, 420)
   }, [onClose, resetAll])
@@ -571,6 +594,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
     // Fetch real comparison data in parallel — resolves well before comparison card appears
     safeRemoveItem(DRAFT_KEY)
+    safeRemoveItem(DRAFT_SHOWN_KEY)
     setCompLoading(true);
     (async () => {
       try {
@@ -1040,7 +1064,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         <span style={{ flex: 1 }}>We saved your progress.</span>
                         <button
                           type="button"
-                          onClick={() => { setShowRestoreNotice(false); safeRemoveItem(DRAFT_KEY) }}
+                          onClick={() => { setShowRestoreNotice(false); safeSetItem(DRAFT_SHOWN_KEY, 'true') }}
                           style={{ background: 'none', border: 'none', color: '#4A50B0', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}
                           aria-label="Dismiss"
                         >×</button>
