@@ -257,6 +257,38 @@ export default function Page() {
       </AnimatePresence>
 
 
+      {/* Map attribution — static element, OSM + CARTO credit */}
+      <div className="mapAttribution">
+        <span style={{
+          fontSize: 10,
+          fontFamily: "'IBM Plex Mono', monospace",
+          color: 'rgba(26,25,23,0.45)',
+          background: 'rgba(255,255,255,0.75)',
+          padding: '2px 8px',
+          borderRadius: 4,
+          pointerEvents: 'all',
+        }}>
+          {'© '}
+          <a
+            href="https://www.openstreetmap.org/copyright"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'rgba(26,25,23,0.55)', textDecoration: 'none' }}
+          >
+            OpenStreetMap
+          </a>
+          {' contributors © '}
+          <a
+            href="https://carto.com/attributions"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'rgba(26,25,23,0.55)', textDecoration: 'none' }}
+          >
+            CARTO
+          </a>
+        </span>
+      </div>
+
       {/* First-visit onboarding overlay */}
       {mounted && (
         <OnboardingOverlay

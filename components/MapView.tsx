@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { MapContainer, TileLayer, Marker, useMap, AttributionControl } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import { AnimatePresence, motion } from 'framer-motion'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -837,8 +837,6 @@ export default function MapView({
           subdomains="abcd"
           maxZoom={19}
         />
-
-        <AttributionControl position="bottomleft" prefix={false} />
 
         <MapSetup
           onExternalReady={onLeafletReady}

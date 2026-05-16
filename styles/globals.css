@@ -428,17 +428,21 @@ input[type="checkbox"]:focus + div {
   }
 }
 
-/* ─── LEAFLET ATTRIBUTION — bottom-left, above Filter pill ──────────────────── */
+/* ─── STATIC MAP ATTRIBUTION — centered, above Filter + ℹ control bar ───────── */
 
-.leaflet-bottom.leaflet-left {
-  bottom: 80px !important;
-  left: 0 !important;
-  padding-left: 8px !important;
+.mapAttribution {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 @media (max-width: 680px) {
-  .leaflet-bottom.leaflet-left {
-    bottom: 72px !important;
+  .mapAttribution {
+    bottom: 72px;
   }
 }
 
