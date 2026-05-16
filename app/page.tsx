@@ -225,10 +225,13 @@ export default function Page() {
             transition={{ type: 'spring', stiffness: 240, damping: 24, mass: 1 }}
             style={{
               position:      'fixed',
-              top:           92,
+              top:           88,
               left:          '50%',
               zIndex:        19,
               pointerEvents: 'none',
+              width:         'calc(100vw - 48px)',
+              maxWidth:      480,
+              boxSizing:     'border-box',
             }}
           >
             <div style={{
@@ -237,16 +240,17 @@ export default function Page() {
               WebkitBackdropFilter: 'blur(8px)',
               border:               '1px solid #E2E1DD',
               borderRadius:         9999,
-              padding:              '10px 20px',
+              padding:              'clamp(8px, 2vw, 10px) clamp(14px, 4vw, 20px)',
               fontFamily:           "'Inter', system-ui, sans-serif",
               fontSize:             13,
               fontWeight:           500,
               color:                '#1A1917',
-              whiteSpace:           'nowrap',
               boxShadow:            '0 1px 3px rgba(26,25,23,.06)',
               pointerEvents:        'none',
+              textAlign:            'center',
             }}>
-              See what Ontario drivers are really paying — tap an envelope to explore
+              <span className="hero-pill-desktop">See what Ontario drivers are really paying — tap an envelope to explore</span>
+              <span className="hero-pill-mobile">Tap an envelope to explore</span>
             </div>
           </motion.div>
         )}
