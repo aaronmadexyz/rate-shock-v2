@@ -91,6 +91,27 @@ function getMarkerMatchState(s: Submission, f: FilterState): boolean {
   return true
 }
 
+// ─── Attribution fix ──────────────────────────────────────────────────────────
+
+function AttributionFix() {
+  const map = useMap()
+  useEffect(() => {
+    const container = map.attributionControl?.getContainer()
+    if (!container) return
+    const el = container as HTMLElement
+    const offset = window.innerWidth <= 680 ? 72 : 80
+    el.style.marginBottom = `${offset}px`
+    el.style.position = 'relative'
+    el.style.zIndex = '20'
+    function onResize() {
+      el.style.marginBottom = `${window.innerWidth <= 680 ? 72 : 80}px`
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [map])
+  return null
+}
+
 // ─── Map setup ────────────────────────────────────────────────────────────────
 // UNCHANGED
 
@@ -836,6 +857,8 @@ export default function MapView({
           subdomains="abcd"
           maxZoom={19}
         />
+
+        <AttributionFix />
 
         <MapSetup
           onExternalReady={onLeafletReady}

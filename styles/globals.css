@@ -428,24 +428,7 @@ input[type="checkbox"]:focus + div {
   }
 }
 
-/* ─── LEAFLET ATTRIBUTION — clear of bottom bar ─────────────────────────── */
-
-.leaflet-bottom.leaflet-right,
-.leaflet-bottom.leaflet-left {
-  bottom: 80px !important;
-}
-
-.leaflet-control-attribution {
-  position: relative;
-  z-index: var(--z-controls) !important;
-}
-
-@media (max-width: 680px) {
-  .leaflet-bottom.leaflet-right,
-  .leaflet-bottom.leaflet-left {
-    bottom: 72px !important;
-  }
-}
+/* ─── LEAFLET ATTRIBUTION — repositioned via JS (AttributionFix in MapView) ─ */
 
 /* ─── HERO HINT PILL — responsive text ───────────────────────────────────── */
 
