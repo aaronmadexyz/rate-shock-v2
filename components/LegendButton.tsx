@@ -101,8 +101,8 @@ export default function LegendButton() {
         }}
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <circle cx="8" cy="8" r="6.5" stroke="#9A998F" strokeWidth="1.3"/>
-          <path d="M8 7.5v4M8 5.5v.01" stroke="#9A998F" strokeWidth="1.4" strokeLinecap="round"/>
+          <circle cx="8" cy="8" r="6.5" stroke="#767670" strokeWidth="1.3"/>
+          <path d="M8 7.5v4M8 5.5v.01" stroke="#767670" strokeWidth="1.4" strokeLinecap="round"/>
         </svg>
       </button>
 
@@ -136,7 +136,7 @@ export default function LegendButton() {
               fontWeight:    500,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
-              color:         '#9A998F',
+              color:         'var(--n-400)',
               marginBottom:  8,
             }}>
               Envelope size

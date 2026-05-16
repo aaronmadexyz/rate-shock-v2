@@ -47,7 +47,7 @@ export default function MapLegend() {
         fontWeight:    500,
         letterSpacing: '0.06em',
         textTransform: 'uppercase',
-        color:         '#9A998F',
+        color:         'var(--n-400)',
         marginBottom:  8,
       }}>
         Envelope size

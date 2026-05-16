@@ -57,7 +57,7 @@ function buildIcon(fill: string, seal: string, scale: number, duration = 0, dela
   const html =
     `<div class="env-hover-wrap" style="display:inline-block;transform-origin:bottom center">` +
     `<div style="width:${W}px;height:${H}px;transform:scale(${scale.toFixed(3)});transform-origin:bottom center;overflow:visible">` +
-    `<div class="envelope-marker" style="${bobStyle}">` +
+    `<div class="envelope-marker" style="will-change:transform;${bobStyle}">` +
     `<svg width="${W}" height="${H}" viewBox="0 0 40 28" fill="none" style="display:block;overflow:visible">` +
     `<rect x="0.5" y="0.5" width="39" height="27" rx="2.5" fill="${fill}" stroke="#D4D3CE" stroke-width="0.8"/>` +
     `<polygon points="0,0 40,0 20,15" fill="#E8E4DD" opacity="0.8"/>` +
@@ -193,11 +193,11 @@ function getContextLine(
   const rate = s.rate_change_pct
   if (!stats || stats.count < 3 || rate == null) {
     const n = stats?.count ?? 1
-    return { text: `One of ${n} report${n !== 1 ? 's' : ''} here`, color: '#9A998F' }
+    return { text: `One of ${n} report${n !== 1 ? 's' : ''} here`, color: 'var(--n-400)' }
   }
   if (rate > stats.median) return { text: `↑ Above ${areaLabel} average`, color: '#B33C28' }
   if (rate < stats.median) return { text: `↓ Below ${areaLabel} average`, color: '#2A7D41' }
-  return { text: 'Around the area average', color: '#9A998F' }
+  return { text: 'Around the area average', color: 'var(--n-400)' }
 }
 
 function pctString(pct: number | null): string {
@@ -272,7 +272,7 @@ function HoverPreview({
       }}>
         {pct}
       </span>
-      <span style={{ fontSize: 12, fontWeight: 400, color: '#9A998F', marginLeft: 8 }}>
+      <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--n-400)', marginLeft: 8 }}>
         {label}
       </span>
       <span style={{
@@ -333,14 +333,14 @@ function PanelContent({
             <div style={{ fontSize: 13, fontWeight: 500, color: '#1A1917', lineHeight: 1.2 }}>
               {displayLabel}
             </div>
-            <div style={{ fontSize: 11, color: '#9A998F', fontWeight: 400, marginTop: 2 }}>
+            <div style={{ fontSize: 11, color: 'var(--n-400)', fontWeight: 400, marginTop: 2 }}>
               {sub.provider} · {sub.insurance_type === 'auto' ? 'Auto' : 'Home'}
             </div>
           </div>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close panel">
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
               <path d="M1.5 1.5l7 7M8.5 1.5l-7 7"
-                    stroke="#9A998F" strokeWidth="1.5" strokeLinecap="round"/>
+                    stroke="#767670" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
         </div>

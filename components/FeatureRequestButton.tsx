@@ -143,7 +143,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
     border:       '1px solid #E2E1DD',
     boxShadow:    '0 8px 28px rgba(26,25,23,.1), 0 2px 6px rgba(26,25,23,.05)',
     padding:      20,
-    zIndex:       500,
+    zIndex:       600,
     transformOrigin: 'top right',
   }
 
@@ -168,7 +168,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
               position:   'fixed',
               inset:      0,
               background: 'rgba(26,25,23,.4)',
-              zIndex:     400,
+              zIndex:     500,
             }}
           />
         )}
@@ -219,7 +219,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                 <p style={{
                   fontFamily:  "'Inter', system-ui, sans-serif",
                   fontSize:    13,
-                  color:       '#7C7B72',
+                  color:       'var(--n-500)',
                   textAlign:   'center',
                   lineHeight:  1.6,
                   marginTop:   6,
@@ -246,7 +246,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                     <p style={{
                       fontFamily: "'Inter', system-ui, sans-serif",
                       fontSize:   12,
-                      color:      '#9A998F',
+                      color:      'var(--n-400)',
                       marginTop:  2,
                     }}>
                       These are the top asks so far.
@@ -265,7 +265,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                       borderRadius:   '50%',
                       border:         '1px solid #EEEDEA',
                       background:     '#FFFFFF',
-                      color:          '#9A998F',
+                      color:          'var(--n-400)',
                       cursor:         'pointer',
                       flexShrink:     0,
                       marginLeft:     8,
@@ -282,7 +282,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                       fontFamily: "'IBM Plex Mono', monospace",
                       fontSize: 10, fontWeight: 500,
                       letterSpacing: '0.06em', textTransform: 'uppercase',
-                      color: '#9A998F', marginBottom: 8,
+                      color: 'var(--n-400)', marginBottom: 8,
                     }}>
                       Most requested
                     </div>

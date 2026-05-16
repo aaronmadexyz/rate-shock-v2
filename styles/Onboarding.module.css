@@ -4,7 +4,7 @@
   background: rgba(26, 25, 23, 0.52);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
-  z-index: 400;
+  z-index: var(--z-overlay-bg);
 }
 
 .card {
@@ -12,7 +12,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 500;
+  z-index: var(--z-overlay);
   width: 90%;
   max-width: 400px;
   background: #FFFFFF;
@@ -80,7 +80,7 @@
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #9A998F;
+  color: var(--n-400);
   text-align: center;
 }
 
@@ -154,7 +154,7 @@
   border: none;
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 13px;
-  color: #9A998F;
+  color: var(--n-400);
   cursor: pointer;
   text-align: center;
   padding: 4px;

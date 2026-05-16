@@ -22,8 +22,8 @@
   --n-150: #E2E1DD;
   --n-200: #D4D3CE;
   --n-300: #B8B7B1;
-  --n-400: #9A998F;
-  --n-500: #7C7B72;
+  --n-400: #767670;
+  --n-500: #706F67;
   --n-600: #5E5D56;
   --n-700: #43423D;
   --n-800: #2C2B27;
@@ -97,6 +97,7 @@
   --sp-3:  12px;
   --sp-4:  16px;
   --sp-5:  20px;
+  --sp-7:  28px;
   --sp-6:  24px;
   --sp-8:  32px;
   --sp-10: 40px;
@@ -118,8 +119,27 @@
   --z-nav:      100;
   --z-panel:    200;
   --z-tooltip:  300;
-  --z-backdrop: 400;
-  --z-modal:    500;
+  --z-overlay-bg: 400;
+  --z-overlay:    450;
+  --z-backdrop:   500;
+  --z-modal:      600;
+  --z-alert:      700;
+
+  /* ── SEMANTIC ALIASES ───────────────────────────────────────────────── */
+  --text-primary:   var(--n-900);
+  --text-secondary: var(--n-500);
+  --text-tertiary:  var(--n-400);
+  --text-disabled:  var(--n-300);
+  --text-inverse:   var(--n-0);
+
+  --surface-primary:   var(--n-0);
+  --surface-secondary: var(--n-25);
+  --surface-tertiary:  var(--n-50);
+  --surface-raised:    var(--n-0);
+
+  --border-default: var(--n-150);
+  --border-strong:  var(--n-200);
+  --border-subtle:  var(--n-100);
 }
 
 /* ─── NAV ────────────────────────────────────────────────────────────────── */
@@ -144,9 +164,26 @@ body {
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
   color: var(--n-900);
   background-color: var(--tod-bg, #F5F4F1);
   transition: background-color 600ms ease;
+}
+
+p {
+  margin-bottom: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 /* ─── UTILITY CLASSES NOT COVERED BY TAILWIND ───────────────────────────── */
@@ -308,7 +345,7 @@ body {
   display: block;
   font-size: 11px;
   font-weight: 500;
-  color: #9A998F;
+  color: var(--n-400);
   margin-bottom: 6px;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -316,11 +353,29 @@ body {
   float: none;
 }
 
-/* ─── CONSENT CHECKBOX FOCUS RING ───────────────────────────────────────── */
+/* ─── FOCUS RINGS ────────────────────────────────────────────────────────── */
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #636AC5;
+  outline-offset: 2px;
+}
+
+button:focus-visible {
+  outline: 2px solid #636AC5;
+  outline-offset: 3px;
+  border-radius: inherit;
+}
+
+input[type="range"]:focus-visible {
+  outline: 2px solid #636AC5;
+  outline-offset: 3px;
+}
 
 input[type="checkbox"]:focus-visible + div,
 input[type="checkbox"]:focus + div {
-  outline: 3px solid #636AC5;
+  outline: 2px solid #636AC5;
   outline-offset: 2px;
 }
 
@@ -339,7 +394,7 @@ input[type="checkbox"]:focus + div {
   background:
     repeating-linear-gradient(
       90deg,
-      #9A998F 0px, #9A998F 1px,
+      #767670 0px, #767670 1px,
       transparent 1px, transparent 3px
     ) center / 12px 8px no-repeat,
     #FFFFFF;

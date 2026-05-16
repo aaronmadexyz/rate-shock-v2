@@ -84,7 +84,7 @@ const sectionLabel: React.CSSProperties = {
   fontWeight: 500,
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
-  color: '#9A998F',
+  color: 'var(--n-400)',
   display: 'block',
   margin: '18px 0 10px',
 }
@@ -305,7 +305,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
               onClick={onClose}
               style={{
                 position: 'fixed', inset: 0,
-                zIndex: 149,
+                zIndex: 400,
                 background: 'rgba(26,25,23,0.28)',
               }}
             />
@@ -326,7 +326,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
               style={{
                 position: 'fixed',
                 bottom: 0, left: 0, right: 0,
-                zIndex: 150,
+                zIndex: 450,
                 background: '#FFFFFF',
                 borderRadius: '20px 20px 0 0',
                 boxShadow: '0 -4px 32px rgba(26,25,23,.1), 0 -1px 4px rgba(26,25,23,.05)',
@@ -430,7 +430,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                       onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}
                     >
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-                        <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="#9A998F" strokeWidth="1.5" strokeLinecap="round"/>
+                        <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="#767670" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
                     </button>
                   </div>
@@ -522,7 +522,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                         }}>
                           {filters.rMin}%
                         </span>
-                        <span style={{ fontSize: 13, color: '#9A998F' }}>to</span>
+                        <span style={{ fontSize: 13, color: 'var(--n-400)' }}>to</span>
                         <span style={{
                           fontSize: 22, fontWeight: 600, color: '#1A1917',
                           letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums',
@@ -561,7 +561,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                         {['0%', '10%', '20%', '30%', '40%', '50%+'].map(l => (
                           <span key={l} style={{
                             fontFamily: "'IBM Plex Mono', monospace",
-                            fontSize: 10, color: '#9A998F',
+                            fontSize: 10, color: 'var(--n-400)',
                           }}>
                             {l}
                           </span>
@@ -584,7 +584,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                         }}>
                           Verified posts only
                         </div>
-                        <div style={{ fontSize: 11, color: '#9A998F', marginTop: 2, lineHeight: 1.4 }}>
+                        <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 2, lineHeight: 1.4 }}>
                           Show only posts backed by a renewal letter
                         </div>
                       </div>

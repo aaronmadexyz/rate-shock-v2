@@ -27,7 +27,7 @@ export class MapErrorBoundary extends React.Component<Props, State> {
             gap:            8,
           }}
         >
-          <p style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, color: '#7C7B72', margin: 0 }}>
+          <p style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, color: 'var(--n-500)', margin: 0 }}>
             The map failed to load.
           </p>
           <button

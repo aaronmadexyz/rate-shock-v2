@@ -10,8 +10,8 @@ export const TOKENS = {
     n150: '#E2E1DD',
     n200: '#D4D3CE',
     n300: '#B8B7B1',
-    n400: '#9A998F',
-    n500: '#7C7B72',
+    n400: '#767670',
+    n500: '#706F67',
     n600: '#5E5D56',
     n700: '#43423D',
     n800: '#2C2B27',
@@ -73,6 +73,7 @@ export const TOKENS = {
     sp3:  12,
     sp4:  16,
     sp5:  20,
+    sp7:  28,
     sp6:  24,
     sp8:  32,
     sp10: 40,
@@ -172,8 +173,11 @@ export const TOKENS = {
     zNav:      100,
     zPanel:    200,
     zTooltip:  300,
-    zBackdrop: 400,
-    zModal:    500,
+    zOverlayBg: 400,
+    zOverlay:   450,
+    zBackdrop:  500,
+    zModal:     600,
+    zAlert:     700,
   },
 } as const;
 
@@ -182,3 +186,24 @@ export type TokenSpacing  = typeof TOKENS.spacing;
 export type TokenRadius   = typeof TOKENS.radius;
 export type TokenShadows  = typeof TOKENS.shadows;
 export type TokenZIndex   = typeof TOKENS.zIndex;
+
+export const SEMANTIC = {
+  text: {
+    primary:   TOKENS.colors.n900,
+    secondary: TOKENS.colors.n500,
+    tertiary:  TOKENS.colors.n400,
+    disabled:  TOKENS.colors.n300,
+    inverse:   TOKENS.colors.n0,
+  },
+  surface: {
+    primary:   TOKENS.colors.n0,
+    secondary: TOKENS.colors.n25,
+    tertiary:  TOKENS.colors.n50,
+    raised:    TOKENS.colors.n0,
+  },
+  border: {
+    default: TOKENS.colors.n150,
+    strong:  TOKENS.colors.n200,
+    subtle:  TOKENS.colors.n100,
+  },
+} as const;

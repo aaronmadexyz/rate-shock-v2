@@ -75,8 +75,8 @@ function faceSvgHtml(s: number): string {
 
 function sliderLabel(val: number, mode: 'pct' | 'dol'): { text: string; color: string } {
   const pct = mode === 'pct' ? val : (val / 2000) * 50
-  if (pct <= 4)  return { text: 'Below average · Most Ontario renewals are higher', color: '#9A998F' }
-  if (pct <= 9)  return { text: 'Around the Ontario average', color: '#9A998F' }
+  if (pct <= 4)  return { text: 'Below average · Most Ontario renewals are higher', color: 'var(--n-400)' }
+  if (pct <= 9)  return { text: 'Around the Ontario average', color: 'var(--n-400)' }
   if (pct <= 16) return { text: 'Above the Ontario average', color: '#AD7710' }
   if (pct <= 24) return { text: 'Significantly above average', color: '#AD7710' }
   if (pct <= 34) return { text: 'Well above average · Worth verifying this', color: '#B33C28' }
@@ -111,13 +111,13 @@ function medianOf(values: number[]): number | null {
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const LABEL_STYLE: React.CSSProperties = {
-  display: 'block', fontSize: 11, fontWeight: 500, color: '#9A998F',
+  display: 'block', fontSize: 11, fontWeight: 500, color: 'var(--n-400)',
   marginBottom: 6, letterSpacing: '.04em', textTransform: 'uppercase',
 }
 
 const SB_STYLE: React.CSSProperties = {
   width: 40, height: 40, border: 'none', background: '#FFFFFF',
-  cursor: 'pointer', fontSize: 17, color: '#9A998F',
+  cursor: 'pointer', fontSize: 17, color: 'var(--n-400)',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   transition: 'background .12s', fontFamily: "'Inter', system-ui, sans-serif",
   flexShrink: 0, lineHeight: 1, padding: 0,
@@ -883,7 +883,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
           ? `${fsaCount} neighbour${fsaCount === 1 ? '' : 's'} in ${areaLabel || fsa} have shared.`
           : `${fsaCount} renewals on the map for ${areaLabel || fsa}.`
       ) : fsa.length >= 1 ? areaLabel : ''
-  const fsaHintColor = fsaHintIsLoading ? '#9A998F' : '#4A50B0'
+  const fsaHintColor = fsaHintIsLoading ? 'var(--n-400)' : '#4A50B0'
 
   // ── Comparison card ──────────────────────────────────────────────────────────
   const daysRemaining = 21
@@ -907,7 +907,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
           {/* ── Backdrop ── */}
           <motion.div
             key="srm-backdrop"
-            style={{ position: 'fixed', inset: 0, background: 'rgba(26,25,23,0.46)', zIndex: 400 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(26,25,23,0.46)', zIndex: 500 }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -936,7 +936,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               borderRadius: '20px 20px 0 0',
               border:       '1px solid #E2E1DD',
               boxShadow:    '0 8px 32px rgba(26,25,23,.12), 0 2px 8px rgba(26,25,23,.06)',
-              zIndex:       500,
+              zIndex:       600,
               display:      'flex',
               flexDirection:'column',
               overflow:     'hidden',
@@ -950,7 +950,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               borderRadius: 20,
               border:       '1px solid #E2E1DD',
               boxShadow:    '0 8px 32px rgba(26,25,23,.12), 0 2px 8px rgba(26,25,23,.06)',
-              zIndex:       500,
+              zIndex:       600,
               display:      'flex',
               flexDirection:'column',
               maxHeight:    'calc(100vh - 48px)',
@@ -993,7 +993,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 aria-label="Close modal"
               >
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-                  <path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke="#9A998F" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke="#767670" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </button>
             </div>
@@ -1026,7 +1026,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
                     fontSize: 10, fontWeight: 500, letterSpacing: '0.04em',
-                    color: '#9A998F', textTransform: 'uppercase', marginLeft: 4,
+                    color: 'var(--n-400)', textTransform: 'uppercase', marginLeft: 4,
                   }}
                 >
                   {step === 1 ? '1 of 2' : '2 of 2'}
@@ -1124,7 +1124,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           Please enter your 3-character FSA to continue
                         </p>
                       )}
-                      <p style={{ fontSize: 11, color: '#9A998F', marginTop: 4, marginBottom: 16, display: 'flex', alignItems: 'flex-start', gap: 5, lineHeight: 1.5 }}>
+                      <p style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 4, marginBottom: 16, display: 'flex', alignItems: 'flex-start', gap: 5, lineHeight: 1.5 }}>
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }}>
                           <circle cx="6" cy="6" r="5" stroke="#B8B7B1" strokeWidth="1"/>
                           <path d="M6 5.5v3" stroke="#B8B7B1" strokeWidth="1.2" strokeLinecap="round"/>
@@ -1148,7 +1148,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               flex: 1, padding: '11px 8px', borderRadius: 10, fontSize: 13, fontWeight: 500,
                               border: `1.5px solid ${insType === t ? '#1A1917' : '#EEEDEA'}`,
                               background: insType === t ? '#1A1917' : '#FFFFFF',
-                              color: insType === t ? '#FFFFFF' : '#7C7B72',
+                              color: insType === t ? '#FFFFFF' : 'var(--n-500)',
                               cursor: 'pointer', transition: 'all .2s cubic-bezier(.16,1,.3,1)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                               fontFamily: "'Inter', system-ui, sans-serif",
@@ -1242,7 +1242,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             if (filtered.length === 0) {
                               return (
                                 <p style={{
-                                  fontSize: 12, color: '#9A998F', textAlign: 'center',
+                                  fontSize: 12, color: 'var(--n-400)', textAlign: 'center',
                                   padding: '8px 0', fontStyle: 'italic', width: '100%', margin: 0,
                                 }}>
                                   No providers match &ldquo;{provSearch}&rdquo;
@@ -1261,7 +1261,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                   padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
                                   border: `1px solid ${provider === p ? '#1A1917' : '#EEEDEA'}`,
                                   background: provider === p ? '#1A1917' : '#FFFFFF',
-                                  color: provider === p ? '#FFFFFF' : '#7C7B72',
+                                  color: provider === p ? '#FFFFFF' : 'var(--n-500)',
                                   cursor: 'pointer', transition: 'all .15s',
                                   fontFamily: "'Inter', system-ui, sans-serif",
                                 }}
@@ -1293,7 +1293,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               onClick={() => switchMode(m)}
                               style={{
                                 padding: '4px 14px', borderRadius: 6, fontSize: 12, fontWeight: 500,
-                                border: 'none', cursor: 'pointer', color: mode === m ? '#1A1917' : '#9A998F',
+                                border: 'none', cursor: 'pointer', color: mode === m ? '#1A1917' : 'var(--n-400)',
                                 background: mode === m ? '#FFFFFF' : 'transparent',
                                 boxShadow: mode === m ? '0 1px 2px rgba(0,0,0,.08)' : 'none',
                                 transition: 'all .15s', fontFamily: "'Inter', system-ui, sans-serif",
@@ -1363,7 +1363,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               {n === 3 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Neutral face</title><circle cx="17" cy="17" r="15" fill="#D49316"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round"/></svg>}
                               {n === 4 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Sad face</title><circle cx="17" cy="17" r="15" fill="#E87460"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 24Q17 20 22 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
                               {n === 5 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Very sad face</title><circle cx="17" cy="17" r="15" fill="#D4503A"/><circle cx="12" cy="13" r="2" fill="white"/><circle cx="22" cy="13" r="2" fill="white"/><path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                              <span aria-hidden="true" style={{ fontSize: 10, color: '#9A998F', textAlign: 'center', lineHeight: 1.3 }}>
+                              <span aria-hidden="true" style={{ fontSize: 10, color: 'var(--n-400)', textAlign: 'center', lineHeight: 1.3 }}>
                                 {n === 1 ? <>Very<br/>fair</> : n === 5 ? <>Very<br/>unfair</> : SENT_LABELS[n]}
                               </span>
                             </button>
@@ -1439,7 +1439,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             </svg>
                           )}
                         </div>
-                        <p style={{ fontSize: 12, color: '#7C7B72', lineHeight: 1.55, margin: 0 }}>
+                        <p style={{ fontSize: 12, color: 'var(--n-500)', lineHeight: 1.55, margin: 0 }}>
                           I confirm this information is accurate to the best of my knowledge. I understand my submission will be published anonymously and will never be sold or used for commercial purposes.
                         </p>
                       </label>
@@ -1548,15 +1548,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           <div id="cmpYours" aria-live="off" style={{ fontSize: 22, fontWeight: 600, color: '#1A1917', letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>
                             {cntYou}%
                           </div>
-                          <div style={{ fontSize: 10, color: '#9A998F', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>you paid</div>
+                          <div style={{ fontSize: 10, color: 'var(--n-400)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>you paid</div>
                           <div style={{ fontSize: 10, color: '#B8B7B1' }}>your renewal</div>
                         </div>
                         {/* Area column */}
                         <div style={{ padding: '14px 12px', textAlign: 'center', borderRight: '1px solid #EEEDEA' }}>
-                          <div id="cmpArea" aria-live="off" style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', color: compLoading ? '#D4D3CE' : (hasLimitedData ? '#9A998F' : (hasAreaData ? '#1A1917' : '#D4D3CE')) }}>
+                          <div id="cmpArea" aria-live="off" style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', color: compLoading ? '#D4D3CE' : (hasLimitedData ? 'var(--n-400)' : (hasAreaData ? '#1A1917' : '#D4D3CE')) }}>
                             {compLoading ? '–' : hasAreaData ? `${cntNbr}%` : hasLimitedData ? `${Math.round(areaMed!)}%*` : '–'}
                           </div>
-                          <div style={{ fontSize: 10, color: '#9A998F', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>your area</div>
+                          <div style={{ fontSize: 10, color: 'var(--n-400)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>your area</div>
                           <div style={{ fontSize: 10, color: '#B8B7B1' }}>
                             {compLoading ? 'loading…' : hasAreaData ? 'area median' : hasLimitedData ? 'limited data' : 'no area data yet'}
                           </div>
@@ -1566,13 +1566,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           <div id="cmpOnt" aria-live="off" style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', color: compLoading || ontMed === null ? '#D4D3CE' : '#1A1917' }}>
                             {compLoading ? '–' : ontMed !== null ? `${cntOnt}%` : '–'}
                           </div>
-                          <div style={{ fontSize: 10, color: '#9A998F', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>ontario</div>
+                          <div style={{ fontSize: 10, color: 'var(--n-400)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>ontario</div>
                           <div style={{ fontSize: 10, color: '#B8B7B1' }}>province-wide</div>
                         </div>
                       </div>
                       {hasAreaData && !compLoading && (
                         <div style={{ padding: '10px 14px', borderTop: '1px solid #EEEDEA', background: '#FAFAF8' }}>
-                          <p style={{ fontSize: 12, color: '#7C7B72', lineHeight: 1.5 }}>
+                          <p style={{ fontSize: 12, color: 'var(--n-500)', lineHeight: 1.5 }}>
                             {nbrAbove ? (
                               <><strong style={{ fontWeight: 600, color: '#1A1917' }}>{provider || 'Other'} customers in your area are typically seeing lower increases.</strong>{' '}Yours is on the higher end — worth a closer look.</>
                             ) : (
@@ -1592,13 +1592,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           style={{
                             fontFamily: "'IBM Plex Mono', monospace",
                             fontSize: 11, fontWeight: 500,
-                            color: '#9A998F', cursor: 'pointer',
+                            color: 'var(--n-400)', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', gap: 4,
                             background: 'none', border: 'none', padding: 0,
                             transition: 'color 150ms',
                           }}
                           onMouseEnter={e => (e.currentTarget.style.color = '#5E5D56')}
-                          onMouseLeave={e => (e.currentTarget.style.color = '#9A998F')}
+                          onMouseLeave={e => (e.currentTarget.style.color = 'var(--n-400)')}
                           onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
                           onMouseUp={e => (e.currentTarget.style.transform = '')}
                         >
@@ -1733,12 +1733,12 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           style={{
                             fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, fontWeight: 500,
                             padding: '6px 16px', borderRadius: 9999,
-                            border: 'none', background: 'none', color: '#9A998F',
+                            border: 'none', background: 'none', color: 'var(--n-400)',
                             cursor: 'pointer', transition: 'background .15s, color .15s',
                             display: 'block', width: '100%', textAlign: 'center',
                           }}
                           onMouseEnter={e => { e.currentTarget.style.background = '#F5F4F1'; e.currentTarget.style.color = '#5E5D56' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#9A998F' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--n-400)' }}
                           onMouseDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)' }}
                           onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = '' }}
                         >Skip for now</button>
@@ -1768,7 +1768,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
                       padding: '11px 18px', borderRadius: 999,
                       border: '1px solid #D4D3CE', background: '#FFFFFF', cursor: 'pointer',
-                      color: '#7C7B72', transition: 'background .15s, transform .1s', whiteSpace: 'nowrap',
+                      color: 'var(--n-500)', transition: 'background .15s, transform .1s', whiteSpace: 'nowrap',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = '#F5F4F1')}
                     onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}

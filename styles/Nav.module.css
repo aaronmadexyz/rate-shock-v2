@@ -121,7 +121,7 @@
 
 .brandSub {
   font-size: 11px;
-  color: #9A998F;
+  color: var(--n-400);
   font-weight: 400;
   line-height: 1;
   white-space: nowrap;
@@ -157,7 +157,7 @@
   transform: translateY(-50%);
   pointer-events: none;
   display: flex;
-  color: #9A998F;
+  color: var(--n-400);
 }
 
 .searchInput {
@@ -491,7 +491,7 @@
   top: 80px;
   left: 0;
   right: 0;
-  z-index: 99;
+  z-index: var(--z-panel);
   pointer-events: all;
   overflow: hidden;
 }
@@ -545,7 +545,7 @@
 
 .drawerStatus {
   font-size: 12px;
-  color: #9A998F;
+  color: var(--n-400);
   text-align: center;
   padding: 6px 4px 2px;
   line-height: 1.5;

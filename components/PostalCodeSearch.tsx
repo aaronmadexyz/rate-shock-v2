@@ -33,7 +33,7 @@ async function fetchFsaCount(fsa: string): Promise<number> {
 }
 
 function SearchSvg({ active }: { active?: boolean }) {
-  const color = active ? '#4A50B0' : '#9A998F'
+  const color = active ? '#4A50B0' : 'var(--n-400)'
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <circle cx="7" cy="7" r="4.5" stroke={color} strokeWidth="1.3"/>

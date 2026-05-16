@@ -44,14 +44,14 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
           <ProfilesIcon />
           <span style={{
             fontFamily: "'Inter', system-ui, sans-serif",
-            fontSize: 12, fontWeight: 500, color: '#7C7B72',
+            fontSize: 12, fontWeight: 500, color: 'var(--n-500)',
           }}>
             Not enough similar profiles yet
           </span>
         </div>
         <p style={{
           fontFamily: "'Inter', system-ui, sans-serif",
-          fontSize: 11, color: '#9A998F', lineHeight: 1.5, margin: 0,
+          fontSize: 11, color: 'var(--n-400)', lineHeight: 1.5, margin: 0,
         }}>
           Need 8+ to build a cohort. Showing all{' '}
           {profile?.insurance_type ?? ''} renewals.
@@ -85,7 +85,7 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
         <ProfilesIcon active />
         <span style={{
           fontFamily:    "'Inter', system-ui, sans-serif",
-          fontSize:      10, fontWeight: 500, color: '#9A998F',
+          fontSize:      10, fontWeight: 500, color: 'var(--n-400)',
           textTransform: 'uppercase', letterSpacing: '.04em',
         }}>
           {tierLabel}
@@ -102,7 +102,7 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
         </span>
         <span style={{
           fontFamily: "'Inter', system-ui, sans-serif",
-          fontSize:   12, color: '#9A998F',
+          fontSize:   12, color: 'var(--n-400)',
         }}>
           median · {result.count} profiles
         </span>
@@ -116,7 +116,7 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
       {tierNote && (
         <p style={{
           fontFamily: "'Inter', system-ui, sans-serif",
-          fontSize:   11, color: '#9A998F', lineHeight: 1.5,
+          fontSize:   11, color: 'var(--n-400)', lineHeight: 1.5,
           marginTop:  6, marginBottom: 0,
         }}>
           {tierNote}
