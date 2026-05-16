@@ -10,7 +10,7 @@ import lazyLoad from 'next/dynamic'
 import type { Map as LeafletMap } from 'leaflet'
 import Nav from '@/components/Nav'
 import MapControls from '@/components/MapControls'
-import FilterSheet, { countFilters } from '@/components/FilterSheet'
+import { countFilters } from '@/components/FilterSheet'
 import type { FilterState } from '@/lib/types'
 import ShareRenewalModal from '@/components/ShareRenewalModal'
 import FeatureRequestButton from '@/components/FeatureRequestButton'
@@ -181,7 +181,10 @@ export default function Page() {
         <div className={mcStyles.bottomLeft}>
           <MapControls
             activeCount={activeFilterCount}
-            onClick={() => setFilterOpen(true)}
+            onClick={() => setFilterOpen(f => !f)}
+            isFilterOpen={filterOpen}
+            onFilterClose={() => setFilterOpen(false)}
+            onFilterChange={handleFilterChange}
             hasSubmission={hasSubmission}
             likeMeMode={likeMeMode}
             onLikeMeToggle={handleLikeMeToggle}
@@ -193,13 +196,6 @@ export default function Page() {
           <LegendButton />
         </div>
       </div>
-
-      {/* Filter sheet */}
-      <FilterSheet
-        isOpen={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        onChange={handleFilterChange}
-      />
 
       {/* Feature request modal — controlled from nav lightbulb */}
       <FeatureRequestButton isOpen={frOpen} onClose={() => setFrOpen(false)} />

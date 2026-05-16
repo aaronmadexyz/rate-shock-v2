@@ -19,6 +19,10 @@
   position: relative;
 }
 
+.filterWrapper {
+  position: relative;
+}
+
 .bottomRight {
   display: flex;
   align-items: center;

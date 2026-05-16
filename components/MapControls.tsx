@@ -4,7 +4,10 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { springs } from '@/lib/springs'
 import type { UserProfile } from '@/lib/types'
+import type { FilterState } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
+import FilterSheet from '@/components/FilterSheet'
+import styles from '@/styles/MapControls.module.css'
 
 const SH_SM = '0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04)'
 
@@ -129,6 +132,9 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
 interface MapControlsProps {
   activeCount:    number
   onClick:        () => void
+  isFilterOpen:   boolean
+  onFilterClose:  () => void
+  onFilterChange: (f: FilterState) => void
   onCtaClick?:    () => void
   mapRef?:        React.MutableRefObject<unknown>
   hasSubmission:  boolean
@@ -139,7 +145,7 @@ interface MapControlsProps {
 }
 
 function MapControls({
-  activeCount, onClick,
+  activeCount, onClick, isFilterOpen, onFilterClose, onFilterChange,
   hasSubmission, likeMeMode, onLikeMeToggle, userProfile, cohortResult,
 }: MapControlsProps) {
   const isActive      = activeCount > 0
@@ -188,48 +194,58 @@ function MapControls({
         )}
       </AnimatePresence>
 
-      {/* Filter pill */}
-      <motion.button
-        type="button"
-        onClick={onClick}
-        style={{
-          fontFamily:      "'Inter', system-ui, sans-serif",
-          fontSize:        13,
-          fontWeight:      500,
-          letterSpacing:   '-0.01em',
-          lineHeight:      1,
-          cursor:          'pointer',
-          display:         'inline-flex',
-          alignItems:      'center',
-          gap:             7,
-          height:          40,
-          padding:         '0 14px',
-          borderRadius:    9999,
-          border:          isActive ? '1px solid #B0B4E6' : '1px solid #D4D3CE',
-          backgroundColor: isActive ? '#EEEFFA' : '#FFFFFF',
-          color:           isActive ? '#3A3F8F' : '#2C2B27',
-          boxShadow:       SH_SM,
-        }}
-        whileHover={isActive ? {} : { backgroundColor: '#FAFAF8', borderColor: '#B8B7B1' }}
-        whileTap={{ scale: 0.97, transition: tapTransition }}
-      >
-        <FilterIcon />
-        Filter
-        {isActive && (
-          <span style={{
-            fontFamily:      "'IBM Plex Mono', monospace",
-            fontSize:        10,
+      {/* Filter pill + floating card — wrapped in position:relative for desktop card anchor */}
+      <div className={styles.filterWrapper}>
+        <FilterSheet
+          isOpen={isFilterOpen}
+          onClose={onFilterClose}
+          onChange={onFilterChange}
+        />
+        <motion.button
+          type="button"
+          onClick={onClick}
+          aria-expanded={isFilterOpen}
+          aria-haspopup="true"
+          aria-controls="filter-panel"
+          style={{
+            fontFamily:      "'Inter', system-ui, sans-serif",
+            fontSize:        13,
             fontWeight:      500,
-            lineHeight:      1.4,
-            backgroundColor: '#3A3F8F',
-            color:           '#FFFFFF',
-            padding:         '2px 6px',
-            borderRadius:    999,
-          }}>
-            {activeCount}
-          </span>
-        )}
-      </motion.button>
+            letterSpacing:   '-0.01em',
+            lineHeight:      1,
+            cursor:          'pointer',
+            display:         'inline-flex',
+            alignItems:      'center',
+            gap:             7,
+            height:          40,
+            padding:         '0 14px',
+            borderRadius:    9999,
+            border:          isActive ? '1px solid #B0B4E6' : '1px solid #D4D3CE',
+            backgroundColor: isActive ? '#EEEFFA' : '#FFFFFF',
+            color:           isActive ? '#3A3F8F' : '#2C2B27',
+            boxShadow:       SH_SM,
+          }}
+          whileHover={isActive ? {} : { backgroundColor: '#FAFAF8', borderColor: '#B8B7B1' }}
+          whileTap={{ scale: 0.97, transition: tapTransition }}
+        >
+          <FilterIcon />
+          Filter
+          {isActive && (
+            <span style={{
+              fontFamily:      "'IBM Plex Mono', monospace",
+              fontSize:        10,
+              fontWeight:      500,
+              lineHeight:      1.4,
+              backgroundColor: '#3A3F8F',
+              color:           '#FFFFFF',
+              padding:         '2px 6px',
+              borderRadius:    999,
+            }}>
+              {activeCount}
+            </span>
+          )}
+        </motion.button>
+      </div>
 
       {/* Like Me toggle — only after submission */}
       {hasSubmission && (
