@@ -7,7 +7,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 0 24px max(28px, env(safe-area-inset-bottom));
+  padding: 0 24px max(30px, calc(22px + env(safe-area-inset-bottom)));
   pointer-events: none;
 }
 
@@ -28,6 +28,40 @@
 
 @media (max-width: 680px) {
   .bottomBar {
-    padding: 0 16px max(20px, env(safe-area-inset-bottom));
+    padding: 0 16px max(26px, calc(22px + env(safe-area-inset-bottom)));
   }
+}
+
+/* ─── MAP ATTRIBUTION BAR ────────────────────────────────────────────────── */
+
+.attributionBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 22px;
+  z-index: 25;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-top: 1px solid rgba(26, 25, 23, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: rgba(26, 25, 23, 0.5);
+  pointer-events: all;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
+.attributionBar a {
+  color: rgba(26, 25, 23, 0.55);
+  text-decoration: none;
+}
+
+.attributionBar a:hover {
+  color: rgba(26, 25, 23, 0.85);
+  text-decoration: underline;
 }

@@ -428,23 +428,6 @@ input[type="checkbox"]:focus + div {
   }
 }
 
-/* ─── STATIC MAP ATTRIBUTION — centered, above Filter + ℹ control bar ───────── */
-
-.mapAttribution {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 15;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-@media (max-width: 680px) {
-  .mapAttribution {
-    bottom: 72px;
-  }
-}
 
 /* ─── HERO HINT PILL — responsive text ───────────────────────────────────── */
 
