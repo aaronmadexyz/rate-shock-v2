@@ -1610,6 +1610,26 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       </div>
                     )}
 
+                    {/* Area report link */}
+                    <div style={{ display: 'flex', justifyContent: 'center', margin: '-4px auto 12px' }}>
+                      <a
+                        href={`/area/${fsa.toLowerCase()}`}
+                        style={{
+                          display: 'block',
+                          fontSize: 12,
+                          fontWeight: 500,
+                          color: '#3A3F8F',
+                          textDecoration: 'none',
+                          marginTop: 6,
+                          fontFamily: "'Inter', system-ui, sans-serif",
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+                        onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
+                      >
+                        See your area&apos;s full report →
+                      </a>
+                    </div>
+
                     {/* Profiles Like Me discovery card */}
                     {showLikeMeCard && (
                       <motion.div
