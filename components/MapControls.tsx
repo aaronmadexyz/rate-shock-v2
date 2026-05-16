@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { springs } from '@/lib/springs'
 import type { UserProfile } from '@/lib/types'
@@ -144,13 +144,18 @@ interface MapControlsProps {
   cohortResult:   CohortResult | null
 }
 
+const NUDGE_SESSION_KEY = 'rateshock_filter_nudge_seen'
+
 function MapControls({
   activeCount, onClick, isFilterOpen, onFilterClose, onFilterChange,
   hasSubmission, likeMeMode, onLikeMeToggle, userProfile, cohortResult,
 }: MapControlsProps) {
-  const isActive      = activeCount > 0
+  const isActive       = activeCount > 0
   const prefersReduced = useReducedMotion()
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile,     setIsMobile]     = useState(false)
+  const [nudgeVisible, setNudgeVisible] = useState(false)
+  const [nudgeActive,  setNudgeActive]  = useState(false)
+  const nudgeTimeouts  = useRef<ReturnType<typeof setTimeout>[]>([])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 680px)')
@@ -159,6 +164,58 @@ function MapControls({
     mq.addEventListener('change', h)
     return () => mq.removeEventListener('change', h)
   }, [])
+
+  const cancelNudge = useCallback(() => {
+    nudgeTimeouts.current.forEach(clearTimeout)
+    nudgeTimeouts.current = []
+    setNudgeVisible(false)
+    setNudgeActive(false)
+    sessionStorage.setItem(NUDGE_SESSION_KEY, '1')
+  }, [])
+
+  // First-visit attention nudge sequence
+  useEffect(() => {
+    if (sessionStorage.getItem(NUDGE_SESSION_KEY)) return
+    const delay = window.innerWidth < 680 ? 5000 : 4500
+
+    const push = (fn: () => void, ms: number) => {
+      const id = setTimeout(fn, ms)
+      nudgeTimeouts.current.push(id)
+      return id
+    }
+
+    push(() => {
+      if (sessionStorage.getItem(NUDGE_SESSION_KEY)) return
+
+      // Part A — tooltip appears
+      setNudgeVisible(true)
+
+      // Part B — pill pulse at +200ms
+      push(() => {
+        setNudgeActive(true)
+        push(() => setNudgeActive(false), 900)
+      }, 200)
+
+      // Part C — tooltip exits at +2000ms
+      push(() => setNudgeVisible(false), 2000)
+
+      // Cleanup at +2800ms
+      push(() => {
+        sessionStorage.setItem(NUDGE_SESSION_KEY, '1')
+        nudgeTimeouts.current = []
+      }, 2800)
+    }, delay)
+
+    return () => {
+      nudgeTimeouts.current.forEach(clearTimeout)
+      nudgeTimeouts.current = []
+    }
+  }, []) // runs once on mount
+
+  const handleFilterClick = useCallback(() => {
+    if (nudgeVisible || nudgeActive || nudgeTimeouts.current.length > 0) cancelNudge()
+    onClick()
+  }, [nudgeVisible, nudgeActive, cancelNudge, onClick])
 
   // Correction 4: cohort card scales from bottom-left corner
   const cohortTransition = prefersReduced
@@ -169,6 +226,11 @@ function MapControls({
   const tapTransition = prefersReduced
     ? { duration: 0 }
     : TAP_SNAPPY
+
+  // Nudge tooltip transition — instant if reduced motion
+  const nudgeTransition = prefersReduced
+    ? { duration: 0 }
+    : { type: 'spring' as const, ...springs.responsive }
 
   return (
     <>
@@ -194,19 +256,80 @@ function MapControls({
         )}
       </AnimatePresence>
 
-      {/* Filter pill + floating card — wrapped in position:relative for desktop card anchor */}
+      {/* Filter pill + floating card + nudge — wrapped in position:relative */}
       <div className={styles.filterWrapper}>
         <FilterSheet
           isOpen={isFilterOpen}
           onClose={onFilterClose}
           onChange={onFilterChange}
         />
+
+        {/* First-visit attention nudge tooltip */}
+        <AnimatePresence>
+          {nudgeVisible && (
+            <motion.div
+              key="filter-nudge"
+              role="tooltip"
+              id="filter-nudge-tooltip"
+              style={{
+                position:      'absolute',
+                bottom:        'calc(100% + 10px)',
+                left:          0,
+                whiteSpace:    'nowrap',
+                pointerEvents: 'none',
+                zIndex:        460,
+                transformOrigin: 'bottom left',
+              }}
+              initial={{ opacity: 0, y: 4, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={prefersReduced
+                ? { opacity: 0, transition: { duration: 0.15 } }
+                : { opacity: 0, y: 4, scale: 0.97, transition: { duration: 0.15 } }}
+              transition={nudgeTransition}
+            >
+              <div style={{
+                background:   'var(--n-900)',
+                color:        'var(--n-0)',
+                fontFamily:   "'Inter', system-ui, sans-serif",
+                fontSize:     12,
+                fontWeight:   500,
+                padding:      '6px 12px',
+                borderRadius: 9999,
+                boxShadow:    '0 4px 12px rgba(26,25,23,.06), 0 1px 3px rgba(26,25,23,.04)',
+                display:      'flex',
+                alignItems:   'center',
+                gap:          6,
+                position:     'relative',
+              }}>
+                Filter by provider or rate
+                {/* Downward caret */}
+                <svg
+                  width="10" height="5" viewBox="0 0 10 5" fill="none"
+                  aria-hidden="true"
+                  style={{ position: 'absolute', bottom: -5, left: 20 }}
+                >
+                  <path d="M0 0L5 5L10 0" fill="var(--n-900)" />
+                </svg>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* sr-only live region — announces nudge to screen readers */}
+        <div aria-live="polite" className={styles.srOnly}>
+          {nudgeVisible
+            ? 'Tip: use Filter results to narrow the map by provider or rate increase'
+            : ''}
+        </div>
+
         <motion.button
           type="button"
-          onClick={onClick}
+          onClick={handleFilterClick}
           aria-expanded={isFilterOpen}
           aria-haspopup="true"
           aria-controls="filter-panel"
+          aria-describedby={nudgeVisible ? 'filter-nudge-tooltip' : undefined}
+          className={nudgeActive ? styles.nudgeActive : undefined}
           style={{
             fontFamily:      "'Inter', system-ui, sans-serif",
             fontSize:        13,
@@ -220,7 +343,9 @@ function MapControls({
             height:          40,
             padding:         '0 14px',
             borderRadius:    9999,
-            border:          isActive ? '1px solid #B0B4E6' : '1px solid #D4D3CE',
+            border:          nudgeActive
+              ? '1px solid #636AC5'
+              : isActive ? '1px solid #B0B4E6' : '1px solid #D4D3CE',
             backgroundColor: isActive ? '#EEEFFA' : '#FFFFFF',
             color:           isActive ? '#3A3F8F' : '#2C2B27',
             boxShadow:       SH_SM,
@@ -229,7 +354,8 @@ function MapControls({
           whileTap={{ scale: 0.97, transition: tapTransition }}
         >
           <FilterIcon />
-          Filter
+          <span className={styles.filterLabelFull}>Filter results</span>
+          <span className={styles.filterLabelShort}>Filter</span>
           {isActive && (
             <span style={{
               fontFamily:      "'IBM Plex Mono', monospace",
