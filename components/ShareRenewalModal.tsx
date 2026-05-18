@@ -233,6 +233,14 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const [rval, setRval]           = useState(480)
   const [prevPrem, setPrevPrem]   = useState<number | null>(null)
   const [prevPremError, setPrevPremError] = useState('')
+
+  // ── post-submit patch state (dollar-mode → add prevPrem later) ───────────────
+  const [submissionId, setSubmissionId]   = useState<string | null>(null)
+  const [dollarAmount, setDollarAmount]   = useState<number | null>(null)
+  const [patchDone, setPatchDone]         = useState(false)
+  const [patchLoading, setPatchLoading]   = useState(false)
+  const [patchError, setPatchError]       = useState('')
+  const patchInputRef = useRef<HTMLInputElement>(null)
   const [trackBg, setTrackBg]     = useState('linear-gradient(to right,#1A1917 24%,#D4D3CE 24%)')
   const [sent, setSent]           = useState(0)
   const [sentErr, setSentErr]     = useState(false)
@@ -381,6 +389,17 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
         setShowRestoreNotice(true)
       }
     } catch { /* ignore malformed draft */ }
+
+    // Restore pending dollar-patch state from a previous session
+    try {
+      const pendingMode   = localStorage.getItem('rateshock_submission_mode')
+      const pendingDollar = localStorage.getItem('rateshock_dollar_amount')
+      const pendingId     = localStorage.getItem('rateshock_submission_id')
+      if (pendingMode === 'dol' && pendingDollar && pendingId) {
+        setSubmissionId(pendingId)
+        setDollarAmount(parseInt(pendingDollar, 10))
+      }
+    } catch { /* ignore */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
@@ -445,6 +464,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     })
     setMode('dol'); setRval(480); updateTrack(480, 0, 2000)
     setPrevPrem(null); setPrevPremError('')
+    setSubmissionId(null); setDollarAmount(null)
+    setPatchDone(false); setPatchLoading(false); setPatchError('')
     setSent(0); setSentErr(false); setNote(''); setConsent(false)
     setSubmitting(false); setAnimDone(false); setShowVerify(false); setShowLikeMeCard(false)
     setShowRestoreNotice(false)
@@ -528,6 +549,73 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     const mn = 0
     const mx = mode === 'pct' ? 50 : 2000
     updateTrack(v, mn, mx)
+  }
+
+  // ── Dollar-patch: update row with calculated rate_change_pct ────────────────
+  async function patchWithPreviousPremium(prevPremVal: number): Promise<boolean> {
+    if (!submissionId || !dollarAmount || prevPremVal <= 0) return false
+    const pct = Math.round((dollarAmount / prevPremVal) * 100)
+    if (pct < 0 || pct > 200) return false
+    try {
+      const { error } = await supabase
+        .from('submissions')
+        .update({ rate_change_pct: pct, rate_change_dollar: null })
+        .eq('id', submissionId)
+      if (error) return false
+      try {
+        localStorage.removeItem('rateshock_dollar_amount')
+        localStorage.removeItem('rateshock_submission_id')
+        localStorage.removeItem('rateshock_submission_mode')
+      } catch { /* ignore */ }
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async function handlePatch() {
+    const rawVal     = patchInputRef.current?.value ?? ''
+    const prevPremVal = parseInt(rawVal, 10)
+    if (isNaN(prevPremVal) || prevPremVal <= 0) {
+      setPatchError('Please enter a valid previous premium amount')
+      return
+    }
+    const pct = dollarAmount ? Math.round((dollarAmount / prevPremVal) * 100) : 0
+    if (pct < 0 || pct > 200) {
+      setPatchError("That doesn't look right — check your previous premium amount")
+      return
+    }
+    setPatchLoading(true)
+    setPatchError('')
+    const success = await patchWithPreviousPremium(prevPremVal)
+    setPatchLoading(false)
+    if (!success) {
+      setPatchError("That doesn't look right — check your previous premium amount")
+      return
+    }
+    // Update local state so comparison card shows percentage
+    setPrevPrem(prevPremVal)
+    setPatchDone(true)
+    // Refresh comparison data now that a pct exists
+    const fsaUpper = fsa.toUpperCase()
+    ;(async () => {
+      try {
+        const [areaRes, ontRes] = await Promise.all([
+          supabase.from('submissions').select('rate_change_pct').eq('fsa', fsaUpper).not('rate_change_pct', 'is', null).limit(100),
+          supabase.from('submissions').select('rate_change_pct').not('rate_change_pct', 'is', null).limit(500),
+        ])
+        const areaPcts = (areaRes.data ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
+        const ontPcts  = (ontRes.data  ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
+        setAreaMed(medianOf(areaPcts))
+        setAreaMedCount(areaPcts.length)
+        setOntMed(medianOf(ontPcts))
+      } catch { /* non-critical */ }
+    })()
+    // Auto-dismiss card after 2000ms
+    setTimeout(() => {
+      setSubmissionId(null)
+      setDollarAmount(null)
+    }, 2000)
   }
 
   // ── Nav ─────────────────────────────────────────────────────────────────────
@@ -624,10 +712,28 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       created_at:         new Date().toISOString(),
     }
 
-    // Insert — fire-and-forget, does not block the animation
-    supabase.from('submissions').insert(payload).then(({ error }) => {
-      if (error) console.error('[ShareRenewalModal] Supabase insert error:', error.message)
-    })
+    // Insert — fire-and-forget; capture the returned ID for the dollar-patch flow
+    supabase
+      .from('submissions')
+      .insert(payload)
+      .select('id')
+      .single()
+      .then(({ data: inserted, error }) => {
+        if (error) {
+          console.error('[ShareRenewalModal] Supabase insert error:', error.message)
+          return
+        }
+        if (!inserted) return
+        setSubmissionId(inserted.id as string)
+        if (rateDollar !== null) {
+          setDollarAmount(rateDollar)
+          try {
+            localStorage.setItem('rateshock_submission_id', String(inserted.id))
+            localStorage.setItem('rateshock_submission_mode', 'dol')
+            localStorage.setItem('rateshock_dollar_amount', String(rateDollar))
+          } catch { /* ignore */ }
+        }
+      })
 
     // Fetch real comparison data in parallel — resolves well before comparison card appears
     safeRemoveItem(DRAFT_KEY)
@@ -934,6 +1040,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
   // Whether we have a percentage to compare (pct mode, or dollar mode with prevPrem calculated)
   const hasPct = mode === 'pct' || (mode === 'dol' && prevPrem !== null && prevPrem > 0)
+  // Show the "add previous premium" patch card in the success state
+  const showPremiumPatch = animDone && dollarAmount !== null && !!submissionId && !patchDone
   const userPctVal = mode === 'pct'
     ? Math.min(rval, 50)
     : (prevPrem !== null && prevPrem > 0)
@@ -1780,6 +1888,140 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         </div>
                       )}
                     </div>
+
+                    {/* Premium patch card — dollar-mode submissions without prevPrem */}
+                    <AnimatePresence>
+                      {(showPremiumPatch || patchDone) && submissionId && (
+                        <motion.div
+                          key="premiumPatchCard"
+                          role="region"
+                          aria-label="Add previous premium to unlock comparisons"
+                          initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.97 }}
+                          transition={prefersReduced
+                            ? { duration: 0 }
+                            : { type: 'spring', stiffness: 240, damping: 24, mass: 1.0, delay: 0.3 }}
+                          style={{
+                            background: 'var(--p-50)', border: '1px solid var(--p-200)',
+                            borderRadius: 12, padding: '14px 16px',
+                            marginBottom: 14, textAlign: 'left',
+                            transformOrigin: 'top center',
+                          }}
+                        >
+                          {patchDone ? (
+                            /* ── Success state ── */
+                            <div role="status" aria-live="polite" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+                                <circle cx="8" cy="8" r="7" stroke="var(--pos-600)" strokeWidth="1.3"/>
+                                <path d="M5 8l2.5 2.5L11 5.5" stroke="var(--pos-600)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--pos-600)', fontFamily: "'Inter', system-ui, sans-serif" }}>
+                                Done — your post is now fully comparable with percentage data.
+                              </span>
+                            </div>
+                          ) : (
+                            /* ── Default / input state ── */
+                            <>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }}>
+                                  <rect x="2" y="1.5" width="12" height="13" rx="2" stroke="#4A50B0" strokeWidth="1.2"/>
+                                  <path d="M5 5h6M5 8h6M5 11h3" stroke="#4A50B0" strokeWidth="1.2" strokeLinecap="round"/>
+                                </svg>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--p-600)', marginBottom: 3, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                                    Unlock neighbourhood comparisons
+                                  </div>
+                                  <div id="patchHelper" style={{ fontSize: 12, color: 'var(--p-500)', lineHeight: 1.5, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                                    You submitted a dollar amount. Add your previous premium and we'll calculate your % increase — making your post fully comparable.
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                                <div
+                                  style={{
+                                    flex: 1, display: 'flex', alignItems: 'center',
+                                    background: 'var(--n-0)',
+                                    border: '1.5px solid var(--p-200)',
+                                    borderRadius: 8, padding: '0 12px', height: 40,
+                                    transition: 'border-color .15s, box-shadow .15s',
+                                  }}
+                                  onFocusCapture={e => {
+                                    const el = e.currentTarget as HTMLDivElement
+                                    el.style.borderColor = 'var(--p-400)'
+                                    el.style.boxShadow   = '0 0 0 3px rgba(99,106,197,.09)'
+                                  }}
+                                  onBlurCapture={e => {
+                                    const el = e.currentTarget as HTMLDivElement
+                                    el.style.borderColor = 'var(--p-200)'
+                                    el.style.boxShadow   = 'none'
+                                  }}
+                                >
+                                  <span style={{
+                                    fontFamily: "'IBM Plex Mono', monospace",
+                                    fontSize: 14, fontWeight: 500,
+                                    color: 'var(--n-400)', marginRight: 4, flexShrink: 0,
+                                  }}>$</span>
+                                  <input
+                                    id="patchPrevPrem"
+                                    ref={patchInputRef}
+                                    type="number"
+                                    inputMode="numeric"
+                                    placeholder="1,800"
+                                    min={100}
+                                    max={99999}
+                                    disabled={patchLoading}
+                                    aria-label="Your previous annual premium in dollars"
+                                    aria-describedby="patchHelper"
+                                    onChange={() => { if (patchError) setPatchError('') }}
+                                    style={{
+                                      flex: 1,
+                                      fontFamily: "'IBM Plex Mono', monospace",
+                                      fontSize: 14, fontWeight: 500,
+                                      color: 'var(--n-900)',
+                                      border: 'none', outline: 'none',
+                                      background: 'transparent', padding: 0,
+                                    }}
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={handlePatch}
+                                  disabled={patchLoading}
+                                  aria-busy={patchLoading}
+                                  aria-label={patchLoading ? 'Calculating…' : 'Calculate percentage'}
+                                  style={{
+                                    height: 40, padding: '0 16px', borderRadius: 8,
+                                    background: 'var(--p-600)', color: 'var(--n-0)',
+                                    fontSize: 13, fontWeight: 500,
+                                    border: 'none', cursor: patchLoading ? 'default' : 'pointer',
+                                    whiteSpace: 'nowrap', flexShrink: 0,
+                                    fontFamily: "'Inter', system-ui, sans-serif",
+                                    transition: 'background .15s, transform .1s',
+                                    opacity: patchLoading ? 0.65 : 1,
+                                  }}
+                                  onMouseEnter={e => { if (!patchLoading) (e.currentTarget as HTMLButtonElement).style.background = 'var(--p-700)' }}
+                                  onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--p-600)'}
+                                  onMouseDown={e => { if (!patchLoading) (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)' }}
+                                  onMouseUp={e => (e.currentTarget as HTMLButtonElement).style.transform = ''}
+                                >
+                                  {patchLoading ? 'Saving…' : 'Calculate %'}
+                                </button>
+                              </div>
+                              {patchError && (
+                                <p role="alert" aria-live="assertive" style={{
+                                  fontSize: 11, color: 'var(--neg-500)',
+                                  marginTop: 6, lineHeight: 1.4,
+                                  fontFamily: "'Inter', system-ui, sans-serif",
+                                }}>
+                                  {patchError}
+                                </p>
+                              )}
+                            </>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     {/* Zoom to my post link — only shown if FSA has a centroid */}
                     {getCentroid(fsa.toUpperCase()) && (
