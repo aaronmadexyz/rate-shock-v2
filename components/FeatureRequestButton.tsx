@@ -143,7 +143,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
     border:       '1px solid #E2E1DD',
     boxShadow:    '0 8px 28px rgba(26,25,23,.1), 0 2px 6px rgba(26,25,23,.05)',
     padding:      20,
-    zIndex:       600,
+    zIndex:       600, // z-modal
     transformOrigin: 'top right',
   }
 
@@ -168,7 +168,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
               position:   'fixed',
               inset:      0,
               background: 'rgba(26,25,23,.4)',
-              zIndex:     500,
+              zIndex:     500, // z-backdrop
             }}
           />
         )}

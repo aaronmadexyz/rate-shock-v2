@@ -127,7 +127,7 @@ export default function LegendButton() {
               borderRadius:    10,
               padding:         '12px 14px',
               boxShadow:       SH_MD,
-              zIndex:          300,
+              zIndex:          300, // z-controls
             }}
           >
             <div style={{

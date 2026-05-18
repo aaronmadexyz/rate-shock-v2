@@ -244,7 +244,7 @@ function HoverPreview({
         top:             y - 8,
         transform:       'translateX(-50%) translateY(-100%)',
         transformOrigin: 'bottom center',
-        zIndex:          300,
+        zIndex:          300, // z-controls
       }}
       initial={isFirst && !prefersReduced
         ? { opacity: 0, scale: 0.95, y: 4 }

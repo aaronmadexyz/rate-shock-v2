@@ -6,6 +6,7 @@ import type { Map as LeafletMap } from 'leaflet'
 import { springs } from '@/lib/springs'
 import { safeGetItem, safeSetItem } from '@/lib/storage'
 import { supabase } from '@/lib/supabase'
+import { fetchFsaCount } from '@/lib/fetchFsaCount'
 import { getCentroid } from '@/lib/fsaCentroids'
 import { getAreaLabel } from '@/lib/fsaData'
 import type { NavState } from '@/lib/types'
@@ -88,21 +89,6 @@ function ClockIcon() {
       <path d="M6.5 4v2.5l1.5 1.5" stroke="#D49316" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-async function fetchFsaCount(fsa: string): Promise<number> {
-  try {
-    const { count, error } = await supabase
-      .from('submissions')
-      .select('*', { count: 'exact', head: true })
-      .ilike('fsa', fsa)
-    if (error) return 0
-    return count ?? 0
-  } catch {
-    return 0
-  }
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────

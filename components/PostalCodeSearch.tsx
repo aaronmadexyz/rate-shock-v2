@@ -5,8 +5,8 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import type { Map as LeafletMap } from 'leaflet'
 import { getCentroid } from '@/lib/fsaCentroids'
 import { getAreaLabel } from '@/lib/fsaData'
-import { supabase } from '@/lib/supabase'
 import { springs } from '@/lib/springs'
+import { fetchFsaCount } from '@/lib/fetchFsaCount'
 
 export interface PostalCodeSearchProps {
   mapRef:      React.MutableRefObject<LeafletMap | null>
@@ -18,19 +18,6 @@ const SH_SM = '0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04)'
 const ONTARIO_PREFIXES = new Set(['K', 'L', 'M', 'N', 'P'])
 
 type Status = 'idle' | 'loading' | 'valid' | 'pioneer' | 'invalid'
-
-async function fetchFsaCount(fsa: string): Promise<number> {
-  try {
-    const { count, error } = await supabase
-      .from('submissions')
-      .select('*', { count: 'exact', head: true })
-      .ilike('fsa', fsa)
-    if (error) return 0
-    return count ?? 0
-  } catch {
-    return 0
-  }
-}
 
 function SearchSvg({ active }: { active?: boolean }) {
   const color = active ? '#4A50B0' : 'var(--n-400)'

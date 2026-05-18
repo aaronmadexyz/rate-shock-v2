@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, useDragControls, useReducedMotion } from 'framer-motion'
 import { springs } from '@/lib/springs'
+import { supabase } from '@/lib/supabase'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,12 +23,6 @@ const PROVIDERS = [
   'CAA Insurance', 'Economical', 'Wawanesa', 'Travelers', 'Co-operators',
   'Gore Mutual', 'Sonnet', 'Allstate',
 ]
-
-const DIST = [
-  2,3,5,7,11,16,20,18,14,10,7,5,4,3,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-]
-const DIST_MAX = Math.max(...DIST)
 
 const DEFAULT_FILTERS: FilterState = {
   types: { auto: true, home: true },
@@ -185,6 +180,8 @@ const RANGE_THUMB_CSS = `
 export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetProps) {
   const [filters, setFilters]   = useState<FilterState>(DEFAULT_FILTERS)
   const [isMobile, setIsMobile] = useState(false)
+  const [dist, setDist]         = useState<number[]>([])
+  const distFetched             = useRef(false)
   const dragControls            = useDragControls()
   const prefersReduced          = useReducedMotion()
   const cardRef                 = useRef<HTMLDivElement>(null)
@@ -198,6 +195,25 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  // Fetch rate distribution on first open
+  useEffect(() => {
+    if (!isOpen || distFetched.current) return
+    distFetched.current = true
+    ;(async () => {
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('rate_change_pct')
+        .not('rate_change_pct', 'is', null)
+      if (error || !data) return
+      const buckets = Array<number>(50).fill(0)
+      for (const row of data) {
+        const slot = Math.min(49, Math.max(0, Math.floor(row.rate_change_pct as number)))
+        buckets[slot]++
+      }
+      setDist(buckets)
+    })()
+  }, [isOpen])
 
   // Focus management: capture trigger on open, return focus on close
   useEffect(() => {
@@ -404,17 +420,21 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 20, marginBottom: 4 }}>
-          {DIST.map((v, i) => (
-            <div
-              key={i}
-              style={{
-                flex: 1, borderRadius: '2px 2px 0 0',
-                background: i >= filters.rMin && i <= filters.rMax ? '#B0B4E6' : '#EEEDEA',
-                height: `${Math.max(3, Math.round(v / DIST_MAX * 20))}px`,
-                transition: 'background .2s',
-              }}
-            />
-          ))}
+          {(() => {
+            const bars = dist.length > 0 ? dist : Array<number>(50).fill(0)
+            const distMax = Math.max(...bars, 1)
+            return bars.map((v, i) => (
+              <div
+                key={i}
+                style={{
+                  flex: 1, borderRadius: '2px 2px 0 0',
+                  background: i >= filters.rMin && i <= filters.rMax ? '#B0B4E6' : '#EEEDEA',
+                  height: `${Math.max(3, Math.round(v / distMax * 20))}px`,
+                  transition: 'background .2s',
+                }}
+              />
+            ))
+          })()}
         </div>
         <DualRange
           valueMin={filters.rMin} valueMax={filters.rMax}
@@ -534,7 +554,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
               borderRadius: 14,
               boxShadow: '0 8px 28px rgba(26,25,23,.08), 0 2px 6px rgba(26,25,23,.04)',
               overflow: 'hidden',
-              zIndex: 450,
+              zIndex: 450, // z-overlay
               willChange: 'transform, opacity',
               transformOrigin: 'bottom left',
             }}
@@ -593,7 +613,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
               onClick={onClose}
               style={{
                 position: 'fixed', inset: 0,
-                zIndex: 400,
+                zIndex: 400, // z-backdrop
                 background: 'rgba(26,25,23,0.28)',
               }}
             />
@@ -619,7 +639,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
               style={{
                 position: 'fixed',
                 bottom: 0, left: 0, right: 0,
-                zIndex: 450,
+                zIndex: 450, // z-overlay
                 background: '#FFFFFF',
                 borderRadius: '20px 20px 0 0',
                 boxShadow: '0 -4px 32px rgba(26,25,23,.1), 0 -1px 4px rgba(26,25,23,.05)',

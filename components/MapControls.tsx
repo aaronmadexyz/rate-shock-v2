@@ -277,7 +277,7 @@ function MapControls({
                 left:          0,
                 whiteSpace:    'nowrap',
                 pointerEvents: 'none',
-                zIndex:        460,
+                zIndex:        460, // z-overlay + 10 (above filter card)
                 transformOrigin: 'bottom left',
               }}
               initial={{ opacity: 0, y: 4, scale: 0.95 }}
