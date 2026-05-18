@@ -7,7 +7,7 @@ export interface Submission {
   insurance_type:     'auto' | 'home'
   provider:           string
   rate_change_pct:    number | null
-  rate_change_dollar: number | null
+  rate_change_dollar?: number | null
   mode:               'pct' | 'dollar'
   sentiment:          1 | 2 | 3 | 4 | 5
   comment_raw:        string | null

@@ -53,7 +53,7 @@ function validatePayload(payload: {
     console.error('[ShareRenewalModal] Validation failed: sentiment =', payload.sentiment)
     return 'Invalid sentiment'
   }
-  if (payload.rate_change_pct !== null && (payload.rate_change_pct < 0 || payload.rate_change_pct > 100)) {
+  if (payload.rate_change_pct !== null && (payload.rate_change_pct < 0 || payload.rate_change_pct > 200)) {
     console.error('[ShareRenewalModal] Validation failed: rate_change_pct =', payload.rate_change_pct)
     return 'Invalid rate change percentage'
   }
@@ -106,6 +106,11 @@ function heroColor(val: number, mode: 'pct' | 'dol'): string {
 function formatSliderVal(val: number, mode: 'pct' | 'dol'): string {
   if (mode === 'pct') return val >= 50 ? '50%+' : `${val}%`
   return val >= 2000 ? '$2,000+' : `$${val.toLocaleString()}`
+}
+
+function calculatePct(dollarIncrease: number, previousPremium: number): number {
+  if (previousPremium <= 0) return 0
+  return Math.round((dollarIncrease / previousPremium) * 100)
 }
 
 function medianOf(values: number[]): number | null {
@@ -226,6 +231,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   })
   const [mode, setMode]           = useState<'pct' | 'dol'>('dol')
   const [rval, setRval]           = useState(480)
+  const [prevPrem, setPrevPrem]   = useState<number | null>(null)
+  const [prevPremError, setPrevPremError] = useState('')
   const [trackBg, setTrackBg]     = useState('linear-gradient(to right,#1A1917 24%,#D4D3CE 24%)')
   const [sent, setSent]           = useState(0)
   const [sentErr, setSentErr]     = useState(false)
@@ -321,10 +328,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     if (!meaningful) return
     safeSetItem(DRAFT_KEY, JSON.stringify({
       fsa, type: insType, provider, mode,
-      rval, yrs: steppers.yrs.v, cl: steppers.cl.v,
+      rval, prevPrem, yrs: steppers.yrs.v, cl: steppers.cl.v,
       cv: steppers.cv.v, hcl: steppers.hcl.v, sent,
     }))
-  }, [isOpen, step, fsa, insType, provider, mode, rval, steppers, sent])
+  }, [isOpen, step, fsa, insType, provider, mode, rval, prevPrem, steppers, sent])
 
   // ── draft rescue: restore when modal opens ──────────────────────────────────
   useEffect(() => {
@@ -356,9 +363,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       }
       if (d.type)     setInsType(d.type)
       if (d.provider) setProvider(d.provider)
-      if (d.mode)     setMode(d.mode)
+      if (d.mode)        setMode(d.mode)
       if (d.rval != null) setRval(d.rval)
-      if (d.sent)     setSent(d.sent)
+      if (d.prevPrem != null) setPrevPrem(d.prevPrem)
+      if (d.sent)        setSent(d.sent)
       if (d.yrs != null || d.cl != null || d.cv != null || d.hcl != null) {
         setSteppers(prev => ({
           yrs: { ...prev.yrs, v: d.yrs ?? prev.yrs.v },
@@ -436,6 +444,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       hcl: { v: 0, k: 0, dir: 'up' },
     })
     setMode('dol'); setRval(480); updateTrack(480, 0, 2000)
+    setPrevPrem(null); setPrevPremError('')
     setSent(0); setSentErr(false); setNote(''); setConsent(false)
     setSubmitting(false); setAnimDone(false); setShowVerify(false); setShowLikeMeCard(false)
     setShowRestoreNotice(false)
@@ -515,7 +524,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   }
   function onRange(v: number) {
     setRval(v)
-    const mn = mode === 'pct' ? 0 : 0
+    if (prevPremError) setPrevPremError('')
+    const mn = 0
     const mx = mode === 'pct' ? 50 : 2000
     updateTrack(v, mn, mx)
   }
@@ -547,7 +557,27 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     setSubmitting(true)
 
     const fsaUpper = fsa.toUpperCase()
-    const ratePct  = mode === 'pct' ? rval : null
+
+    // Determine what to store based on mode + prevPrem
+    let ratePct: number | null = null
+    let rateDollar: number | null = null
+    if (mode === 'pct') {
+      ratePct   = rval
+      rateDollar = null
+    } else if (prevPrem !== null && prevPrem > 0) {
+      ratePct   = calculatePct(rval, prevPrem)
+      rateDollar = null
+    } else {
+      ratePct   = null
+      rateDollar = rval
+    }
+
+    // Guard: unreasonable percentage (wrong previous premium entered)
+    if (ratePct !== null && (ratePct < 0 || ratePct > 200)) {
+      setPrevPremError("That doesn't look right — check your previous premium amount")
+      setSubmitting(false)
+      return
+    }
 
     // Validate before touching Supabase
     const validationError = validatePayload({
@@ -568,7 +598,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       insurance_type:     insType,
       provider,
       rate_change_pct:    ratePct,
-      rate_change_dollar: mode === 'dol' ? rval : null,
+      rate_change_dollar: rateDollar,
       mode:               mode === 'dol' ? 'dollar' : 'pct',
       years_licensed:     insType === 'auto' ? steppers.yrs.v : null,
       at_fault_claims:    insType === 'auto' ? steppers.cl.v  : 0,
@@ -585,7 +615,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       provider,
       insurance_type:     insType,
       rate_change_pct:    ratePct,
-      rate_change_dollar: mode === 'dol' ? rval : null,
+      rate_change_dollar: rateDollar,
       mode:               mode === 'dol' ? 'dollar' : 'pct',
       sentiment:          sent as (1 | 2 | 3 | 4 | 5),
       comment_raw:        note || null,
@@ -816,7 +846,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   // ── Count-up when animDone and data resolved ─────────────────────────────────
   useEffect(() => {
     if (!animDone || compLoading) return
-    const targetYou = mode === 'pct' ? Math.min(rval, 50) : Math.round((rval / 2000) * 50)
+    const targetYou = mode === 'pct'
+      ? Math.min(rval, 50)
+      : (prevPrem !== null && prevPrem > 0)
+        ? Math.min(calculatePct(rval, prevPrem), 200)
+        : 0
     const targetNbr = areaMed !== null ? Math.round(areaMed) : null
     const targetOnt = ontMed  !== null ? Math.round(ontMed)  : null
     const DUR = 1200
@@ -848,7 +882,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
         }
       })
     }, 1500)
-  }, [animDone, compLoading, rval, mode, areaMed, ontMed])
+  }, [animDone, compLoading, rval, mode, prevPrem, areaMed, ontMed])
 
   // ── Delay verify prompt 2800ms after comparison card is ready ──────────────
   useEffect(() => {
@@ -898,10 +932,16 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     ? `${daysRemaining} days left to contribute for your area.`
     : `${daysRemaining} days remaining in the current data window. The more neighbours contribute, the clearer the picture becomes.`
 
-  const userPctVal    = mode === 'pct' ? Math.min(rval, 50) : Math.round((rval / 2000) * 50)
+  // Whether we have a percentage to compare (pct mode, or dollar mode with prevPrem calculated)
+  const hasPct = mode === 'pct' || (mode === 'dol' && prevPrem !== null && prevPrem > 0)
+  const userPctVal = mode === 'pct'
+    ? Math.min(rval, 50)
+    : (prevPrem !== null && prevPrem > 0)
+      ? calculatePct(rval, prevPrem)
+      : 0
   const hasAreaData   = areaMed !== null && areaMedCount >= 3
   const hasLimitedData = areaMed !== null && areaMedCount > 0 && areaMedCount < 3
-  const nbrAbove      = hasAreaData && areaMed! < userPctVal
+  const nbrAbove      = hasAreaData && hasPct && areaMed! < userPctVal
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   const stepTitle = step === 1 ? 'Your policy' : step === 2 ? 'Your renewal' : ''
@@ -1363,6 +1403,131 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       <p aria-live="polite" aria-atomic="true" style={{ fontSize: 12, color: label.color, marginTop: 6, lineHeight: 1.5 }}>{label.text}</p>
                     </div>
 
+                    {/* Previous premium — dollar mode only */}
+                    <AnimatePresence>
+                      {mode === 'dol' && (
+                        <motion.div
+                          key="prevPremWrap"
+                          initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                          animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
+                          exit={{    opacity: 0, height: 0, marginBottom: 0 }}
+                          transition={prefersReduced
+                            ? { duration: 0 }
+                            : { type: 'spring', stiffness: 240, damping: 24, mass: 1.0 }}
+                          style={{ overflow: 'hidden' }}
+                        >
+                          <label
+                            htmlFor="prevPremInput"
+                            style={{
+                              fontFamily: "'IBM Plex Mono', monospace",
+                              fontSize: 10, fontWeight: 500,
+                              letterSpacing: '0.06em', textTransform: 'uppercase',
+                              color: 'var(--n-400)', display: 'block', marginBottom: 8,
+                            }}
+                          >
+                            Previous annual premium
+                            <span
+                              aria-hidden="true"
+                              style={{
+                                fontFamily: "'Inter', system-ui, sans-serif",
+                                fontWeight: 400, letterSpacing: 0,
+                                textTransform: 'none', fontSize: 11,
+                                color: 'var(--n-300)', marginLeft: 6,
+                              }}
+                            >
+                              optional
+                            </span>
+                          </label>
+                          <div
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 8,
+                              background: 'var(--n-0)',
+                              border: '1.5px solid var(--n-150)',
+                              borderRadius: 10, padding: '0 14px', height: 48,
+                              transition: 'border-color .15s, box-shadow .15s',
+                            }}
+                            onFocusCapture={e => {
+                              const el = e.currentTarget as HTMLDivElement
+                              el.style.borderColor = 'var(--p-400)'
+                              el.style.boxShadow   = '0 0 0 3px rgba(99,106,197,.09)'
+                            }}
+                            onBlurCapture={e => {
+                              const el = e.currentTarget as HTMLDivElement
+                              el.style.borderColor = 'var(--n-150)'
+                              el.style.boxShadow   = 'none'
+                            }}
+                          >
+                            <span style={{
+                              fontFamily: "'IBM Plex Mono', monospace",
+                              fontSize: 16, fontWeight: 500,
+                              color: 'var(--n-400)', userSelect: 'none', flexShrink: 0,
+                            }}>$</span>
+                            <input
+                              id="prevPremInput"
+                              type="number"
+                              inputMode="numeric"
+                              placeholder="1,800"
+                              min={100}
+                              max={99999}
+                              step={1}
+                              autoComplete="off"
+                              aria-label="Previous annual premium in dollars, optional"
+                              aria-describedby="prevPremHelp"
+                              value={prevPrem !== null ? String(prevPrem) : ''}
+                              style={{
+                                flex: 1,
+                                fontFamily: "'IBM Plex Mono', monospace",
+                                fontSize: 16, fontWeight: 500,
+                                color: 'var(--n-900)',
+                                border: 'none', outline: 'none',
+                                background: 'transparent', padding: 0,
+                              }}
+                              onChange={e => {
+                                const v = parseInt(e.target.value)
+                                setPrevPrem(isNaN(v) ? null : v)
+                                if (prevPremError) setPrevPremError('')
+                              }}
+                            />
+                          </div>
+                          {prevPremError && (
+                            <p
+                              role="alert"
+                              style={{
+                                fontFamily: "'Inter', system-ui, sans-serif",
+                                fontSize: 11, color: 'var(--neg-500)',
+                                marginTop: 6, lineHeight: 1.4,
+                              }}
+                            >
+                              {prevPremError}
+                            </p>
+                          )}
+                          {!prevPremError && prevPrem !== null && prevPrem > 0 ? (
+                            <p
+                              id="prevPremHelp"
+                              style={{
+                                fontFamily: "'IBM Plex Mono', monospace",
+                                fontSize: 11, color: 'var(--pos-600)',
+                                marginTop: 6, lineHeight: 1.4,
+                              }}
+                            >
+                              ≈ {calculatePct(rval, prevPrem)}% increase — your post will be fully comparable with neighbours
+                            </p>
+                          ) : (
+                            <p
+                              id="prevPremHelp"
+                              style={{
+                                fontFamily: "'Inter', system-ui, sans-serif",
+                                fontSize: 11, color: 'var(--n-400)',
+                                marginTop: 6, lineHeight: 1.4,
+                              }}
+                            >
+                              Helps us calculate your % increase so your post is fully comparable. Find it on last year's renewal letter.
+                            </p>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     {/* Sentiment */}
                     <div style={{ marginBottom: 16 }}>
                       <fieldset style={{ border: 'none', padding: 0, margin: 0 }} aria-invalid={sentErr}>
@@ -1572,7 +1737,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         {/* You column */}
                         <div style={{ padding: '14px 12px', textAlign: 'center', borderRight: '1px solid #EEEDEA', background: '#FAFAF8' }}>
                           <div id="cmpYours" aria-live="off" style={{ fontSize: 22, fontWeight: 600, color: '#1A1917', letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>
-                            {cntYou}%
+                            {hasPct ? `${cntYou}%` : `+$${rval.toLocaleString()}`}
                           </div>
                           <div style={{ fontSize: 10, color: 'var(--n-400)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>you paid</div>
                           <div style={{ fontSize: 10, color: '#B8B7B1' }}>your renewal</div>
@@ -1596,7 +1761,14 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           <div style={{ fontSize: 10, color: '#B8B7B1' }}>province-wide</div>
                         </div>
                       </div>
-                      {hasAreaData && !compLoading && (
+                      {!compLoading && !hasPct && (
+                        <div style={{ padding: '10px 14px', borderTop: '1px solid #EEEDEA', background: '#FAFAF8' }}>
+                          <p style={{ fontSize: 12, color: 'var(--n-500)', lineHeight: 1.5 }}>
+                            Add your previous premium above to see how you compare as a percentage with your neighbours.
+                          </p>
+                        </div>
+                      )}
+                      {hasAreaData && hasPct && !compLoading && (
                         <div style={{ padding: '10px 14px', borderTop: '1px solid #EEEDEA', background: '#FAFAF8' }}>
                           <p style={{ fontSize: 12, color: 'var(--n-500)', lineHeight: 1.5 }}>
                             {nbrAbove ? (
