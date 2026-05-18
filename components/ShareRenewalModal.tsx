@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getAreaLabel } from '@/lib/fsaData'
 import { supabase } from '@/lib/supabase'
+import { fetchFsaCount } from '@/lib/fetchFsaCount'
 import { setNavState } from '@/components/Nav'
 import { useReducedMotion } from '@/lib/motionSafety'
 import { playRip, playSeal, playChime } from '@/lib/sounds'
@@ -74,31 +75,37 @@ function faceSvgHtml(s: number): string {
 }
 
 function sliderLabel(val: number, mode: 'pct' | 'dol'): { text: string; color: string } {
-  const pct = mode === 'pct' ? val : (val / 2000) * 50
-  if (pct <= 4)  return { text: 'Below average · Most Ontario renewals are higher', color: 'var(--n-400)' }
-  if (pct <= 9)  return { text: 'Around the Ontario average', color: 'var(--n-400)' }
-  if (pct <= 16) return { text: 'Above the Ontario average', color: '#AD7710' }
-  if (pct <= 24) return { text: 'Significantly above average', color: '#AD7710' }
-  if (pct <= 34) return { text: 'Well above average · Worth verifying this', color: '#B33C28' }
-  return { text: 'Exceptionally high — this should definitely be verified', color: '#B33C28' }
+  if (mode === 'dol') {
+    if (val < 150)  return { text: 'Below the typical increase', color: 'var(--n-400)' }
+    if (val < 400)  return { text: 'Around the Ontario average', color: 'var(--n-400)' }
+    if (val < 800)  return { text: 'Above the Ontario average', color: 'var(--cau-500)' }
+    if (val < 1300) return { text: 'A significant increase', color: 'var(--cau-500)' }
+    return { text: 'An exceptional increase', color: 'var(--neg-500)' }
+  }
+  if (val <= 4)  return { text: 'Below average · Most Ontario renewals are higher', color: 'var(--n-400)' }
+  if (val <= 9)  return { text: 'Around the Ontario average', color: 'var(--n-400)' }
+  if (val <= 16) return { text: 'Above the Ontario average', color: 'var(--cau-500)' }
+  if (val <= 24) return { text: 'Significantly above average', color: 'var(--cau-500)' }
+  if (val <= 34) return { text: 'Well above average · Worth verifying this', color: 'var(--neg-500)' }
+  return { text: 'Exceptionally high — this should definitely be verified', color: 'var(--neg-500)' }
+}
+
+function heroColor(val: number, mode: 'pct' | 'dol'): string {
+  if (mode === 'dol') {
+    if (val < 300)  return 'var(--n-600)'
+    if (val < 800)  return 'var(--n-900)'
+    if (val < 1300) return 'var(--cau-600)'
+    return 'var(--neg-500)'
+  }
+  if (val <= 7)  return 'var(--n-600)'
+  if (val <= 14) return 'var(--n-900)'
+  if (val <= 24) return 'var(--cau-600)'
+  return 'var(--neg-500)'
 }
 
 function formatSliderVal(val: number, mode: 'pct' | 'dol'): string {
   if (mode === 'pct') return val >= 50 ? '50%+' : `${val}%`
   return val >= 2000 ? '$2,000+' : `$${val.toLocaleString()}`
-}
-
-async function fetchFsaCount(fsa: string): Promise<number> {
-  try {
-    const { count, error } = await supabase
-      .from('submissions')
-      .select('*', { count: 'exact', head: true })
-      .ilike('fsa', fsa)
-    if (error) return 0
-    return count ?? 0
-  } catch {
-    return 0
-  }
 }
 
 function medianOf(values: number[]): number | null {
@@ -217,8 +224,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     cv:  { v: 0, k: 0, dir: 'up' },
     hcl: { v: 0, k: 0, dir: 'up' },
   })
-  const [mode, setMode]           = useState<'pct' | 'dol'>('pct')
-  const [rval, setRval]           = useState(12)
+  const [mode, setMode]           = useState<'pct' | 'dol'>('dol')
+  const [rval, setRval]           = useState(480)
   const [trackBg, setTrackBg]     = useState('linear-gradient(to right,#1A1917 24%,#D4D3CE 24%)')
   const [sent, setSent]           = useState(0)
   const [sentErr, setSentErr]     = useState(false)
@@ -428,7 +435,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       cv:  { v: 0, k: 0, dir: 'up' },
       hcl: { v: 0, k: 0, dir: 'up' },
     })
-    setMode('pct'); setRval(12); updateTrack(12, 0, 50)
+    setMode('dol'); setRval(480); updateTrack(480, 0, 2000)
     setSent(0); setSentErr(false); setNote(''); setConsent(false)
     setSubmitting(false); setAnimDone(false); setShowVerify(false); setShowLikeMeCard(false)
     setShowRestoreNotice(false)
@@ -898,7 +905,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   const stepTitle = step === 1 ? 'Your policy' : step === 2 ? 'Your renewal' : ''
-  const label = sliderLabel(rval, mode)
+  const label    = sliderLabel(rval, mode)
+  const valColor = heroColor(rval, mode)
 
   return (
     <AnimatePresence>
@@ -907,7 +915,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
           {/* ── Backdrop ── */}
           <motion.div
             key="srm-backdrop"
-            style={{ position: 'fixed', inset: 0, background: 'rgba(26,25,23,0.46)', zIndex: 500 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(26,25,23,0.46)', zIndex: 500 /* z-backdrop */ }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -936,7 +944,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               borderRadius: '20px 20px 0 0',
               border:       '1px solid #E2E1DD',
               boxShadow:    '0 8px 32px rgba(26,25,23,.12), 0 2px 8px rgba(26,25,23,.06)',
-              zIndex:       600,
+              zIndex:       600, // z-modal
               display:      'flex',
               flexDirection:'column',
               overflow:     'hidden',
@@ -950,7 +958,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               borderRadius: 20,
               border:       '1px solid #E2E1DD',
               boxShadow:    '0 8px 32px rgba(26,25,23,.12), 0 2px 8px rgba(26,25,23,.06)',
-              zIndex:       600,
+              zIndex:       600, // z-modal
               display:      'flex',
               flexDirection:'column',
               maxHeight:    'calc(100vh - 48px)',
@@ -1281,22 +1289,40 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     {/* Slider */}
                     <div style={{ marginBottom: 16 }}>
                       <label htmlFor="rng" style={LABEL_STYLE}>Premium increase this renewal</label>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                        <span style={{ fontSize: 28, fontWeight: 600, color: '#1A1917', letterSpacing: '-.02em', fontVariantNumeric: 'tabular-nums' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                        <div
+                          id="slval"
+                          aria-live="polite"
+                          aria-atomic="true"
+                          style={{
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontSize: 'clamp(36px, 8vw, 48px)',
+                            fontWeight: 700,
+                            letterSpacing: '-0.03em',
+                            color: valColor,
+                            lineHeight: 1,
+                            fontVariantNumeric: 'tabular-nums',
+                            transition: 'color 0.15s ease',
+                          }}
+                        >
                           {formatSliderVal(rval, mode)}
-                        </span>
-                        <div style={{ display: 'flex', background: '#F5F4F1', borderRadius: 8, padding: 2 }}>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', background: 'var(--n-100)', borderRadius: 9999, padding: 2 }}>
                           {(['pct', 'dol'] as const).map(m => (
                             <button
                               key={m}
                               type="button"
                               onClick={() => switchMode(m)}
                               style={{
-                                padding: '4px 14px', borderRadius: 6, fontSize: 12, fontWeight: 500,
-                                border: 'none', cursor: 'pointer', color: mode === m ? '#1A1917' : 'var(--n-400)',
-                                background: mode === m ? '#FFFFFF' : 'transparent',
-                                boxShadow: mode === m ? '0 1px 2px rgba(0,0,0,.08)' : 'none',
-                                transition: 'all .15s', fontFamily: "'Inter', system-ui, sans-serif",
+                                fontFamily: "'IBM Plex Mono', monospace",
+                                fontSize: 11, fontWeight: 500,
+                                padding: '4px 12px', borderRadius: 9999,
+                                border: 'none', cursor: 'pointer',
+                                letterSpacing: '0.02em',
+                                background: mode === m ? 'var(--n-0)' : 'transparent',
+                                color: mode === m ? 'var(--n-900)' : 'var(--n-400)',
+                                boxShadow: mode === m ? '0 1px 2px rgba(26,25,23,.08)' : 'none',
+                                transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
                               }}
                             >{m === 'pct' ? '%' : '$'}</button>
                           ))}
