@@ -38,7 +38,8 @@ L.Icon.Default.mergeOptions({
 // ─── Marker icon factory ──────────────────────────────────────────────────────
 // UNCHANGED — do not modify anything in this section
 
-function sealColor(sentiment: number): string {
+function sealColor(sentiment: number | null): string {
+  if (sentiment == null) return '#D49316'
   if (sentiment <= 2) return '#3A9B55'
   if (sentiment === 3) return '#D49316'
   return '#D4503A'
@@ -84,9 +85,12 @@ const SKELETON_COORDS: Array<[number, number]> = [
 function getMarkerMatchState(s: Submission, f: FilterState): boolean {
   if (!f.types.auto && s.insurance_type === 'auto') return false
   if (!f.types.home && s.insurance_type === 'home') return false
-  if (f.provs.length > 0 && !f.provs.includes(s.provider)) return false
-  const pct = s.rate_change_pct ?? 0
-  if (pct < f.rMin || pct > f.rMax) return false
+  if (f.provs.length > 0 && !f.provs.includes(s.provider ?? '')) return false
+  // Dollar-mode submissions (null pct) always pass the rate range filter
+  if (s.rate_change_pct !== null) {
+    const pct = s.rate_change_pct
+    if (pct < f.rMin || pct > f.rMax) return false
+  }
   if (f.verified && !s.verified) return false
   return true
 }
@@ -131,7 +135,8 @@ const SENTIMENT_COLORS: Record<number, string> = {
   1: '#3A9B55', 2: '#93D1A2', 3: '#D49316', 4: '#E87460', 5: '#D4503A',
 }
 
-function rateColor(sentiment: number): string {
+function rateColor(sentiment: number | null): string {
+  if (sentiment == null) return '#AD7710'
   if (sentiment <= 2) return '#2A7D41'
   if (sentiment === 3) return '#AD7710'
   return '#B33C28'
@@ -139,7 +144,7 @@ function rateColor(sentiment: number): string {
 
 // Sentiment face — exact filled-circle style from the submission form.
 // Panel uses size=32; preview uses size=20 (same SVG scaled down).
-function SentimentFace({ sentiment, size }: { sentiment: number; size: number }) {
+function SentimentFace({ sentiment, size }: { sentiment: number | null; size: number }) {
   if (sentiment === 1) return (
     <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
       <circle cx="17" cy="17" r="15" fill="#3A9B55"/>
@@ -760,16 +765,33 @@ export default function MapView({
       try {
         const { data, error } = await supabase
           .from('submissions')
-          .select(
-            'id, fsa, provider, insurance_type, rate_change_pct, sentiment, ' +
-            'verified, created_at, comment_raw, years_licensed, at_fault_claims, ' +
-            'convictions, home_claims',
-          )
+          .select(`
+            id,
+            fsa,
+            provider,
+            insurance_type,
+            rate_change_pct,
+            rate_change_dollar,
+            renewal_year,
+            sentiment,
+            verified,
+            created_at,
+            comment_raw,
+            years_licensed,
+            at_fault_claims,
+            convictions,
+            home_claims
+          `)
           .order('created_at', { ascending: false })
           .limit(500)
 
-        if (error) console.error('Supabase fetch error:', error)
-        if (data) setSubmissions(data as unknown as Submission[])
+        setSubmissions((data ?? []) as unknown as Submission[])
+
+        if (error) {
+          console.error('[MapView] fetch error:', error.message)
+        } else {
+          console.log('[MapView] fetched:', data?.length ?? 0, 'submissions')
+        }
       } catch (err) {
         console.error('Unexpected error fetching submissions:', err)
       } finally {

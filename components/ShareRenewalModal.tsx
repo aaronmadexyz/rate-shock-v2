@@ -704,12 +704,17 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       insurance_type:     insType,
       rate_change_pct:    ratePct,
       rate_change_dollar: rateDollar,
+      renewal_year:       null,
       mode:               mode === 'dol' ? 'dollar' : 'pct',
-      sentiment:          sent as (1 | 2 | 3 | 4 | 5),
+      sentiment:          sent,
       comment_raw:        note || null,
       verified:           false,
       neighbourhood:      getAreaLabel(fsa),
       created_at:         new Date().toISOString(),
+      years_licensed:     insType === 'auto' ? steppers.yrs.v : null,
+      at_fault_claims:    insType === 'auto' ? steppers.cl.v  : 0,
+      convictions:        insType === 'auto' ? steppers.cv.v  : 0,
+      home_claims:        insType === 'home' ? steppers.hcl.v : 0,
     }
 
     // Insert — fire-and-forget; capture the returned ID for the dollar-patch flow

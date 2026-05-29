@@ -5,19 +5,19 @@ export interface Submission {
   created_at:         string
   fsa:                string
   insurance_type:     'auto' | 'home'
-  provider:           string
+  provider:           string | null
   rate_change_pct:    number | null
-  rate_change_dollar?: number | null
+  rate_change_dollar: number | null
+  renewal_year:       number | null
   mode:               'pct' | 'dollar'
-  sentiment:          1 | 2 | 3 | 4 | 5
+  sentiment:          number | null
   comment_raw:        string | null
   verified:           boolean
   neighbourhood:      string | null
-  // Profile fields — present when fetched for cohort matching
-  years_licensed?:    number | null
-  at_fault_claims?:   number | null
-  convictions?:       number | null
-  home_claims?:       number | null
+  years_licensed:     number | null
+  at_fault_claims:    number | null
+  convictions:        number | null
+  home_claims:        number | null
 }
 
 export interface FeatureRequest {
