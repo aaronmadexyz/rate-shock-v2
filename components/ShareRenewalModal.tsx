@@ -120,6 +120,118 @@ function medianOf(values: number[]): number | null {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2
 }
 
+// ─── Tooltip tip text ─────────────────────────────────────────────────────────
+
+const TIP_YRS    = "How many years you've held a full licence. In Ontario this is your G licence. In other provinces, use the date of your equivalent full licence (e.g. Class 5 in BC or Alberta)."
+const TIP_CLAIMS = "Accidents where your insurer paid out on your behalf in the past 6 years. Includes incidents even if you weren't charged. Does not include claims made against you by others."
+const TIP_CV     = "Traffic violations resulting in a conviction in the past 3 years. Includes speeding tickets, distracted driving, and similar offences. Minor parking tickets do not count."
+
+// ─── Tooltip portal hook ──────────────────────────────────────────────────────
+
+function useTipPortal() {
+  const portalRef  = useRef<HTMLDivElement | null>(null)
+  const activeRef  = useRef<HTMLElement | null>(null)
+  const hideTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const el    = document.createElement('div')
+    el.className = 'tip-portal'
+    el.setAttribute('role', 'tooltip')
+    const caret    = document.createElement('div')
+    caret.className = 'tip-portal-caret'
+    el.appendChild(caret)
+    document.body.appendChild(el)
+    portalRef.current = el
+    return () => { try { document.body.removeChild(el) } catch {} }
+  }, [])
+
+  const hideTip = useCallback(() => {
+    const el = portalRef.current; if (!el) return
+    el.classList.remove('visible', 'measuring')
+    activeRef.current?.classList.remove('active')
+    activeRef.current = null
+  }, [])
+
+  const hideTipDelayed = useCallback(() => {
+    hideTimer.current = setTimeout(hideTip, 200)
+  }, [hideTip])
+
+  const showTip = useCallback((btn: HTMLElement, text: string) => {
+    if (hideTimer.current) clearTimeout(hideTimer.current)
+    const el = portalRef.current; if (!el) return
+
+    // Toggle: tap same button again → close
+    if (activeRef.current === btn && el.classList.contains('visible')) {
+      hideTip(); return
+    }
+    if (activeRef.current && activeRef.current !== btn) {
+      activeRef.current.classList.remove('active')
+    }
+    activeRef.current = btn
+    btn.classList.add('active')
+
+    // Replace text content, keep caret
+    const caret = el.querySelector('.tip-portal-caret')
+    Array.from(el.childNodes).forEach(n => { if (n !== caret) el.removeChild(n) })
+    el.insertBefore(document.createTextNode(text), caret as Node)
+
+    // Measure, then position
+    el.classList.remove('visible')
+    el.classList.add('measuring')
+    setTimeout(() => {
+      const rect   = btn.getBoundingClientRect()
+      const tipW   = 220, gap = 8
+      const idealL = rect.left + rect.width / 2 - tipW / 2
+      const left   = Math.max(16, Math.min(idealL, window.innerWidth - tipW - 16))
+      const tipH   = el.offsetHeight || 80
+      let   top    = rect.top - tipH - gap
+      let   flip   = false
+      if (top < 8) { top = rect.bottom + gap; flip = true }
+      el.style.left  = `${left}px`
+      el.style.top   = `${top}px`
+      el.style.width = `${tipW}px`
+      const c = el.querySelector('.tip-portal-caret') as HTMLElement | null
+      if (c) {
+        const cx = Math.max(12, Math.min((rect.left + rect.width / 2) - left, tipW - 12))
+        c.style.left      = `${cx}px`
+        c.style.transform = 'translateX(-50%)'
+        if (flip) {
+          c.style.top = '-10px'; c.style.bottom = 'auto'
+          c.style.borderTopColor = 'transparent'; c.style.borderBottomColor = '#1A1917'
+        } else {
+          c.style.top = 'auto'; c.style.bottom = '-10px'
+          c.style.borderBottomColor = 'transparent'; c.style.borderTopColor = '#1A1917'
+        }
+      }
+      el.classList.remove('measuring')
+      el.classList.add('visible')
+    }, 0)
+  }, [hideTip])
+
+  // Reposition on scroll / resize while a tip is open
+  useEffect(() => {
+    const reposition = () => {
+      const el = portalRef.current
+      if (!activeRef.current || !el?.classList.contains('visible')) return
+      showTip(activeRef.current, el.childNodes[0]?.nodeValue ?? '')
+    }
+    window.addEventListener('scroll', reposition, { passive: true })
+    window.addEventListener('resize', reposition, { passive: true })
+    return () => { window.removeEventListener('scroll', reposition); window.removeEventListener('resize', reposition) }
+  }, [showTip])
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (activeRef.current && !activeRef.current.contains(e.target as Node)) hideTip()
+    }
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [hideTip])
+
+  return { showTip, hideTip, hideTipDelayed }
+}
+
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const LABEL_STYLE: React.CSSProperties = {
@@ -158,6 +270,7 @@ interface ShareRenewalModalProps {
 
 function Stepper({
   s, min, max, label, onAdj, inputId, decreaseLabel, increaseLabel,
+  tipText, onTipShow, onTipHide,
 }: {
   s: StepperVal
   min: number
@@ -167,15 +280,37 @@ function Stepper({
   inputId?: string
   decreaseLabel?: string
   increaseLabel?: string
+  tipText?: string
+  onTipShow?: (btn: HTMLElement, text: string) => void
+  onTipHide?: () => void
 }) {
+  const tipBtnRef  = useRef<HTMLButtonElement>(null)
   const displayVal = `${s.v}${s.v === max ? '+' : ''}`
-  const anim = s.k > 0
+  const anim       = s.k > 0
     ? `${s.dir === 'up' ? 'snUp' : 'snDown'} 180ms ease both`
     : undefined
 
   return (
     <div>
-      <label htmlFor={inputId} style={LABEL_STYLE}>{label}</label>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
+        <label htmlFor={inputId} style={{ ...LABEL_STYLE, marginBottom: 0 }}>{label}</label>
+        {tipText && onTipShow && (
+          <button
+            type="button"
+            ref={tipBtnRef}
+            className="tip-btn"
+            aria-label={`More info about ${label.toLowerCase()}`}
+            onMouseEnter={() => tipBtnRef.current && onTipShow(tipBtnRef.current, tipText)}
+            onMouseLeave={onTipHide}
+            onClick={() => tipBtnRef.current && onTipShow(tipBtnRef.current, tipText)}
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <circle cx="5" cy="5" r="5" fill="currentColor" opacity="0.15"/>
+              <path d="M5 4.5v3M5 3v.01" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+          </button>
+        )}
+      </div>
       <div style={{
         display: 'flex', alignItems: 'center',
         border: '1px solid #EEEDEA', borderRadius: 10,
@@ -183,6 +318,7 @@ function Stepper({
       }}>
         <button
           type="button"
+          className="srm-stepper-btn"
           onClick={() => onAdj(-1)}
           disabled={s.v <= min}
           aria-label={decreaseLabel}
@@ -202,6 +338,7 @@ function Stepper({
         </div>
         <button
           type="button"
+          className="srm-stepper-btn"
           onClick={() => onAdj(1)}
           disabled={s.v >= max}
           aria-label={increaseLabel}
@@ -284,6 +421,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const pioneerNameRef  = useRef<HTMLElement>(null)
 
   const { prefersReduced } = useReducedMotion()
+  const { showTip, hideTipDelayed } = useTipPortal()
   const prefersReducedRef  = useRef(prefersReduced)
   prefersReducedRef.current = prefersReduced
   const lastSubmitRef      = useRef<number>(0)
@@ -1057,7 +1195,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const nbrAbove      = hasAreaData && hasPct && areaMed! < userPctVal
 
   // ─── Render ──────────────────────────────────────────────────────────────────
-  const stepTitle = step === 1 ? 'Your policy' : step === 2 ? 'Your renewal' : ''
+  const stepTitle = step === 1 ? 'About your policy' : step === 2 ? 'What did they charge you?' : ''
   const label    = sliderLabel(rval, mode)
   const valColor = heroColor(rval, mode)
 
@@ -1143,6 +1281,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               <button
                 type="button"
                 onClick={handleClose}
+                className="srm-close-btn"
                 style={{
                   width: 26, height: 26, borderRadius: '50%',
                   border: '1px solid #EEEDEA', background: '#FFFFFF',
@@ -1245,14 +1384,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         autoCorrect="off"
                         spellCheck={false}
                         inputMode="text"
-                        aria-invalid={fsaError}
+                        aria-invalid={fsaError ? 'true' : 'false'}
+                        aria-describedby="fsaError"
                         onChange={e => onFsaInput(e.target.value)}
                         style={{
                           fontFamily: "'IBM Plex Mono', monospace",
                           fontSize: 22, fontWeight: 500,
-                          width: '100%', padding: '11px 15px',
+                          width: '100%', padding: '12px 16px',
                           border: fsaError ? '1.5px solid #D4503A' : '1.5px solid #EEEDEA',
-                          borderRadius: 12, background: '#FFFFFF', color: '#1A1917',
+                          borderRadius: 14, background: '#FFFFFF', color: '#1A1917',
                           outline: 'none', letterSpacing: '.14em', textTransform: 'uppercase',
                           transition: 'border-color .15s, box-shadow .15s', display: 'block',
                         }}
@@ -1260,32 +1400,35 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         onBlur={e => { e.currentTarget.style.borderColor = fsaError ? '#D4503A' : '#EEEDEA'; e.currentTarget.style.boxShadow = 'none' }}
                       />
                       <div style={{ marginTop: 4, marginBottom: 0, minHeight: 32 }}>
-                        <AnimatePresence mode="wait">
-                          {fsaHint && !fsaError && (
-                            <motion.p
-                              key={fsaHint}
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: prefersReduced ? 0 : 0.12, ease: 'easeInOut' }}
-                              style={{
-                                fontSize: 12, color: fsaHintColor, fontWeight: 500, margin: 0,
-                                lineHeight: 1.4, overflow: 'hidden',
-                                display: '-webkit-box', WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                              }}
-                            >
-                              {fsaHint}
-                            </motion.p>
-                          )}
-                        </AnimatePresence>
+                        {fsaHint && !fsaError && (
+                          <p
+                            key={fsaHint}
+                            className={prefersReduced ? undefined : 'fsa-hint-resolving'}
+                            style={{
+                              fontSize: 12, color: fsaHintColor, fontWeight: 500, margin: 0,
+                              lineHeight: 1.4, overflow: 'hidden',
+                              display: '-webkit-box', WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                            }}
+                          >
+                            {fsaHint}
+                          </p>
+                        )}
                       </div>
                       {fsaError && (
-                        <p role="alert" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>
+                        <p id="fsaError" role="alert" aria-live="assertive" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>
                           Please enter your 3-character FSA to continue
                         </p>
                       )}
-                      <p style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 4, marginBottom: 16, display: 'flex', alignItems: 'flex-start', gap: 5, lineHeight: 1.5 }}>
+                      <p style={{
+                        fontSize: 11, color: 'var(--n-400)',
+                        marginTop: 8, marginBottom: 16,
+                        display: 'flex', alignItems: 'flex-start', gap: 8,
+                        lineHeight: 1.5,
+                        padding: '8px 12px',
+                        background: 'var(--n-50)',
+                        borderRadius: 'var(--r-md)',
+                      }}>
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }}>
                           <circle cx="6" cy="6" r="5" stroke="#B8B7B1" strokeWidth="1"/>
                           <path d="M6 5.5v3" stroke="#B8B7B1" strokeWidth="1.2" strokeLinecap="round"/>
@@ -1296,7 +1439,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     </div>
 
                     {/* Insurance type */}
-                    <div style={{ marginBottom: 16 }}>
+                    <div style={{ marginBottom: 24 }}>
                       <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
                         <legend className="fl">Insurance type</legend>
                       <div style={{ display: 'flex', gap: 8 }}>
@@ -1341,12 +1484,14 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       opacity: insType === 'auto' ? 1 : 0,
                       transition: 'max-height .5s cubic-bezier(.16,1,.3,1), opacity .35s',
                     }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                        <Stepper s={steppers.yrs} min={0} max={30} label="Years licensed (G)"      onAdj={d => adj('yrs', d)} inputId="yrsv" decreaseLabel="Decrease years licensed"   increaseLabel="Increase years licensed" />
-                        <Stepper s={steppers.cl}  min={0} max={5}  label="At-fault claims (6 yrs)" onAdj={d => adj('cl', d)}  inputId="clv"  decreaseLabel="Decrease at-fault claims"  increaseLabel="Increase at-fault claims" />
-                      </div>
-                      <div style={{ marginBottom: 4 }}>
-                        <Stepper s={steppers.cv} min={0} max={3} label="Convictions (last 3 years)" onAdj={d => adj('cv', d)} inputId="cvv" decreaseLabel="Decrease convictions" increaseLabel="Increase convictions" />
+                      <div style={{ paddingTop: 16, borderTop: '1px solid var(--n-100)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                          <Stepper s={steppers.yrs} min={0} max={30} label="Years licensed (G)"      onAdj={d => adj('yrs', d)} inputId="yrsv" decreaseLabel="Decrease years licensed"   increaseLabel="Increase years licensed" tipText={TIP_YRS}   onTipShow={showTip} onTipHide={hideTipDelayed} />
+                          <Stepper s={steppers.cl}  min={0} max={5}  label="At-fault claims (6 yrs)" onAdj={d => adj('cl', d)}  inputId="clv"  decreaseLabel="Decrease at-fault claims"  increaseLabel="Increase at-fault claims" tipText={TIP_CLAIMS} onTipShow={showTip} onTipHide={hideTipDelayed} />
+                        </div>
+                        <div style={{ marginBottom: 4 }}>
+                          <Stepper s={steppers.cv} min={0} max={3} label="Convictions (last 3 years)" onAdj={d => adj('cv', d)} inputId="cvv" decreaseLabel="Decrease convictions" increaseLabel="Increase convictions" tipText={TIP_CV} onTipShow={showTip} onTipHide={hideTipDelayed} />
+                        </div>
                       </div>
                     </div>
 
@@ -1356,7 +1501,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       opacity: insType === 'home' ? 1 : 0,
                       transition: 'max-height .5s cubic-bezier(.16,1,.3,1), opacity .35s',
                     }}>
-                      <div style={{ paddingBottom: 4 }}>
+                      <div style={{ paddingTop: 16, borderTop: '1px solid var(--n-100)', paddingBottom: 4 }}>
                         <Stepper s={steppers.hcl} min={0} max={5} label="Number of claims" onAdj={d => adj('hcl', d)} inputId="hclv" decreaseLabel="Decrease number of claims" increaseLabel="Increase number of claims" />
                       </div>
                     </div>
@@ -1419,7 +1564,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                 tabIndex={provider === p ? 0 : (provider === '' && i === 0 ? 0 : -1)}
                                 onClick={() => { setProvider(p); setProvErr(false); setProvSearch('') }}
                                 style={{
-                                  padding: '6px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
+                                  padding: '8px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
                                   border: `1px solid ${provider === p ? '#1A1917' : '#EEEDEA'}`,
                                   background: provider === p ? '#1A1917' : '#FFFFFF',
                                   color: provider === p ? '#FFFFFF' : 'var(--n-500)',
@@ -1465,6 +1610,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             <button
                               key={m}
                               type="button"
+                              className="srm-mode-btn"
                               onClick={() => switchMode(m)}
                               style={{
                                 fontFamily: "'IBM Plex Mono', monospace",

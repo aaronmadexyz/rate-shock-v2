@@ -491,6 +491,17 @@ export default function Nav({
                   </AnimatePresence>
                 </motion.button>
 
+                {/* Trigger tagline — social proof, hidden until count loads */}
+                {state === 'new' && mounted && (stripCount ?? 0) > 0 && (
+                  <p style={{
+                    fontSize: 11, color: 'var(--n-500)', textAlign: 'center',
+                    lineHeight: 1.55, margin: '4px 0 0', pointerEvents: 'none',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    Join {(stripCount ?? 0).toLocaleString()} Ontario driver{stripCount === 1 ? '' : 's'} who shared
+                  </p>
+                )}
+
                 {/* Activity badge — Rule 5: origin-aware (top right) */}
                 {activityCount > 0 && (
                   <motion.span
