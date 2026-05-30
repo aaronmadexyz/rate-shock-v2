@@ -509,7 +509,7 @@ export default function Nav({
                 )}
               </div>
             ) : (
-              <div style={{ width: 180, height: 34, borderRadius: 9999, background: '#E2E1DD', opacity: 0.5 }} />
+              <div style={{ width: 180, height: 34, borderRadius: 9999, background: 'var(--n-150)', opacity: 0.5 }} />
             )}
 
             {/* Hamburger — mobile only (CSS shows on mobile) */}
@@ -561,7 +561,7 @@ export default function Nav({
                 <p
                   className={styles.drawerStatus}
                   style={{
-                    color:      isUrgent ? '#845A0C' : undefined,
+                    color:      isUrgent ? 'var(--cau-600)' : undefined,
                     fontWeight: isUrgent ? 500      : undefined,
                   }}
                 >
@@ -585,7 +585,7 @@ export default function Nav({
                     <ShareCheckIcon />
                     Share with neighbours
                   </motion.button>
-                  <div style={{ height: 1, background: '#EEEDEA', margin: '2px 0' }} />
+                  <div style={{ height: 1, background: 'var(--n-100)', margin: '2px 0' }} />
                 </>
               )}
 

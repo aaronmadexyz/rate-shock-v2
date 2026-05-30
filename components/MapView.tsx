@@ -249,7 +249,7 @@ function HoverPreview({
         top:             y - 8,
         transform:       'translateX(-50%) translateY(-100%)',
         transformOrigin: 'bottom center',
-        zIndex:          300, // z-controls
+        zIndex:          300, // z-tooltip
       }}
       initial={isFirst && !prefersReduced
         ? { opacity: 0, scale: 0.95, y: 4 }
@@ -499,7 +499,7 @@ function LockedPanel({
           ref={sheetRef}
           className={styles.sheet}
           style={{
-            zIndex:      200,
+            zIndex:      200, // z-panel
             borderLeft,
             paddingLeft,
           }}
@@ -532,7 +532,7 @@ function LockedPanel({
         top:             y - 8,
         transform:       'translateX(-50%) translateY(-100%)',
         transformOrigin: 'bottom center',
-        zIndex:          200,
+        zIndex:          200, // z-panel
         borderTop:       '1px solid #E2E1DD',
         borderRight:     '1px solid #E2E1DD',
         borderBottom:    '1px solid #E2E1DD',
@@ -851,7 +851,7 @@ export default function MapView({
         maxZoom={16}
         zoomControl={false}
         attributionControl={false}
-        style={{ position: 'fixed', inset: 0, zIndex: 0, width: '100vw', height: '100dvh', touchAction: 'none' }}
+        style={{ position: 'fixed', inset: 0, zIndex: 0, /* z-map */ width: '100vw', height: '100dvh', touchAction: 'none' }}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"

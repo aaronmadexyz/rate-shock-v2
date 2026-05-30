@@ -93,12 +93,12 @@ function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangePr
     <div style={{ position: 'relative', width: '100%', height: 4, marginTop: 4 }}>
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0,
-        height: 4, borderRadius: 2, background: '#E2E1DD',
+        height: 4, borderRadius: 2, background: 'var(--n-100)',
       }} />
       <div style={{
         position: 'absolute', top: 0,
         left: fillLeft + '%', right: fillRight + '%',
-        height: 4, borderRadius: 2, background: '#1A1917',
+        height: 4, borderRadius: 2, background: 'var(--n-900)',
         transition: 'left .05s, right .05s',
       }} />
       <input
@@ -352,9 +352,9 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                 flex: 1, fontFamily: 'inherit',
                 fontSize: 13, fontWeight: 500,
                 padding: '10px 8px', borderRadius: 10,
-                border: `1.5px solid ${on ? '#1A1917' : '#D4D3CE'}`,
-                background: on ? '#1A1917' : '#FFFFFF',
-                color: on ? '#FFFFFF' : '#5E5D56',
+                border: `1.5px solid ${on ? 'var(--n-900)' : 'var(--n-200)'}`,
+                background: on ? 'var(--n-900)' : 'var(--n-0)',
+                color: on ? 'var(--n-0)' : 'var(--n-600)',
                 cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 transition: 'all .18s cubic-bezier(.16,1,.3,1)',
@@ -367,7 +367,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
           )
         })}
       </div>
-      <div style={{ height: 1, background: '#EEEDEA', marginTop: 16 }} />
+      <div style={{ height: 1, background: 'var(--n-100)', marginTop: 16 }} />
 
       {/* Provider pills */}
       <span style={sectionLabel}>Provider</span>
@@ -383,9 +383,9 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                 fontFamily: 'inherit',
                 fontSize: 12, fontWeight: 500,
                 padding: '6px 13px', borderRadius: 9999,
-                border: `1px solid ${on ? '#1A1917' : '#D4D3CE'}`,
-                background: on ? '#1A1917' : '#FFFFFF',
-                color: on ? '#FFFFFF' : '#5E5D56',
+                border: `1px solid ${on ? 'var(--n-900)' : 'var(--n-200)'}`,
+                background: on ? 'var(--n-900)' : 'var(--n-0)',
+                color: on ? 'var(--n-0)' : 'var(--n-600)',
                 cursor: 'pointer',
                 transition: 'all .18s cubic-bezier(.16,1,.3,1)',
                 letterSpacing: '-0.01em',
@@ -406,14 +406,14 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
           justifyContent: 'space-between', marginBottom: 10,
         }}>
           <span style={{
-            fontSize: 22, fontWeight: 600, color: '#1A1917',
+            fontSize: 22, fontWeight: 600, color: 'var(--n-900)',
             letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums',
           }}>
             {filters.rMin}%
           </span>
           <span style={{ fontSize: 13, color: 'var(--n-400)' }}>to</span>
           <span style={{
-            fontSize: 22, fontWeight: 600, color: '#1A1917',
+            fontSize: 22, fontWeight: 600, color: 'var(--n-900)',
             letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums',
           }}>
             {filters.rMax >= 50 ? '50%+' : `${filters.rMax}%`}
@@ -428,7 +428,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                 key={i}
                 style={{
                   flex: 1, borderRadius: '2px 2px 0 0',
-                  background: i >= filters.rMin && i <= filters.rMax ? '#B0B4E6' : '#EEEDEA',
+                  background: i >= filters.rMin && i <= filters.rMax ? 'var(--p-200)' : 'var(--n-100)',
                   height: `${Math.max(3, Math.round(v / distMax * 20))}px`,
                   transition: 'background .2s',
                 }}
@@ -450,13 +450,13 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
       </div>
 
       {/* Verified only */}
-      <span style={{ ...sectionLabel, color: '#B8B7B1' }}>Trust</span>
+      <span style={{ ...sectionLabel, color: 'var(--n-400)' }}>Trust</span>
       <div style={{
         display: 'flex', alignItems: 'center',
         justifyContent: 'space-between', padding: '10px 0',
       }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#5E5D56', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--n-600)', letterSpacing: '-0.01em' }}>
             Verified posts only
           </div>
           <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 2, lineHeight: 1.4 }}>
@@ -469,7 +469,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
           aria-pressed={filters.verified}
           style={{
             width: 42, height: 24, borderRadius: 9999,
-            background: filters.verified ? '#1A1917' : '#D4D3CE',
+            background: filters.verified ? 'var(--n-900)' : 'var(--n-200)',
             border: 'none', cursor: 'pointer',
             position: 'relative', flexShrink: 0, marginLeft: 16,
             transition: 'background .2s cubic-bezier(.16,1,.3,1)',
@@ -477,7 +477,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
         >
           <span style={{
             position: 'absolute', width: 18, height: 18, borderRadius: '50%',
-            background: '#FFFFFF', top: 3,
+            background: 'var(--n-0)', top: 3,
             left: filters.verified ? 21 : 3,
             boxShadow: '0 1px 3px rgba(26,25,23,.14)',
             transition: 'left .22s cubic-bezier(.16,1,.3,1)',
@@ -613,7 +613,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
               onClick={onClose}
               style={{
                 position: 'fixed', inset: 0,
-                zIndex: 400, // z-backdrop
+                zIndex: 400, // z-overlay-bg
                 background: 'rgba(26,25,23,0.28)',
               }}
             />
@@ -640,7 +640,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                 position: 'fixed',
                 bottom: 0, left: 0, right: 0,
                 zIndex: 450, // z-overlay
-                background: '#FFFFFF',
+                background: 'var(--n-0)',
                 borderRadius: '20px 20px 0 0',
                 boxShadow: '0 -4px 32px rgba(26,25,23,.1), 0 -1px 4px rgba(26,25,23,.05)',
                 maxHeight: '72vh',
@@ -658,17 +658,17 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                   touchAction: 'none', flexShrink: 0,
                 }}
               >
-                <div style={{ width: 36, height: 4, borderRadius: 2, background: '#D4D3CE' }} />
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--n-200)' }} />
               </div>
 
               {/* Header */}
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '14px 20px 12px', flexShrink: 0,
-                borderBottom: '1px solid #EEEDEA',
+                borderBottom: '1px solid var(--n-100)',
               }}>
                 <span style={{
-                  fontSize: 15, fontWeight: 500, color: '#1A1917',
+                  fontSize: 15, fontWeight: 500, color: 'var(--n-900)',
                   letterSpacing: '-0.01em',
                 }}>
                   Filter
@@ -681,13 +681,13 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
                     aria-label="Close filter"
                     style={{
                       width: 26, height: 26, borderRadius: '50%',
-                      border: '1px solid #EEEDEA', background: '#FFFFFF',
+                      border: '1px solid var(--n-100)', background: 'var(--n-0)',
                       cursor: 'pointer', display: 'flex',
                       alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0, transition: 'background .15s', padding: 0,
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#F5F4F1')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--n-50)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'var(--n-0)')}
                   >
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
                       <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="#767670" strokeWidth="1.5" strokeLinecap="round"/>

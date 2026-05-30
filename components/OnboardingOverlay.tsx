@@ -111,7 +111,7 @@ export default function OnboardingOverlay({ isVisible, onDismiss, onSubmit }: Pr
                 </div>
               </div>
               <p className={styles.insightLine}>
-                <strong style={{ fontWeight: 600, color: '#1A1917' }}>Your renewal is on the higher end for your area.</strong>{' '}
+                <strong style={{ fontWeight: 600, color: 'var(--n-900)' }}>Your renewal is on the higher end for your area.</strong>{' '}
                 Posting it helps others know what to expect at renewal time.
               </p>
               <span className={styles.disclaimer}>Sample data — not your actual rates</span>
