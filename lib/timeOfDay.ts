@@ -11,30 +11,32 @@ export function getTimeOfDay(): TimeOfDayState {
 }
 
 // CSS variable shifts per time of day.
-// Values are subtle — max 4% shift from the standard palette.
+// --tod-bg variants are intentional warm offsets from n-50 (#F5F4F1).
+// They are application-specific and not in the main token table.
+// --tod-cta snapped to p-600 (#3A3F8F) — the standard CTA colour.
 export const timeOfDayTokens: Record<TimeOfDayState, Record<string, string>> = {
   'morning': {
-    '--tod-bg':  '#F2EFE8',
-    '--tod-cta': '#3D4498',
+    '--tod-bg':  '#F2EFE8', // +3% warm offset from n-50 — intentional
+    '--tod-cta': '#3A3F8F', // p-600
   },
   'commute-am': {
-    '--tod-bg':  '#F2EFE8',  // 3% warmer than n-50
-    '--tod-cta': '#3D4498',  // 4% brighter than p-600
+    '--tod-bg':  '#F2EFE8', // +3% warm offset from n-50 — intentional
+    '--tod-cta': '#3A3F8F', // p-600
   },
   'day': {
-    '--tod-bg':  '#F5F4F1',  // standard n-50
-    '--tod-cta': '#3A3F8F',  // standard p-600
+    '--tod-bg':  '#F5F4F1', // n-50 standard
+    '--tod-cta': '#3A3F8F', // p-600
   },
   'commute-pm': {
-    '--tod-bg':  '#F0EDE6',  // 4% warmer
-    '--tod-cta': '#3D4498',  // 4% brighter
+    '--tod-bg':  '#F0EDE6', // +4% warm offset from n-50 — intentional
+    '--tod-cta': '#3A3F8F', // p-600
   },
   'evening': {
-    '--tod-bg':  '#EDEAE3',  // 6% warmer, slightly darker
-    '--tod-cta': '#3A3F8F',  // standard
+    '--tod-bg':  '#EDEAE3', // +6% warm offset from n-50 — intentional
+    '--tod-cta': '#3A3F8F', // p-600
   },
   'night': {
-    '--tod-bg':  '#EDEAE3',
-    '--tod-cta': '#3A3F8F',
+    '--tod-bg':  '#EDEAE3', // +6% warm offset from n-50 — intentional
+    '--tod-cta': '#3A3F8F', // p-600
   },
 }

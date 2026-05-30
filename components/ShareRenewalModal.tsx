@@ -10,11 +10,12 @@ import { useReducedMotion } from '@/lib/motionSafety'
 import { playRip, playSeal, playChime } from '@/lib/sounds'
 import { safeSetItem, safeGetItem, safeRemoveItem } from '@/lib/storage'
 import { getCentroid } from '@/lib/fsaCentroids'
+import { TOKENS } from '@/lib/tokens'
 import type { Submission } from '@/lib/types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const SC = ['', '#3A9B55', '#93D1A2', '#D49316', '#E87460', '#D4503A']
+const SC = ['', '#3A9B55', '#93D1A2', '#D49316', '#F2A597', '#D4503A']
 const SENT_LABELS = ['', 'Very fair', 'Fair', 'Neutral', 'Unfair', 'Very unfair']
 const DRAFT_KEY       = 'rateshock_form_draft'
 const DRAFT_SHOWN_KEY = 'rateshock_draft_shown'
@@ -53,7 +54,8 @@ function validatePayload(payload: {
     console.error('[ShareRenewalModal] Validation failed: sentiment =', payload.sentiment)
     return 'Invalid sentiment'
   }
-  if (payload.rate_change_pct !== null && (payload.rate_change_pct < 0 || payload.rate_change_pct > 200)) {
+  // Decreases are encoded as negative values — valid range: −30% to +100%
+  if (payload.rate_change_pct !== null && (payload.rate_change_pct < -30 || payload.rate_change_pct > 100)) {
     console.error('[ShareRenewalModal] Validation failed: rate_change_pct =', payload.rate_change_pct)
     return 'Invalid rate change percentage'
   }
@@ -69,7 +71,7 @@ function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function faceSvgHtml(s: number): string {
-  const c = ['', '#3A9B55', '#2A7D41', '#92600A', '#B33C28', '#8C2E1E'][s]
+  const c = ['', '#3A9B55', '#2A7D41', '#845A0C', '#B33C28', '#8C2E1E'][s]
   const m = ['', 'M9 19Q17 26 25 19', 'M11 20Q17 24 23 20', 'M11 22L23 22', 'M11 24Q17 20 23 24', 'M9 25Q17 19 25 25'][s]
   return `<svg width="52" height="52" viewBox="0 0 34 34" aria-hidden="true"><circle cx="12" cy="13" r="2.1" fill="${c}"/><circle cx="22" cy="13" r="2.1" fill="${c}"/><path d="${m}" stroke="${c}" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>`
 }
@@ -93,6 +95,17 @@ function sliderLabel(val: number, mode: 'pct' | 'dol', sign: 'inc' | 'dec'): { t
   if (val <= 24) return { text: 'Significantly above average', color: 'var(--cau-600)' }
   if (val <= 34) return { text: 'Well above average · Worth verifying this', color: 'var(--neg-500)' }
   return { text: 'Exceptionally high — this should definitely be verified', color: 'var(--neg-500)' }
+}
+
+// Maps a stored (signed) rate_change_pct to a display colour tier.
+// Decreases (negative pct) = good news = positive/green.
+// Do NOT use Math.abs() — −12% is green, not caution.
+function pctTierColor(pct: number | null): string {
+  if (pct === null) return 'var(--n-400)'   // no data
+  if (pct < 0)      return 'var(--pos-600)' // decrease → green
+  if (pct <= 7)     return 'var(--n-600)'   // at/below typical
+  if (pct <= 16)    return 'var(--cau-600)' // above average
+  return 'var(--neg-500)'                    // significantly above
 }
 
 function heroColor(val: number, mode: 'pct' | 'dol', sign: 'inc' | 'dec'): string {
@@ -298,7 +311,7 @@ function Stepper({
   const tipBtnRef  = useRef<HTMLButtonElement>(null)
   const displayVal = `${s.v}${s.v === max ? '+' : ''}`
   const anim       = s.k > 0
-    ? `${s.dir === 'up' ? 'snUp' : 'snDown'} 180ms ease both`
+    ? `${s.dir === 'up' ? 'snUp' : 'snDown'} 180ms cubic-bezier(0.16, 1, 0.3, 1) both`
     : undefined
 
   return (
@@ -324,7 +337,7 @@ function Stepper({
       </div>
       <div style={{
         display: 'flex', alignItems: 'center',
-        border: '1px solid #EEEDEA', borderRadius: 'var(--r-md)',
+        border: '1px solid var(--n-100)', borderRadius: 'var(--r-md)',
         overflow: 'hidden', width: 'fit-content',
       }}>
         <button
@@ -335,7 +348,7 @@ function Stepper({
           aria-label={decreaseLabel}
           style={{ ...SB_STYLE, opacity: s.v <= min ? 0.4 : 1 }}
         >−</button>
-        <div aria-live="polite" aria-atomic="true" style={{ borderLeft: '1px solid #EEEDEA', borderRight: '1px solid #EEEDEA' }}>
+        <div aria-live="polite" aria-atomic="true" style={{ borderLeft: '1px solid var(--n-100)', borderRight: '1px solid var(--n-100)' }}>
           <span
             id={inputId}
             key={s.k}
@@ -635,13 +648,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     if (sealCircleRef.current) sealCircleRef.current.setAttribute('fill', '#D4D3CE')
     if (envLetterRef.current) {
       envLetterRef.current.className = ''
-      envLetterRef.current.style.cssText = 'position:absolute;left:14px;right:14px;top:14px;height:140px;background:#FFFFFF;border:1px solid #DDDBD6;border-radius:4px;box-shadow:0 2px 10px rgba(26,25,23,.1);z-index:2;opacity:0;transform:translateY(0px)'
+      envLetterRef.current.style.cssText = 'position:absolute;left:14px;right:14px;top:14px;height:140px;background:#FFFFFF;border:1px solid var(--n-150);border-radius:4px;box-shadow:0 2px 10px rgba(26,25,23,.1);z-index:2;opacity:0;transform:translateY(0px)'
     }
     if (letterFaceRef.current) { letterFaceRef.current.innerHTML = ''; letterFaceRef.current.style.opacity = '0' }
-    const ripStyle = 'position:absolute;left:14px;right:14px;top:14px;height:140px;background:#FFFFFF;border:1px solid #DDDBD6;border-radius:4px;z-index:6;opacity:0;animation:none'
+    const ripStyle = 'position:absolute;left:14px;right:14px;top:14px;height:140px;background:#FFFFFF;border:1px solid var(--n-150);border-radius:4px;z-index:6;opacity:0;animation:none'
     if (ripLRef.current)    { ripLRef.current.style.cssText = ripStyle; ripLRef.current.innerHTML = '' }
     if (ripRRef.current)    { ripRRef.current.style.cssText = ripStyle; ripRRef.current.innerHTML = '' }
-    if (ripCrackRef.current) ripCrackRef.current.style.cssText = 'position:absolute;left:50%;width:2px;top:14px;height:140px;margin-left:-1px;background:linear-gradient(to bottom,transparent,#E87460 15%,#E87460 85%,transparent);z-index:7;opacity:0;transform:scaleY(0);transform-origin:top'
+    if (ripCrackRef.current) ripCrackRef.current.style.cssText = 'position:absolute;left:50%;width:2px;top:14px;height:140px;margin-left:-1px;background:linear-gradient(to bottom,transparent,var(--neg-200) 15%,var(--neg-200) 85%,transparent);z-index:7;opacity:0;transform:scaleY(0);transform-origin:top'
     if (ptcWrapRef.current)  ptcWrapRef.current.innerHTML = ''
     if (envSceneRef.current) envSceneRef.current.style.cssText = ''
     if (amsgRef.current)   { amsgRef.current.style.visibility = 'hidden'; amsgRef.current.style.animation = '' }
@@ -826,9 +839,17 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       rateDollar = rval * signMul
     }
 
-    // Guard: unreasonable percentage (wrong previous premium entered)
-    if (ratePct !== null && (ratePct < 0 || ratePct > 200)) {
-      setPrevPremError("That doesn't look right — check your previous premium amount")
+    // Guard: at least one rate field must be present before touching Supabase.
+    // Mirrors the DB constraint submissions_rate_data_required.
+    if (ratePct === null && rateDollar === null) {
+      setPrevPremError('Please enter your premium change to continue.')
+      setSubmitting(false)
+      return
+    }
+
+    // Guard: valid range −30% (max decrease) to +100% (extreme increase)
+    if (ratePct !== null && (ratePct < -30 || ratePct > 100)) {
+      setPrevPremError("That doesn't look right — rate change must be between −30% and +100%")
       setSubmitting(false)
       return
     }
@@ -864,23 +885,27 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
     // Build optimistic submission for the map — shown immediately without waiting for DB
     const optimisticSub: Submission = {
-      id:                 crypto.randomUUID(),
-      fsa:                fsaUpper,
+      id:                  crypto.randomUUID(),
+      created_at:          new Date().toISOString(),
+      fsa:                 fsaUpper,
+      neighbourhood:       getAreaLabel(fsa),
+      insurance_type:      insType,
       provider,
-      insurance_type:     insType,
-      rate_change_pct:    ratePct,
-      rate_change_dollar: rateDollar,
-      renewal_year:       null,
-      mode:               mode === 'dol' ? 'dollar' : 'pct',
-      sentiment:          sent,
-      comment_raw:        note || null,
-      verified:           false,
-      neighbourhood:      getAreaLabel(fsa),
-      created_at:         new Date().toISOString(),
-      years_licensed:     insType === 'auto' ? steppers.yrs.v : null,
-      at_fault_claims:    insType === 'auto' ? steppers.cl.v  : 0,
-      convictions:        insType === 'auto' ? steppers.cv.v  : 0,
-      home_claims:        insType === 'home' ? steppers.hcl.v : 0,
+      rate_change_pct:     ratePct,
+      rate_change_dollar:  rateDollar,
+      mode:                mode === 'dol' ? 'dollar' : 'pct',
+      years_licensed:      insType === 'auto' ? steppers.yrs.v : null,
+      at_fault_claims:     insType === 'auto' ? steppers.cl.v  : 0,
+      convictions:         insType === 'auto' ? steppers.cv.v  : 0,
+      home_claims:         insType === 'home' ? steppers.hcl.v : 0,
+      sentiment:           sent,
+      comment_raw:         note || null,
+      comment_explanation: null,
+      comment_loyalty:     null,
+      comment_shopping:    null,
+      comment_tone:        null,
+      verified:            false,
+      renewal_year:        null,
     }
 
     // Insert — fire-and-forget; capture the returned ID for the dollar-patch flow
@@ -1008,7 +1033,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
       if (!passedHinge && peakY <= 0) {
         passedHinge = true
-        flapPolyRef.current?.setAttribute('fill', '#E2DDD7')
+        flapPolyRef.current?.setAttribute('fill', 'var(--paper-flap-open)')
         if (sealGroupRef.current)  sealGroupRef.current.style.opacity  = '0'
         if (envFlapRef.current)    envFlapRef.current.style.filter     = 'url(#flapShadow)'
         if (!prefersReducedRef.current) playSeal()
@@ -1069,11 +1094,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const doRip = useCallback((s: number) => {
     const RISE_PX = 108
     const inner = `<div style="padding:14px 13px 0"><div style="height:2px;background:#EEEDEA;border-radius:1px;margin-bottom:10px"></div><div style="height:2px;background:#EEEDEA;border-radius:1px;margin-bottom:10px;width:70%"></div><div style="height:2px;background:#EEEDEA;border-radius:1px;margin-bottom:10px;width:50%"></div><div style="height:2px;background:#EEEDEA;border-radius:1px;margin-bottom:10px"></div><div style="height:2px;background:#EEEDEA;border-radius:1px;width:70%"></div></div><div style="display:flex;align-items:center;justify-content:center;padding-top:10px">${faceSvgHtml(s)}</div>`
-    const shared = `position:absolute;left:14px;right:14px;height:140px;background:#FFFFFF;border:1px solid #DDDBD6;border-radius:4px;z-index:6;top:calc(14px - ${RISE_PX}px);`
+    const shared = `position:absolute;left:14px;right:14px;height:140px;background:#FFFFFF;border:1px solid var(--n-150);border-radius:4px;z-index:6;top:calc(14px - ${RISE_PX}px);`
 
     if (ripLRef.current)  { ripLRef.current.innerHTML  = inner; ripLRef.current.style.cssText  = shared + 'clip-path:inset(0 50% 0 0 round 4px 0 0 4px);opacity:1' }
     if (ripRRef.current)  { ripRRef.current.innerHTML  = inner; ripRRef.current.style.cssText  = shared + 'clip-path:inset(0 0 0 50% round 0 4px 4px 0);opacity:1' }
-    if (ripCrackRef.current) ripCrackRef.current.style.cssText = `position:absolute;left:50%;width:2px;top:calc(14px - ${RISE_PX}px);height:140px;margin-left:-1px;background:linear-gradient(to bottom,transparent,#E87460 15%,#E87460 85%,transparent);z-index:7;opacity:1;animation:crackIn .65s ease forwards;transform-origin:top`
+    if (ripCrackRef.current) ripCrackRef.current.style.cssText = `position:absolute;left:50%;width:2px;top:calc(14px - ${RISE_PX}px);height:140px;margin-left:-1px;background:linear-gradient(to bottom,transparent,var(--neg-400) 15%,var(--neg-400) 85%,transparent);z-index:7;opacity:1;animation:crackIn .65s cubic-bezier(0.4,0,1,1) forwards;transform-origin:top`
     if (envLetterRef.current) envLetterRef.current.style.opacity = '0'
 
     setTimeout(() => {
@@ -1204,7 +1229,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
           ? `${fsaCount} neighbour${fsaCount === 1 ? '' : 's'} in ${areaLabel || fsa} have shared.`
           : `${fsaCount} renewals on the map for ${areaLabel || fsa}.`
       ) : fsa.length >= 1 ? areaLabel : ''
-  const fsaHintColor = fsaHintIsLoading ? 'var(--n-400)' : '#4A50B0'
+  const fsaHintColor = fsaHintIsLoading ? 'var(--n-400)' : 'var(--p-500)'
 
   // ── Comparison card ──────────────────────────────────────────────────────────
   const daysRemaining = 21
@@ -1224,6 +1249,12 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const hasAreaData   = areaMed !== null && areaMedCount >= 3
   const hasLimitedData = areaMed !== null && areaMedCount > 0 && areaMedCount < 3
   const nbrAbove      = hasAreaData && hasPct && areaMed! < userPctVal
+  // Signed pct for tier colouring: decreases are negative, increases positive
+  const submittedSignedPct: number | null = mode === 'pct'
+    ? rval * (sign === 'dec' ? -1 : 1)
+    : (prevPrem !== null && prevPrem > 0)
+      ? calculatePct(rval, prevPrem) * (sign === 'dec' ? -1 : 1)
+      : null
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   const stepTitle  = step === 1 ? 'About your policy' : step === 2 ? 'What did they charge you?' : ''
@@ -1249,7 +1280,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
           {/* ── Backdrop ── */}
           <motion.div
             key="srm-backdrop"
-            style={{ position: 'fixed', inset: 0, background: 'rgba(26,25,23,0.46)', zIndex: 500 /* z-backdrop */ }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(26,25,23,0.46)', zIndex: TOKENS.zIndex.zBackdrop /* --z-backdrop: 500 */ }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -1276,7 +1307,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               margin:       0,
               background:   '#FFFFFF',
               borderRadius: 'var(--r-xl) var(--r-xl) 0 0',
-              border:       '1px solid #E2E1DD',
+              border:       '1px solid var(--n-150)',
               boxShadow:    'var(--sh-lg)',
               zIndex:       600, // z-modal
               display:      'flex',
@@ -1290,7 +1321,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               maxWidth:     468,
               background:   '#FFFFFF',
               borderRadius: 'var(--r-xl)',
-              border:       '1px solid #E2E1DD',
+              border:       '1px solid var(--n-150)',
               boxShadow:    'var(--sh-lg)',
               zIndex:       600, // z-modal
               display:      'flex',
@@ -1327,7 +1358,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 className="srm-close-btn"
                 style={{
                   width: 26, height: 26, borderRadius: '50%',
-                  border: '1px solid #EEEDEA', background: '#FFFFFF',
+                  border: '1px solid var(--n-100)', background: '#FFFFFF',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'background .15s', flexShrink: 0, padding: 0,
                 }}
@@ -1381,7 +1412,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
             {step !== 'anim' && (
               <div style={{
                 padding: '16px 22px 0', overflowY: 'auto', flex: 1,
-                scrollbarWidth: 'thin', scrollbarColor: '#E2E1DD transparent',
+                scrollbarWidth: 'thin', scrollbarColor: 'var(--n-150) transparent',
                 ...(isMobile ? {
                   maxHeight:                 'calc(92dvh - 140px)',
                   WebkitOverflowScrolling:   'touch',
@@ -1398,17 +1429,17 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         display: 'flex', alignItems: 'center', gap: 6,
                         background: '#EEEFFA', borderRadius: 'var(--r-sm)',
                         padding: '8px 12px', marginBottom: 12,
-                        fontSize: 12, color: '#4A50B0',
+                        fontSize: 12, color: 'var(--p-500)',
                       }}>
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-                          <circle cx="6" cy="6" r="5" stroke="#4A50B0" strokeWidth="1"/>
-                          <path d="M6 3.5v3l1.5 1.5" stroke="#4A50B0" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                          <circle cx="6" cy="6" r="5" stroke="var(--p-500)" strokeWidth="1"/>
+                          <path d="M6 3.5v3l1.5 1.5" stroke="var(--p-500)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                         <span style={{ flex: 1 }}>We saved your progress.</span>
                         <button
                           type="button"
                           onClick={() => { setShowRestoreNotice(false); safeSetItem(DRAFT_SHOWN_KEY, 'true') }}
-                          style={{ background: 'none', border: 'none', color: '#4A50B0', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}
+                          style={{ background: 'none', border: 'none', color: 'var(--p-500)', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}
                           aria-label="Dismiss"
                         >×</button>
                       </div>
@@ -1434,13 +1465,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           fontFamily: "'IBM Plex Mono', monospace",
                           fontSize: 22, fontWeight: 500,
                           width: '100%', padding: '12px 16px',
-                          border: fsaError ? '1.5px solid #D4503A' : '1.5px solid #EEEDEA',
+                          border: fsaError ? '1.5px solid #D4503A' : '1.5px solid var(--n-100)',
                           borderRadius: 'var(--r-lg)', background: '#FFFFFF', color: '#1A1917',
                           outline: 'none', letterSpacing: '.14em', textTransform: 'uppercase',
                           transition: 'border-color .15s, box-shadow .15s', display: 'block',
                         }}
-                        onFocus={e => { e.currentTarget.style.borderColor = '#4A50B0'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,80,176,.09)' }}
-                        onBlur={e => { e.currentTarget.style.borderColor = fsaError ? '#D4503A' : '#EEEDEA'; e.currentTarget.style.boxShadow = 'none' }}
+                        onFocus={e => { e.currentTarget.style.borderColor = 'var(--p-400)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99,106,197,.12)' }}
+                        onBlur={e => { e.currentTarget.style.borderColor = fsaError ? '#D4503A' : 'var(--n-100)'; e.currentTarget.style.boxShadow = 'none' }}
                       />
                       <div style={{ marginTop: 4, marginBottom: 0, minHeight: 32 }}>
                         {fsaHint && !fsaError && (
@@ -1492,8 +1523,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             type="button"
                             onClick={() => setInsType(t)}
                             style={{
-                              flex: 1, padding: '11px 8px', borderRadius: 'var(--r-md)', fontSize: 13, fontWeight: 500,
-                              border: `1.5px solid ${insType === t ? '#1A1917' : '#EEEDEA'}`,
+                              flex: 1, padding: '12px 8px', borderRadius: 'var(--r-md)', fontSize: 13, fontWeight: 500,
+                              border: `1.5px solid ${insType === t ? '#1A1917' : 'var(--n-100)'}`,
                               background: insType === t ? '#1A1917' : '#FFFFFF',
                               color: insType === t ? '#FFFFFF' : 'var(--n-500)',
                               cursor: 'pointer', transition: 'all .2s cubic-bezier(.16,1,.3,1)',
@@ -1529,11 +1560,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     }}>
                       <div style={{ paddingTop: 16, borderTop: '1px solid var(--n-100)' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                          <Stepper s={steppers.yrs} min={0} max={30} label="Years licensed (G)"      onAdj={d => adj('yrs', d)} inputId="yrsv" decreaseLabel="Decrease years licensed"   increaseLabel="Increase years licensed" tipText={TIP_YRS}   onTipShow={showTip} onTipHide={hideTipDelayed} />
-                          <Stepper s={steppers.cl}  min={0} max={5}  label="At-fault claims (6 yrs)" onAdj={d => adj('cl', d)}  inputId="clv"  decreaseLabel="Decrease at-fault claims"  increaseLabel="Increase at-fault claims" tipText={TIP_CLAIMS} onTipShow={showTip} onTipHide={hideTipDelayed} />
+                          <Stepper s={steppers.yrs} min={0} max={30} label="Years licensed"   onAdj={d => adj('yrs', d)} inputId="yrsv" decreaseLabel="Decrease years licensed"   increaseLabel="Increase years licensed" tipText={TIP_YRS}   onTipShow={showTip} onTipHide={hideTipDelayed} />
+                          <Stepper s={steppers.cl}  min={0} max={5}  label="At-fault claims" onAdj={d => adj('cl', d)}  inputId="clv"  decreaseLabel="Decrease at-fault claims"  increaseLabel="Increase at-fault claims" tipText={TIP_CLAIMS} onTipShow={showTip} onTipHide={hideTipDelayed} />
                         </div>
                         <div style={{ marginBottom: 4 }}>
-                          <Stepper s={steppers.cv} min={0} max={3} label="Convictions (last 3 years)" onAdj={d => adj('cv', d)} inputId="cvv" decreaseLabel="Decrease convictions" increaseLabel="Increase convictions" tipText={TIP_CV} onTipShow={showTip} onTipHide={hideTipDelayed} />
+                          <Stepper s={steppers.cv} min={0} max={3} label="Convictions" onAdj={d => adj('cv', d)} inputId="cvv" decreaseLabel="Decrease convictions" increaseLabel="Increase convictions" tipText={TIP_CV} onTipShow={showTip} onTipHide={hideTipDelayed} />
                         </div>
                       </div>
                     </div>
@@ -1566,7 +1597,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             fontFamily: "'Inter', system-ui, sans-serif",
                             fontSize: 13,
                             padding: '8px 12px',
-                            border: '1.5px solid #EEEDEA',
+                            border: '1.5px solid var(--n-100)',
                             borderRadius: 'var(--r-sm)',
                             background: '#FFFFFF',
                             color: '#1A1917',
@@ -1574,8 +1605,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             marginBottom: 10,
                             boxSizing: 'border-box',
                           }}
-                          onFocus={e => { e.target.style.borderColor = '#636AC5'; e.target.style.boxShadow = '0 0 0 3px rgba(74,80,176,.09)' }}
-                          onBlur={e => { e.target.style.borderColor = '#EEEDEA'; e.target.style.boxShadow = 'none' }}
+                          onFocus={e => { e.target.style.borderColor = '#636AC5'; e.target.style.boxShadow = '0 0 0 3px rgba(99,106,197,.12)' }}
+                          onBlur={e => { e.target.style.borderColor = 'var(--n-100)'; e.target.style.boxShadow = 'none' }}
                         />
                         <div
                           id="provGrid"
@@ -1619,7 +1650,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                 }}
                                 style={{
                                   padding: '8px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
-                                  border: `1px solid ${provider === p ? '#1A1917' : '#EEEDEA'}`,
+                                  border: `1px solid ${provider === p ? '#1A1917' : 'var(--n-100)'}`,
                                   background: provider === p ? '#1A1917' : '#FFFFFF',
                                   color: provider === p ? '#FFFFFF' : 'var(--n-500)',
                                   cursor: 'pointer', transition: 'all .15s',
@@ -1698,7 +1729,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             color: valColor,
                             lineHeight: 1,
                             fontVariantNumeric: 'tabular-nums',
-                            transition: 'color 0.18s ease',
+                            transition: 'color 0.18s cubic-bezier(0.25, 0, 0.3, 1)',
                           }}
                         >
                           {heroText}
@@ -1775,7 +1806,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           borderRadius: 'var(--r-lg)',
                         }}>
                           <div style={{
-                            fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 500,
+                            fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, fontWeight: 500,
                             letterSpacing: '.06em', textTransform: 'uppercase',
                             color: 'var(--n-500)', marginBottom: 8,
                             display: 'flex', alignItems: 'center', gap: 8,
@@ -1784,7 +1815,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             <span style={{
                               fontFamily: "'Inter', system-ui, sans-serif",
                               fontWeight: 400, letterSpacing: 0, textTransform: 'none',
-                              fontSize: 10, color: 'var(--n-500)',
+                              fontSize: 11, color: 'var(--n-500)',
                             }}>— fill any two to calculate the third</span>
                           </div>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -1793,7 +1824,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               <label
                                 htmlFor="triDollar"
                                 style={{
-                                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
+                                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
                                   fontWeight: 500, letterSpacing: '.06em',
                                   textTransform: 'uppercase', color: 'var(--n-500)',
                                   marginBottom: 4, display: 'block',
@@ -1840,7 +1871,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               <label
                                 htmlFor="triPrevPrem"
                                 style={{
-                                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
+                                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
                                   fontWeight: 500, letterSpacing: '.06em',
                                   textTransform: 'uppercase', color: 'var(--n-500)',
                                   marginBottom: 4, display: 'block',
@@ -1964,8 +1995,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               }}
                               style={{
                                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                                padding: '9px 3px', borderRadius: 'var(--r-lg)', minHeight: 72,
-                                border: `1.5px solid ${sent === n ? SC[n] : '#EEEDEA'}`,
+                                padding: '8px 4px', borderRadius: 'var(--r-lg)', minHeight: 72,
+                                border: `1.5px solid ${sent === n ? SC[n] : 'var(--n-100)'}`,
                                 cursor: 'pointer', transition: 'border-color .22s cubic-bezier(.16,1,.3,1), background .22s cubic-bezier(.16,1,.3,1)',
                                 background: sent === n ? SC[n] + '28' : '#FFFFFF',
                                 fontFamily: "'Inter', system-ui, sans-serif",
@@ -1977,7 +2008,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               {n === 1 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Very happy face</title><circle cx="17" cy="17" r="15" fill="#3A9B55"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M10 21Q17 27 24 21" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
                               {n === 2 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Happy face</title><circle cx="17" cy="17" r="15" fill="#93D1A2"/><circle cx="12" cy="14" r="2" fill="#1F6132"/><circle cx="22" cy="14" r="2" fill="#1F6132"/><path d="M12 21Q17 24.5 22 21" stroke="#1F6132" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
                               {n === 3 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Neutral face</title><circle cx="17" cy="17" r="15" fill="#D49316"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round"/></svg>}
-                              {n === 4 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Sad face</title><circle cx="17" cy="17" r="15" fill="#E87460"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 24Q17 20 22 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              {n === 4 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Sad face</title><circle cx="17" cy="17" r="15" fill="var(--neg-200)"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 24Q17 20 22 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
                               {n === 5 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Very sad face</title><circle cx="17" cy="17" r="15" fill="#D4503A"/><circle cx="12" cy="13" r="2" fill="white"/><circle cx="22" cy="13" r="2" fill="white"/><path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
                               <span aria-hidden="true" style={{ fontSize: 10, color: 'var(--n-400)', textAlign: 'center', lineHeight: 1.3 }}>
                                 {n === 1 ? <>Very<br/>fair</> : n === 5 ? <>Very<br/>unfair</> : SENT_LABELS[n]}
@@ -2008,15 +2039,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             placeholder={`e.g. "Intact raised mine 22% after 8 clean years — no claims, always on time"`}
                             onChange={handleNoteChange}
                             style={{
-                              width: '100%', padding: '11px 13px',
+                              width: '100%', padding: '12px 12px',
                               fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
-                              border: '1.5px solid #EEEDEA', borderRadius: 'var(--r-lg)',
+                              border: '1.5px solid var(--n-100)', borderRadius: 'var(--r-lg)',
                               background: '#FFFFFF', color: '#1A1917', outline: 'none',
                               resize: 'none', lineHeight: 1.6, minHeight: 76,
                               transition: 'border-color .15s, box-shadow .15s', display: 'block',
                             }}
-                            onFocus={e => { e.currentTarget.style.borderColor = '#4A50B0'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,80,176,.09)' }}
-                            onBlur={e => { e.currentTarget.style.borderColor = '#EEEDEA'; e.currentTarget.style.boxShadow = 'none' }}
+                            onFocus={e => { e.currentTarget.style.borderColor = 'var(--p-400)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99,106,197,.12)' }}
+                            onBlur={e => { e.currentTarget.style.borderColor = 'var(--n-100)'; e.currentTarget.style.boxShadow = 'none' }}
                           />
                           {showCounter && (
                             <div
@@ -2121,25 +2152,25 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     ref={envLetterRef}
                     style={{
                       position: 'absolute', left: 14, right: 14, top: 14, height: 140,
-                      background: '#FFFFFF', border: '1px solid #DDDBD6', borderRadius: 4,
+                      background: '#FFFFFF', border: '1px solid var(--n-150)', borderRadius: 4,
                       boxShadow: '0 2px 10px rgba(26,25,23,.1)', zIndex: 2, opacity: 0,
                     }}
                   >
                     <div style={{ padding: '14px 13px 0' }}>
                       {[null, '70%', '50%', null, '70%'].map((w, i) => (
-                        <div key={i} style={{ height: 2, background: '#EEEDEA', borderRadius: 1, marginBottom: 10, width: w ?? '100%' }} />
+                        <div key={i} style={{ height: 2, background: 'var(--n-100)', borderRadius: 1, marginBottom: 10, width: w ?? '100%' }} />
                       ))}
                     </div>
                     <div
                       ref={letterFaceRef}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 10, opacity: 0, transition: 'opacity .4s ease' }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 10, opacity: 0, transition: 'opacity 0.3s cubic-bezier(0.25, 0, 0.3, 1)' }}
                     />
                   </div>
 
                   {/* Z=3 Rip elements */}
-                  <div ref={ripLRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: '#FFFFFF', border: '1px solid #DDDBD6', borderRadius: 4, zIndex: 6, opacity: 0, clipPath: 'inset(0 50% 0 0 round 4px 0 0 4px)' }} />
-                  <div ref={ripRRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: '#FFFFFF', border: '1px solid #DDDBD6', borderRadius: 4, zIndex: 6, opacity: 0, clipPath: 'inset(0 0 0 50% round 0 4px 4px 0)' }} />
-                  <div ref={ripCrackRef} style={{ position: 'absolute', left: '50%', width: 2, top: 14, height: 140, marginLeft: -1, background: 'linear-gradient(to bottom,transparent,#E87460 15%,#E87460 85%,transparent)', zIndex: 7, opacity: 0, transform: 'scaleY(0)', transformOrigin: 'top' }} />
+                  <div ref={ripLRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: '#FFFFFF', border: '1px solid var(--n-150)', borderRadius: 4, zIndex: 6, opacity: 0, clipPath: 'inset(0 50% 0 0 round 4px 0 0 4px)' }} />
+                  <div ref={ripRRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: '#FFFFFF', border: '1px solid var(--n-150)', borderRadius: 4, zIndex: 6, opacity: 0, clipPath: 'inset(0 0 0 50% round 0 4px 4px 0)' }} />
+                  <div ref={ripCrackRef} style={{ position: 'absolute', left: '50%', width: 2, top: 14, height: 140, marginLeft: -1, background: 'linear-gradient(to bottom,transparent,var(--neg-200) 15%,var(--neg-200) 85%,transparent)', zIndex: 7, opacity: 0, transform: 'scaleY(0)', transformOrigin: 'top' }} />
 
                   {/* Z=4 Flap */}
                   <svg
@@ -2166,7 +2197,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
                 {/* Success / comparison card */}
                 {animDone && (
-                  <div ref={amsgRef} style={{ textAlign: 'center', animation: 'fadeUp .45s ease both', width: '100%', paddingBottom: 4 }}>
+                  <div ref={amsgRef} style={{ textAlign: 'center', animation: 'fadeUp .28s cubic-bezier(0.16, 1, 0.3, 1) both', width: '100%', paddingBottom: 4 }}>
                     {/* On-map confirmation — personalised from FSA */}
                     {(() => {
                       const hood = (areaLabel || fsa).replace(/\s*\(.*?\)$/, '').trim()
@@ -2188,13 +2219,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     </div>
 
                     {/* Comparison card */}
-                    <div style={{ border: '1px solid #EEEDEA', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 14 }}>
+                    <div style={{ border: '1px solid var(--n-100)', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 14 }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: '#FFFFFF' }}>
                         {/* You column */}
-                        <div style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid #EEEDEA' }}>
+                        <div style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid var(--n-100)' }}>
                           <div
                             style={{
-                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
+                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
                               fontWeight: 500, letterSpacing: '.02em', textTransform: 'uppercase',
                               color: 'var(--n-400)', marginBottom: 4, whiteSpace: 'nowrap',
                             }}
@@ -2207,18 +2238,22 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               fontVariationSettings: "'opsz' 32",
                               letterSpacing: '-.02em', lineHeight: 1,
                               fontVariantNumeric: 'tabular-nums',
-                              color: '#D4503A', marginBottom: 3,
+                              color: pctTierColor(submittedSignedPct), marginBottom: 3,
                             }}
                           >
-                            {hasPct ? `${cntYou >= 50 && sign === 'inc' ? '50+' : cntYou}%` : `+$${rval.toLocaleString()}`}
+                            {hasPct
+                              ? (sign === 'dec'
+                                  ? `−${cntYou}%`
+                                  : `${cntYou >= 50 ? '50+' : cntYou}%`)
+                              : `${sign === 'dec' ? '−' : '+'}$${rval.toLocaleString()}`}
                           </div>
-                          <div style={{ fontSize: 10, color: 'var(--n-400)', marginTop: 3, lineHeight: 1.4 }}>your renewal</div>
+                          <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 3, lineHeight: 1.4 }}>your renewal</div>
                         </div>
                         {/* Area column */}
-                        <div style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid #EEEDEA' }}>
+                        <div style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid var(--n-100)' }}>
                           <div
                             style={{
-                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
+                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
                               fontWeight: 500, letterSpacing: '.02em', textTransform: 'uppercase',
                               color: 'var(--n-400)', marginBottom: 4, whiteSpace: 'nowrap',
                             }}
@@ -2231,13 +2266,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               fontVariationSettings: "'opsz' 32",
                               letterSpacing: '-.02em', lineHeight: 1,
                               fontVariantNumeric: 'tabular-nums',
-                              color: compLoading ? '#D4D3CE' : (hasLimitedData ? 'var(--n-400)' : (hasAreaData ? '#AD7710' : '#D4D3CE')),
+                              color: compLoading ? '#D4D3CE' : (hasLimitedData ? 'var(--n-400)' : (hasAreaData ? 'var(--cau-500)' : '#D4D3CE')),
                               marginBottom: 3,
                             }}
                           >
                             {compLoading ? '–' : hasAreaData ? `${cntNbr}%` : hasLimitedData ? `${Math.round(areaMed!)}%*` : '–'}
                           </div>
-                          <div style={{ fontSize: 10, color: 'var(--n-400)', marginTop: 3, lineHeight: 1.4 }}>
+                          <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 3, lineHeight: 1.4 }}>
                             {compLoading ? 'loading…' : hasAreaData ? 'average increase' : hasLimitedData ? 'limited data' : 'no area data yet'}
                           </div>
                         </div>
@@ -2245,7 +2280,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         <div style={{ padding: '12px 8px', textAlign: 'center' }}>
                           <div
                             style={{
-                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
+                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
                               fontWeight: 500, letterSpacing: '.02em', textTransform: 'uppercase',
                               color: 'var(--n-400)', marginBottom: 4, whiteSpace: 'nowrap',
                             }}
@@ -2264,7 +2299,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           >
                             {compLoading ? '–' : ontMed !== null ? `${cntOnt}%` : '–'}
                           </div>
-                          <div style={{ fontSize: 10, color: 'var(--n-400)', marginTop: 3, lineHeight: 1.4 }}>province-wide</div>
+                          <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 3, lineHeight: 1.4 }}>province-wide</div>
                         </div>
                       </div>
                       {/* Insight line */}
@@ -2324,8 +2359,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             <>
                               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }}>
-                                  <rect x="2" y="1.5" width="12" height="13" rx="2" stroke="#4A50B0" strokeWidth="1.2"/>
-                                  <path d="M5 5h6M5 8h6M5 11h3" stroke="#4A50B0" strokeWidth="1.2" strokeLinecap="round"/>
+                                  <rect x="2" y="1.5" width="12" height="13" rx="2" stroke="var(--p-500)" strokeWidth="1.2"/>
+                                  <path d="M5 5h6M5 8h6M5 11h3" stroke="var(--p-500)" strokeWidth="1.2" strokeLinecap="round"/>
                                 </svg>
                                 <div>
                                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--p-600)', marginBottom: 3, fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -2487,16 +2522,16 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         }}
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }}>
-                          <circle cx="6" cy="4" r="2.5" stroke="#4A50B0" strokeWidth="1.2"/>
-                          <circle cx="11" cy="5" r="2" stroke="#4A50B0" strokeWidth="1.2"/>
-                          <path d="M1 13c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="#4A50B0" strokeWidth="1.2" strokeLinecap="round"/>
-                          <path d="M11 9c1.7.4 3 1.9 3 3.5" stroke="#4A50B0" strokeWidth="1.2" strokeLinecap="round"/>
+                          <circle cx="6" cy="4" r="2.5" stroke="var(--p-500)" strokeWidth="1.2"/>
+                          <circle cx="11" cy="5" r="2" stroke="var(--p-500)" strokeWidth="1.2"/>
+                          <path d="M1 13c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="var(--p-500)" strokeWidth="1.2" strokeLinecap="round"/>
+                          <path d="M11 9c1.7.4 3 1.9 3 3.5" stroke="var(--p-500)" strokeWidth="1.2" strokeLinecap="round"/>
                         </svg>
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 500, color: '#3A3F8F', marginBottom: 3, fontFamily: "'Inter', system-ui, sans-serif" }}>
                             Filter the map to drivers like you
                           </div>
-                          <div style={{ fontSize: 12, color: '#4A50B0', lineHeight: 1.5, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                          <div style={{ fontSize: 12, color: 'var(--p-500)', lineHeight: 1.5, fontFamily: "'Inter', system-ui, sans-serif" }}>
                             See how your renewal compares to drivers with a similar profile and provider.
                           </div>
                           <button
@@ -2559,7 +2594,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           onClick={onVerify}
                           style={{
                             fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, fontWeight: 500,
-                            padding: '9px 20px', borderRadius: 999,
+                            padding: '8px 20px', borderRadius: 999,
                             border: 'none', background: '#1A1917', color: '#FFFFFF',
                             cursor: 'pointer', transition: 'opacity .15s',
                           }}
@@ -2605,7 +2640,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     onClick={goBack}
                     style={{
                       fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
-                      padding: '11px 18px', borderRadius: 999,
+                      padding: '12px 16px', borderRadius: 999,
                       border: '1px solid #D4D3CE', background: '#FFFFFF', cursor: 'pointer',
                       color: 'var(--n-500)', transition: 'background .15s, transform .1s', whiteSpace: 'nowrap',
                     }}
@@ -2629,7 +2664,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                   }}
                   style={{
                     fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
-                    padding: '11px 0', borderRadius: 999,
+                    padding: '12px 0', borderRadius: 999,
                     border: 'none',
                     background: step === 2 && !consent ? '#D4D3CE' : '#1A1917',
                     color: '#FFFFFF', cursor: step === 2 && !consent ? 'not-allowed' : 'pointer',

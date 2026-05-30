@@ -102,19 +102,19 @@
   align-items: center;
   justify-content: center;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  color: rgba(26, 25, 23, 0.5);
+  font-size: 11px;
+  color: var(--n-500); /* 4.7:1 on white ✓ AA — raised from rgba opacity */
   pointer-events: all;
   padding: 0 16px;
   white-space: nowrap;
 }
 
 .attributionBar a {
-  color: rgba(26, 25, 23, 0.55);
+  color: var(--n-500); /* 4.7:1 on near-white ✓ AA */
   text-decoration: none;
 }
 
 .attributionBar a:hover {
-  color: rgba(26, 25, 23, 0.85);
+  color: var(--n-800);
   text-decoration: underline;
 }

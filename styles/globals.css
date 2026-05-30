@@ -68,8 +68,9 @@
   --seal-negative-shine: #F2A597;
 
   /* ── PAPER COLORS ───────────────────────────────────────────────────── */
-  --paper-body: #F0EDE8;
-  --paper-flap: #E6E3DD;
+  --paper-body:      #F0EDE8;
+  --paper-flap:      #E6E3DD;
+  --paper-flap-open: #E2DDD7; /* flap after fold — slightly darker than closed */
 
   /* ── MAP COLORS ─────────────────────────────────────────────────────── */
   --map-land:   #EEEDEA;
@@ -117,13 +118,16 @@
   --z-markers:  10;
   --z-controls: 20;
   --z-nav:      100;
-  --z-panel:    200;
-  --z-tooltip:  300;
-  --z-overlay-bg: 400;
-  --z-overlay:    450;
-  --z-backdrop:   500;
-  --z-modal:      600;
-  --z-alert:      700;
+  --z-panel:           200;
+  --z-panel-backdrop:  199; /* Detail sheet backdrop — sits just below the sheet it dims */
+  --z-tooltip:         300;
+  --z-overlay-bg:      400;
+  --z-overlay:         450;
+  --z-nudge:           460; /* Nudge tooltip — sits above the filter overlay card it annotates */
+  --z-backdrop:        500;
+  --z-modal:       600;
+  --z-above-modal: 650; /* tooltip portals escaping a modal stacking context */
+  --z-alert:       700;
 
   /* ── SEMANTIC ALIASES ───────────────────────────────────────────────── */
   --text-primary:      var(--n-900);
@@ -169,7 +173,7 @@ body {
   letter-spacing: 0.012em;
   color: var(--n-900);
   background-color: var(--tod-bg, #F5F4F1);
-  transition: background-color 600ms ease;
+  transition: background-color 250ms cubic-bezier(0.25, 0, 0.3, 1);
 }
 
 p {
@@ -305,11 +309,11 @@ p {
 
 /* ── Consent confirm (Rule 2/3/4/5) */
 @keyframes consentConfirm {
-  0%   { transform: scale(1);    border-color: #D4D3CE }
-  20%  { transform: scale(.94);  border-color: #3A9B55 }
-  55%  { transform: scale(1.06); border-color: #3A9B55 }
-  80%  { transform: scale(.99);  border-color: #1A1917 }
-  100% { transform: scale(1);    border-color: #1A1917 }
+  0%   { transform: scale(1);    border-color: var(--n-200) }
+  20%  { transform: scale(.94);  border-color: var(--pos-400) }
+  55%  { transform: scale(1.06); border-color: var(--pos-400) }
+  80%  { transform: scale(.99);  border-color: var(--n-900) }
+  100% { transform: scale(1);    border-color: var(--n-900) }
 }
 .consent-confirm {
   animation: consentConfirm 260ms cubic-bezier(.16,1,.3,1) both;
@@ -358,13 +362,13 @@ p {
 .marker-match {
   opacity: 1;
   transform: scale(1);
-  transition: opacity 250ms ease, transform 300ms cubic-bezier(0.16,1,0.3,1);
+  transition: opacity 250ms cubic-bezier(0.25,0,0.3,1), transform 300ms cubic-bezier(0.16,1,0.3,1);
 }
 
 .marker-dim {
   opacity: 0.08;
   transform: scale(0.85);
-  transition: opacity 250ms ease, transform 250ms ease;
+  transition: opacity 250ms cubic-bezier(0.25,0,0.3,1), transform 250ms cubic-bezier(0.4,0,1,1);
 }
 
 .marker-pulse {
@@ -381,17 +385,17 @@ p {
 .pioneer-shimmer {
   background: linear-gradient(
     90deg,
-    #1A1917 0%,
-    #1A1917 40%,
-    #4A50B0 50%,
-    #1A1917 60%,
-    #1A1917 100%
+    var(--n-900) 0%,
+    var(--n-900) 40%,
+    var(--p-500) 50%,
+    var(--n-900) 60%,
+    var(--n-900) 100%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: shimmer 1.8s ease-in-out 1;
+  animation: shimmer 1.8s cubic-bezier(0.65, 0, 0.35, 1) 1;
   animation-delay: 0.3s;
 }
 
@@ -439,8 +443,11 @@ button:focus-visible {
 }
 
 input[type="range"]:focus-visible {
-  outline: 2px solid var(--p-400);
-  outline-offset: 3px;
+  outline: none;
+}
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  border-color: var(--p-400);
+  box-shadow: 0 0 0 3px rgba(99,106,197,.12);
 }
 
 input[type="checkbox"]:focus-visible + div,
@@ -458,42 +465,32 @@ input[type="checkbox"]:focus + div {
 /* ─── SLIDER DRAG AFFORDANCE ─────────────────────────────────────────────── */
 
 .rng {
-  cursor: grab;
-}
-.rng:active {
-  cursor: grabbing;
+  cursor: pointer;
 }
 .rng::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 22px; height: 22px;
+  width: 20px; height: 20px;
   border-radius: 50%;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #767670 0px, #767670 1px,
-      transparent 1px, transparent 3px
-    ) center / 12px 8px no-repeat,
-    #FFFFFF;
-  border: 1.5px solid #B8B7B1;
-  box-shadow: 0 1px 4px rgba(26,25,23,.14);
-  cursor: grab;
+  background: #FFFFFF;
+  border: 1.5px solid var(--n-200);
+  box-shadow: 0 1px 3px rgba(0,0,0,.12);
+  cursor: pointer;
   transition: border-color .15s, transform .1s;
 }
 .rng::-webkit-slider-thumb:hover {
-  border-color: #5E5D56;
-  transform: scale(1.1);
+  border-color: var(--n-400);
 }
 .rng:active::-webkit-slider-thumb {
-  cursor: grabbing;
-  transform: scale(1.15);
+  transform: scale(1.18);
 }
 .rng::-moz-range-thumb {
-  width: 22px; height: 22px;
+  width: 20px; height: 20px;
   border-radius: 50%;
   background: #FFFFFF;
-  border: 1.5px solid #B8B7B1;
-  box-shadow: 0 1px 4px rgba(26,25,23,.14);
-  cursor: grab;
+  border: 1.5px solid var(--n-200);
+  box-shadow: 0 1px 3px rgba(0,0,0,.12);
+  cursor: pointer;
+  transition: border-color .15s, transform .1s;
 }
 @media (pointer: coarse) {
   .rng::-webkit-slider-thumb {
@@ -531,8 +528,8 @@ input[type="checkbox"]:focus + div {
 
 .tip-portal {
   position: fixed;
-  background: #1A1917;
-  color: #FFFFFF;
+  background: var(--n-900);
+  color: var(--n-0);
   font-family: var(--font);
   font-size: 12px;
   font-weight: 400;
@@ -542,7 +539,7 @@ input[type="checkbox"]:focus + div {
   width: 220px;
   max-width: calc(100vw - 32px);
   box-shadow: 0 4px 12px rgba(26,25,23,.22), 0 1px 3px rgba(26,25,23,.14);
-  z-index: 700;
+  z-index: var(--z-above-modal); /* 650 — above z-modal:600, below z-alert:700 */
   pointer-events: none;
   display: none;
   opacity: 0;
@@ -564,7 +561,7 @@ input[type="checkbox"]:focus + div {
 .tip-portal-caret {
   position: absolute;
   border: 5px solid transparent;
-  border-top-color: #1A1917;
+  border-top-color: var(--n-900);
 }
 
 /* ─── INFO BUTTON (tip-btn) ─────────────────────────────────────────────── */

@@ -6,6 +6,7 @@ import type { Map as LeafletMap } from 'leaflet'
 import { getCentroid } from '@/lib/fsaCentroids'
 import { getAreaLabel } from '@/lib/fsaData'
 import { springs } from '@/lib/springs'
+import { TOKENS } from '@/lib/tokens'
 import { fetchFsaCount } from '@/lib/fetchFsaCount'
 
 export interface PostalCodeSearchProps {
@@ -13,14 +14,14 @@ export interface PostalCodeSearchProps {
   onCtaClick?: () => void
 }
 
-const SH_SM = '0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04)'
+const SH_SM = TOKENS.shadows.shadowSm
 
 const ONTARIO_PREFIXES = new Set(['K', 'L', 'M', 'N', 'P'])
 
 type Status = 'idle' | 'loading' | 'valid' | 'pioneer' | 'invalid'
 
 function SearchSvg({ active }: { active?: boolean }) {
-  const color = active ? '#4A50B0' : 'var(--n-400)'
+  const color = active ? 'var(--p-500)' : 'var(--n-400)'
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <circle cx="7" cy="7" r="4.5" stroke={color} strokeWidth="1.3"/>
@@ -224,7 +225,7 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
           borderRadius:    9999,
           background:      'var(--n-0)',
           border:          isExpanded ? '1.5px solid var(--p-400)' : '1px solid var(--n-200)',
-          boxShadow:       isExpanded ? '0 0 0 3px rgba(74,80,176,.09)' : SH_SM,
+          boxShadow:       isExpanded ? '0 0 0 3px rgba(99,106,197,.12)' : SH_SM,
           overflow:        'hidden',
           display:         'flex',
           alignItems:      'center',

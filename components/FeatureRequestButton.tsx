@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { springs } from '@/lib/springs'
+import { TOKENS } from '@/lib/tokens'
 import { supabase } from '@/lib/supabase'
 import { safeGetItem } from '@/lib/storage'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const SH_SM = '0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04)'
+const SH_SM = TOKENS.shadows.shadowSm
 const CHAR_LIMIT = 280
 
 const TOP_REQUESTS = [
@@ -263,7 +264,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                       width:          26,
                       height:         26,
                       borderRadius:   '50%',
-                      border:         '1px solid #EEEDEA',
+                      border:         '1px solid var(--n-100)',
                       background:     'var(--n-0)',
                       color:          'var(--n-400)',
                       cursor:         'pointer',
@@ -280,7 +281,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                   <div style={{ margin: '12px 0 14px' }}>
                     <div style={{
                       fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: 10, fontWeight: 500,
+                      fontSize: 11, fontWeight: 500,
                       letterSpacing: '0.06em', textTransform: 'uppercase',
                       color: 'var(--n-400)', marginBottom: 8,
                     }}>
@@ -292,7 +293,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                         style={{
                           display: 'flex', alignItems: 'center', gap: 8,
                           padding: '6px 0',
-                          borderBottom: i < TOP_REQUESTS.length - 1 ? '1px solid #EEEDEA' : 'none',
+                          borderBottom: i < TOP_REQUESTS.length - 1 ? '1px solid var(--n-100)' : 'none',
                         }}
                       >
                         <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--n-200)', flexShrink: 0 }} />
@@ -311,8 +312,8 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                   <style>{`
                     .frb-ta::placeholder { color: var(--n-300); }
                     .frb-ta:focus {
-                      border-color: #636AC5 !important;
-                      box-shadow: 0 0 0 3px rgba(74,80,176,.12) !important;
+                      border-color: var(--p-400) !important;
+                      box-shadow: 0 0 0 3px rgba(99,106,197,.12) !important;
                     }
                   `}</style>
                   <textarea
@@ -332,7 +333,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                       minHeight:    88,
                       padding:      '10px 12px',
                       border:       '1.5px solid var(--n-100)',
-                      borderRadius: 10,
+                      borderRadius: 'var(--r-md)',
                       background:   'var(--n-0)',
                       color:        'var(--n-900)',
                       resize:       'none',

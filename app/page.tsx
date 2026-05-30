@@ -20,6 +20,7 @@ import mcStyles from '@/styles/MapControls.module.css'
 import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
 import { safeGetItem, safeSetItem } from '@/lib/storage'
+import { TOKENS } from '@/lib/tokens'
 import OnboardingOverlay from '@/components/OnboardingOverlay'
 
 // Leaflet requires browser APIs — skip SSR entirely
@@ -219,13 +220,13 @@ export default function Page() {
             key="hero-hint"
             initial={{ opacity: 0, y: -4, x: '-50%' }}
             animate={{ opacity: 1, y: 0,  x: '-50%' }}
-            exit={{ opacity: 0, y: -4, x: '-50%', transition: { duration: 0.6, ease: 'easeOut' } }}
+            exit={{ opacity: 0, y: -4, x: '-50%', transition: { duration: 0.15, ease: [0.4, 0, 1, 1] as [number,number,number,number] } }}
             transition={{ type: 'spring', stiffness: 240, damping: 24, mass: 1 }}
             style={{
               position:      'fixed',
               top:           88,
               left:          '50%',
-              zIndex:        20, // z-controls — decorative hint, pointer-events none
+              zIndex:        TOKENS.zIndex.zControls, // --z-controls: 20 — decorative hint, pointer-events none
               pointerEvents: 'none',
               width:         'calc(100vw - 48px)',
               maxWidth:      480,

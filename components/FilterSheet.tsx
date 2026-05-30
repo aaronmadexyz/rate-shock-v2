@@ -44,7 +44,7 @@ export function countFilters(f: FilterState): number {
 
 const sectionLabel: React.CSSProperties = {
   fontFamily:    "'IBM Plex Mono', monospace",
-  fontSize:      10,
+  fontSize:      11,
   fontWeight:    500,
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
@@ -94,17 +94,17 @@ function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangePr
   const fillRight = 100 - ((valueMax - RANGE_MIN) / RANGE_SPAN) * 100
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: 6, marginTop: 6 }}>
+    <div style={{ position: 'relative', width: '100%', height: 4, marginTop: 6 }}>
       {/* Track background */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0,
-        height: 6, borderRadius: 3, background: 'var(--n-150)',
+        height: 4, borderRadius: 2, background: 'var(--n-200)',
       }} />
       {/* Track fill */}
       <div style={{
         position: 'absolute', top: 0,
         left: fillLeft + '%', right: fillRight + '%',
-        height: 6, borderRadius: 3, background: 'var(--n-900)',
+        height: 4, borderRadius: 2, background: 'var(--n-900)',
         transition: 'left .05s, right .05s',
       }} />
       {/* Min handle */}
@@ -149,12 +149,13 @@ function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangePr
 
 // ─── Thumb + track CSS ────────────────────────────────────────────────────────
 
-const RANGE_THUMB_CSS = `
+const FILTER_CSS = `
+  /* ── Dual-range slider ─────────────────────────────────────── */
   .fs-rh {
     position: absolute;
     width: 100%;
-    top: -9px;
-    height: 24px;
+    top: -8px;
+    height: 20px;
     -webkit-appearance: none;
     appearance: none;
     background: transparent;
@@ -163,24 +164,46 @@ const RANGE_THUMB_CSS = `
   }
   .fs-rh::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 24px; height: 24px; border-radius: 50%;
+    width: 20px; height: 20px; border-radius: 50%;
     background: var(--n-0);
-    border: 1.5px solid var(--n-300);
-    box-shadow: 0 1px 3px rgba(26,25,23,.12);
+    border: 1.5px solid var(--n-200);
+    box-shadow: 0 1px 3px rgba(0,0,0,.12);
     cursor: pointer;
     pointer-events: all;
     transition: border-color .15s, transform .1s;
   }
-  .fs-rh::-webkit-slider-thumb:hover { border-color: var(--n-600); }
-  .fs-rh:active::-webkit-slider-thumb { transform: scale(1.15); }
+  .fs-rh::-webkit-slider-thumb:hover { border-color: var(--n-400); }
+  .fs-rh:active::-webkit-slider-thumb { transform: scale(1.18); }
   .fs-rh::-moz-range-thumb {
-    width: 24px; height: 24px; border-radius: 50%;
+    width: 20px; height: 20px; border-radius: 50%;
     background: var(--n-0);
-    border: 1.5px solid var(--n-300);
-    box-shadow: 0 1px 3px rgba(26,25,23,.12);
+    border: 1.5px solid var(--n-200);
+    box-shadow: 0 1px 3px rgba(0,0,0,.12);
     cursor: pointer;
     pointer-events: all;
+    transition: border-color .15s, transform .1s;
   }
+  .fs-rh:focus-visible { outline: none; }
+  .fs-rh:focus-visible::-webkit-slider-thumb {
+    border-color: var(--p-400);
+    box-shadow: 0 0 0 3px rgba(99,106,197,.12);
+  }
+
+  /* ── Insurance type buttons — Rule 1 press feedback ────────── */
+  .fs-type-btn:active { transform: scale(0.97); }
+
+  /* ── Provider pills — Rule 1 press feedback ─────────────────── */
+  .fs-pill:active { transform: scale(0.97); }
+
+  /* ── Close button — 44px tap target + Rule 1 ────────────────── */
+  .fs-close { position: relative; }
+  .fs-close::before {
+    content: '';
+    position: absolute;
+    inset: -9px;
+    border-radius: 50%;
+  }
+  .fs-close:active { transform: scale(0.97); }
 `
 
 // ─── Section divider ──────────────────────────────────────────────────────────
@@ -378,6 +401,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
             <button
               key={t}
               type="button"
+              className="fs-type-btn"
               onClick={() => update({ ...filters, insuranceType: isSelected ? null : t })}
               style={{
                 flex:           1,
@@ -422,6 +446,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
             <button
               key={name}
               type="button"
+              className="fs-pill"
               role="checkbox"
               aria-checked={on}
               onClick={() => update({ ...filters, provider: on ? null : name })}
@@ -449,7 +474,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
               {count > 0 && (
                 <span style={{
                   fontFamily:    "'IBM Plex Mono', monospace",
-                  fontSize:      10,
+                  fontSize:      11,
                   fontWeight:    500,
                   color:         on ? 'var(--n-300)' : 'var(--n-400)',
                   letterSpacing: '0.02em',
@@ -466,7 +491,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
 
       {/* ─ Rate range ──────────────────────────────────────────────────────── */}
       <span style={sectionLabel}>Rate</span>
-      <div role="group" aria-label="Rate increase range" style={{ position: 'relative', paddingBottom: 4 }}>
+      <div role="group" aria-label="Rate change range" style={{ position: 'relative', paddingBottom: 4 }}>
         {/* Endpoint display — compact 14px */}
         <div style={{
           display: 'flex', alignItems: 'center',
@@ -523,17 +548,14 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
           onMinChange={setRMin}   onMaxChange={setRMax}
         />
 
-        {/* Axis labels — n-500 at 11px for WCAG 5.05:1 ✓ */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-          {['-30%', '0%', '10%', '20%', '30%', '40%', '50%+'].map(l => (
-            <span key={l} style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize:   11,
-              color:      'var(--n-500)',
-            }}>
-              {l}
-            </span>
-          ))}
+        {/* Boundary labels — range markers, deliberately quiet */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--n-300)' }}>
+            {filters.rMin < 0 ? `−${Math.abs(filters.rMin)}%` : `${filters.rMin}%`}
+          </span>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--n-300)' }}>
+            {filters.rMax >= 50 ? '50%+' : `${filters.rMax}%`}
+          </span>
         </div>
       </div>
     </>
@@ -594,6 +616,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
         )}
         <button
           type="button"
+          className="fs-close"
           onClick={onClose}
           aria-label="Close filter"
           style={{
@@ -625,7 +648,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
 
   return (
     <>
-      <style>{RANGE_THUMB_CSS}</style>
+      <style>{FILTER_CSS}</style>
 
       {/* ── Desktop floating card ─────────────────────────────────────────── */}
       <AnimatePresence>

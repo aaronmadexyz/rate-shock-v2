@@ -3,9 +3,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { springs } from '@/lib/springs'
+import { TOKENS } from '@/lib/tokens'
 
-const SH_MD = '0 4px 12px rgba(26,25,23,.06), 0 1px 3px rgba(26,25,23,.04)'
-const SH_SM = '0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04)'
+const SH_MD = TOKENS.shadows.shadowMd
+const SH_SM = TOKENS.shadows.shadowSm
 
 const ITEMS = [
   { w: 26, h: 18, label: 'Lower premium' },
@@ -91,7 +92,7 @@ export default function LegendButton() {
           height:         40,
           borderRadius:   9999,
           background:     '#FFFFFF',
-          border:         '1px solid #D4D3CE',
+          border:         '1px solid var(--n-200)',
           boxShadow:      SH_SM,
           display:        'flex',
           alignItems:     'center',
@@ -123,16 +124,16 @@ export default function LegendButton() {
               pointerEvents:   'none',
               whiteSpace:      'nowrap',
               background:      '#FFFFFF',
-              border:          '1px solid #E2E1DD',
+              border:          '1px solid var(--n-150)',
               borderRadius:    10,
               padding:         '12px 14px',
               boxShadow:       SH_MD,
-              zIndex:          300, // z-controls
+              zIndex:          TOKENS.zIndex.zTooltip, // --z-tooltip: 300
             }}
           >
             <div style={{
               fontFamily:    "'IBM Plex Mono', monospace",
-              fontSize:      9,
+              fontSize:      11,
               fontWeight:    500,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',

@@ -1,23 +1,27 @@
 // Shared types used across all components and lib modules.
 
 export interface Submission {
-  id:                 string
-  created_at:         string
-  fsa:                string
-  insurance_type:     'auto' | 'home'
-  provider:           string | null
-  rate_change_pct:    number | null
-  rate_change_dollar: number | null
-  renewal_year:       number | null
-  mode:               'pct' | 'dollar'
-  sentiment:          number | null
-  comment_raw:        string | null
-  verified:           boolean
-  neighbourhood:      string | null
-  years_licensed:     number | null
-  at_fault_claims:    number | null
-  convictions:        number | null
-  home_claims:        number | null
+  id:                  string
+  created_at:          string
+  fsa:                 string
+  neighbourhood:       string | null
+  insurance_type:      'auto' | 'home'
+  provider:            string
+  rate_change_pct:     number | null
+  rate_change_dollar:  number | null
+  mode:                'pct' | 'dollar'
+  years_licensed:      number | null
+  at_fault_claims:     number
+  convictions:         number
+  home_claims:         number
+  sentiment:           number
+  comment_raw:         string | null
+  comment_explanation: string | null
+  comment_loyalty:     string | null
+  comment_shopping:    string | null
+  comment_tone:        string | null
+  verified:            boolean
+  renewal_year:        number | null
 }
 
 export interface FeatureRequest {
@@ -31,8 +35,8 @@ export interface FeatureRequest {
 export interface FilterState {
   insuranceType: 'auto' | 'home' | null
   provider:      string | null
-  rMin:          number
-  rMax:          number
+  rMin:          number  // default -30
+  rMax:          number  // default  50
 }
 
 export interface MapViewHandle {

@@ -167,17 +167,20 @@ export const TOKENS = {
   // ─── Z-INDEX SCALE ────────────────────────────────────────────────────────
 
   zIndex: {
-    zMap:      0,
-    zMarkers:  10,
-    zControls: 20,
-    zNav:      100,
-    zPanel:    200,
-    zTooltip:  300,
-    zOverlayBg: 400,
-    zOverlay:   450,
-    zBackdrop:  500,
-    zModal:     600,
-    zAlert:     700,
+    zMap:        0,
+    zMarkers:    10,
+    zControls:   20,
+    zNav:        100,
+    zPanel:          200,
+    zPanelBackdrop:  199, // sits just below the detail sheet it dims
+    zTooltip:        300,
+    zOverlayBg:      400,
+    zOverlay:        450,
+    zNudge:          460, // nudge tooltip above the filter overlay card
+    zBackdrop:       500,
+    zModal:      600,
+    zAboveModal: 650, // tooltip portals that must escape a modal stacking context
+    zAlert:      700,
   },
 } as const;
 
@@ -190,8 +193,8 @@ export type TokenZIndex   = typeof TOKENS.zIndex;
 export const SEMANTIC = {
   text: {
     primary:   TOKENS.colors.n900,
-    secondary: TOKENS.colors.n500,
-    tertiary:  TOKENS.colors.n400,
+    secondary: TOKENS.colors.n600, // n-600 #5E5D56 5.9:1 on white ✓ AA
+    tertiary:  TOKENS.colors.n500, // n-500 #706F67 4.7:1 on white ✓ AA
     disabled:  TOKENS.colors.n300,
     inverse:   TOKENS.colors.n0,
   },
@@ -202,8 +205,8 @@ export const SEMANTIC = {
     raised:    TOKENS.colors.n0,
   },
   border: {
-    default: TOKENS.colors.n150,
-    strong:  TOKENS.colors.n200,
+    default: TOKENS.colors.n200, // --border-default per spec
+    strong:  TOKENS.colors.n300, // --border-strong per spec
     subtle:  TOKENS.colors.n100,
   },
 } as const;

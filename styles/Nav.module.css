@@ -17,10 +17,10 @@
   font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.02em;
-  color: #D4D3CE; /* var(--n-200) — 4.88:1 on n-800 ✓ AA */
+  color: #D4D3CE; /* var(--n-200) — ~8.5:1 on n-800 ✓ AAA */
   white-space: nowrap;
   overflow: hidden;
-  transition: opacity .2s ease;
+  transition: opacity .2s cubic-bezier(0.25, 0, 0.3, 1);
 }
 
 .stripEmpty {
@@ -52,7 +52,7 @@
     #43423D 100%
   );
   background-size: 200% 100%;
-  animation: stripShimmer 1.4s ease infinite;
+  animation: stripShimmer 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes stripShimmer {
@@ -79,7 +79,7 @@
   z-index: var(--z-nav);
   height: 52px;
   background: #FFFFFF;
-  border-bottom: 1px solid #EEEDEA;
+  border-bottom: 1px solid var(--n-100);
   pointer-events: all;
 }
 
@@ -122,12 +122,12 @@
 
 .brandBadge {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #4A50B0;
-  background: #EEEFFA;
+  color: var(--p-500);
+  background: var(--p-50);
   padding: 2px 7px;
   border-radius: 9999px;
   flex-shrink: 0;
@@ -180,7 +180,7 @@
   width: 100%;
   height: 34px;
   background: #F5F4F1;
-  border: 1px solid #EEEDEA;
+  border: 1px solid var(--n-100);
   border-radius: 9999px;
   padding: 0 14px 0 34px;
   outline: none;
@@ -192,8 +192,8 @@
 
 .searchInput:focus {
   background: #FFFFFF;
-  border: 1.5px solid #636AC5;
-  box-shadow: 0 0 0 3px rgba(74, 80, 176, .09);
+  border: 1.5px solid #636AC5; /* var(--p-400) */
+  box-shadow: 0 0 0 3px rgba(99, 106, 197, .12); /* p-400 rgba ✓ */
 }
 
 .searchInput::placeholder {
@@ -214,8 +214,8 @@
 }
 
 .searchStatusPioneer {
-  background: #FEF6E8;
-  border: 1px solid #FACA6B;
+  background: var(--cau-50);
+  border: 1px solid var(--cau-200);
   border-radius: var(--r-sm);
   padding: var(--sp-2) var(--sp-3);
   display: flex;
@@ -227,7 +227,7 @@
 .searchStatusPioneerText {
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 12px;
-  color: #845A0C;
+  color: var(--cau-600);
   line-height: 1.5;
 }
 
@@ -235,7 +235,7 @@
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
-  color: #845A0C;
+  color: var(--cau-600);
   background: none;
   border: none;
   padding: 0;
@@ -248,9 +248,9 @@
   display: block;
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 12px;
-  color: #B33C28;
+  color: var(--neg-500);
   background: #FFFFFF;
-  border: 1px solid #F2A597;
+  border: 1px solid var(--neg-200);
   border-radius: var(--r-sm);
   padding: var(--sp-2) var(--sp-3);
 }
@@ -328,7 +328,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid #EEEDEA;
+  border: 1px solid var(--n-100);
   background: #FFFFFF;
   cursor: pointer;
   display: inline-flex;
@@ -372,11 +372,11 @@
 }
 
 .cta[data-state="new"] {
-  background: #3A3F8F;
+  background: var(--p-600);
   color: #FFFFFF;
 }
 .cta[data-state="new"]:hover {
-  background: #2D3170;
+  background: var(--p-700);
 }
 
 .cta[data-state="unverified"] {
@@ -395,7 +395,7 @@
   border: 1px solid rgba(58, 155, 85, .2);
 }
 .cta[data-state="verified"]:hover {
-  background: #e0f2e6;
+  background: var(--pos-50);
 }
 
 .ctaInner {
@@ -422,11 +422,11 @@
 /* Urgency badge */
 .urgencyBadge {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: .02em;
   background: rgba(212, 147, 22, .14);
-  color: #845A0C;
+  color: var(--cau-600);
   padding: 2px 7px;
   border-radius: 999px;
   white-space: nowrap;
@@ -436,7 +436,7 @@
 
 .urgent {
   background: rgba(212, 147, 22, .22);
-  color: #7A4E08;
+  color: var(--cau-600); /* cau-600 — 5.67:1 on cau-50 ✓ AA */
 }
 
 /* Activity badge */
@@ -450,7 +450,7 @@
   background: #D4503A;
   color: #FFFFFF;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -540,11 +540,11 @@
 }
 
 .drawerCta[data-state="new"] {
-  background: #3A3F8F;
+  background: var(--p-600);
   color: #FFFFFF;
 }
 .drawerCta[data-state="new"]:hover {
-  background: #2D3170;
+  background: var(--p-700);
 }
 
 .drawerCta[data-state="unverified"] {
@@ -594,7 +594,7 @@
   color: #5E5D56;
   background: none;
   border: none;
-  border-top: 1px solid #EEEDEA;
+  border-top: 1px solid var(--n-100);
   cursor: pointer;
   padding: 10px 12px;
   display: flex;
@@ -620,14 +620,6 @@
     gap: 16px;
   }
 
-  .stripStat {
-    font-size: 10px;
-  }
-
-  .stripSep {
-    font-size: 10px;
-  }
-
   .bar {
     top: 22px;
     height: 46px;
@@ -638,7 +630,7 @@
   }
 
   .brandSub {
-    font-size: 10px;
+    font-size: 11px;
     max-width: 160px;
   }
 

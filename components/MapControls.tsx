@@ -3,13 +3,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { springs } from '@/lib/springs'
+import { TOKENS } from '@/lib/tokens'
 import type { UserProfile } from '@/lib/types'
 import type { FilterState } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
 import FilterSheet from '@/components/FilterSheet'
 import styles from '@/styles/MapControls.module.css'
 
-const SH_SM = '0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04)'
+const SH_SM = TOKENS.shadows.shadowSm
 
 const TAP_SNAPPY = { type: 'spring' as const, ...springs.snappy }
 
@@ -37,8 +38,8 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
     return (
       <div style={{
         background:   '#FFFFFF',
-        border:       '1px solid #E2E1DD',
-        borderRadius: 10,
+        border:       `1px solid var(--n-150)`,
+        borderRadius: 'var(--r-md)',
         padding:      '10px 12px',
         boxShadow:    SH_SM,
         maxWidth:     280,
@@ -78,8 +79,8 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
   return (
     <div style={{
       background:   '#FFFFFF',
-      border:       '1px solid #E2E1DD',
-      borderRadius: 10,
+      border:       `1px solid var(--n-150)`,
+      borderRadius: 'var(--r-md)',
       padding:      '10px 12px',
       boxShadow:    SH_SM,
       maxWidth:     280,
@@ -88,7 +89,7 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
         <ProfilesIcon active />
         <span style={{
           fontFamily:    "'Inter', system-ui, sans-serif",
-          fontSize:      10, fontWeight: 500, color: 'var(--n-400)',
+          fontSize:      11, fontWeight: 500, color: 'var(--n-400)',
           textTransform: 'uppercase', letterSpacing: '.04em',
         }}>
           {tierLabel}
@@ -112,7 +113,7 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
       </div>
       <div style={{
         fontFamily: "'IBM Plex Mono', monospace",
-        fontSize:   11, color: '#B8B7B1', marginTop: 2,
+        fontSize:   11, color: 'var(--n-500)', marginTop: 2,
       }}>
         Range: +{result.min}% – +{result.max}%
       </div>
@@ -279,7 +280,7 @@ function MapControls({
                 left:          0,
                 whiteSpace:    'nowrap',
                 pointerEvents: 'none',
-                zIndex:        460, // z-overlay + 10 (above filter card)
+                zIndex:        TOKENS.zIndex.zNudge, // --z-nudge: 460 — above filter overlay card
                 transformOrigin: 'bottom left',
               }}
               initial={{ opacity: 0, y: 4, scale: 0.95 }}
@@ -347,10 +348,10 @@ function MapControls({
             padding:         '0 14px',
             borderRadius:    9999,
             border:          nudgeActive
-              ? '1px solid #636AC5'
-              : isActive ? '1px solid #B0B4E6' : '1px solid #D4D3CE',
-            backgroundColor: isActive ? '#EEEFFA' : '#FFFFFF',
-            color:           isActive ? '#3A3F8F' : '#2C2B27',
+              ? '1px solid var(--p-400)'
+              : isActive ? '1px solid var(--p-200)' : '1px solid var(--n-200)',
+            backgroundColor: isActive ? 'var(--p-50)' : 'var(--n-0)',
+            color:           isActive ? 'var(--p-600)' : 'var(--n-800)',
             boxShadow:       SH_SM,
           }}
           whileHover={isActive ? {} : { backgroundColor: '#FAFAF8', borderColor: '#B8B7B1' }}
@@ -365,7 +366,7 @@ function MapControls({
               fontSize:        10,
               fontWeight:      500,
               lineHeight:      1.4,
-              backgroundColor: '#3A3F8F',
+              backgroundColor: 'var(--p-600)',
               color:           '#FFFFFF',
               padding:         '2px 6px',
               borderRadius:    999,
@@ -383,6 +384,7 @@ function MapControls({
           type="button"
           onClick={onLikeMeToggle}
           aria-pressed={likeMeMode}
+          aria-label="Like me — show renewals matching my profile"
           style={{
             cursor:          'pointer',
             display:         'inline-flex',
@@ -393,9 +395,9 @@ function MapControls({
             width:           isMobile ? 40 : 'auto',
             padding:         isMobile ? 0 : '0 14px',
             borderRadius:    9999,
-            border:          likeMeMode ? '1px solid #B0B4E6' : '1px solid #D4D3CE',
-            backgroundColor: likeMeMode ? '#EEEFFA' : '#FFFFFF',
-            color:           likeMeMode ? '#3A3F8F' : '#2C2B27',
+            border:          likeMeMode ? '1px solid var(--p-200)' : '1px solid var(--n-200)',
+            backgroundColor: likeMeMode ? 'var(--p-50)' : 'var(--n-0)',
+            color:           likeMeMode ? 'var(--p-600)' : 'var(--n-800)',
             boxShadow:       SH_SM,
             fontFamily:      "'Inter', system-ui, sans-serif",
             fontSize:        13,

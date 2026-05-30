@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { supabase } from '@/lib/supabase'
+import { TOKENS } from '@/lib/tokens'
 import { getCentroid } from '@/lib/fsaCentroids'
 import { getAreaLabel } from '@/lib/fsaData'
 import { useReducedMotion } from '@/lib/motionSafety'
@@ -46,20 +47,27 @@ function sealColor(sentiment: number | null): string {
 }
 
 function markerScale(pct: number | null): number {
-  const clamped = Math.min(50, Math.max(0, pct ?? 25))
+  // Decreases (negative pct) have the same magnitude as equivalent increases.
+  // Math.abs() so −12% and +12% render at the same envelope size.
+  // Null (dollar-mode) defaults to 25 → mid-size envelope.
+  const absPct  = Math.abs(pct ?? 25)
+  const clamped = Math.min(50, Math.max(0, absPct))
   return 0.6 + (clamped / 50) * 0.8
 }
 
-function buildIcon(fill: string, seal: string, scale: number, duration = 0, delay = 0): L.DivIcon {
+function buildIcon(fill: string, seal: string, scale: number, duration = 0, delay = 0, ariaLabel?: string): L.DivIcon {
   const W = 40, H = 28
   const bobStyle = duration > 0
     ? `animation:envelopeBob ${duration}ms ease-in-out infinite;animation-delay:${delay}ms;`
     : ''
+  const svgAria = ariaLabel
+    ? `role="img" aria-label="${ariaLabel}"`
+    : `aria-hidden="true"`
   const html =
     `<div class="env-hover-wrap" style="display:inline-block;transform-origin:bottom center">` +
     `<div style="width:${W}px;height:${H}px;transform:scale(${scale.toFixed(3)});transform-origin:bottom center;overflow:visible">` +
     `<div class="envelope-marker" style="will-change:transform;${bobStyle}">` +
-    `<svg width="${W}" height="${H}" viewBox="0 0 40 28" fill="none" style="display:block;overflow:visible">` +
+    `<svg width="${W}" height="${H}" viewBox="0 0 40 28" fill="none" ${svgAria} style="display:block;overflow:visible">` +
     `<rect x="0.5" y="0.5" width="39" height="27" rx="2.5" fill="${fill}" stroke="#D4D3CE" stroke-width="0.8"/>` +
     `<polygon points="0,0 40,0 20,15" fill="#E8E4DD" opacity="0.8"/>` +
     `<circle cx="20" cy="6.5" r="4" fill="${seal}"/>` +
@@ -67,11 +75,22 @@ function buildIcon(fill: string, seal: string, scale: number, duration = 0, dela
   return L.divIcon({ html, className: '', iconSize: [W * scale, H * scale], iconAnchor: [(W * scale) / 2, H * scale] })
 }
 
-function makeIcon(s: Submission, duration: number, delay: number): L.DivIcon {
-  return buildIcon('#F0EDE8', sealColor(s.sentiment), markerScale(s.rate_change_pct), duration, delay)
+function markerAriaLabel(s: Submission): string {
+  const type = s.insurance_type === 'home' ? 'home' : 'auto'
+  const mood = s.sentiment == null || s.sentiment === 3
+    ? 'neutral'
+    : s.sentiment <= 2 ? 'positive' : 'negative'
+  const pct = s.rate_change_pct != null
+    ? ` · ${s.rate_change_pct >= 0 ? '+' : '−'}${Math.abs(Math.round(s.rate_change_pct))}%`
+    : ''
+  return `${mood.charAt(0).toUpperCase() + mood.slice(1)} ${type} renewal${pct}`
 }
 
-const SKELETON_ICON = buildIcon('#EEEDEA', '#D4D3CE', 1.0)
+function makeIcon(s: Submission, duration: number, delay: number): L.DivIcon {
+  return buildIcon('#F0EDE8', sealColor(s.sentiment), markerScale(s.rate_change_pct), duration, delay, markerAriaLabel(s))
+}
+
+const SKELETON_ICON = buildIcon('#EEEDEA', '#D4D3CE', 1.0) // aria-hidden — no semantic content
 
 // ─── Skeleton coordinates ─────────────────────────────────────────────────────
 const SKELETON_COORDS: Array<[number, number]> = [
@@ -130,13 +149,13 @@ function MapSetup({
 // ─── Tooltip helpers ──────────────────────────────────────────────────────────
 
 const SENTIMENT_COLORS: Record<number, string> = {
-  1: '#3A9B55', 2: '#93D1A2', 3: '#D49316', 4: '#E87460', 5: '#D4503A',
+  1: '#3A9B55', 2: '#93D1A2', 3: '#D49316', 4: '#F2A597', 5: '#D4503A',
 }
 
 function rateColor(sentiment: number | null): string {
-  if (sentiment == null) return '#AD7710'
+  if (sentiment == null) return 'var(--cau-500)'
   if (sentiment <= 2) return '#2A7D41'
-  if (sentiment === 3) return '#AD7710'
+  if (sentiment === 3) return 'var(--cau-500)'
   return '#B33C28'
 }
 
@@ -169,7 +188,7 @@ function SentimentFace({ sentiment, size }: { sentiment: number | null; size: nu
   )
   if (sentiment === 4) return (
     <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
-      <circle cx="17" cy="17" r="15" fill="#E87460"/>
+      <circle cx="17" cy="17" r="15" fill="var(--neg-200)"/>
       <circle cx="12" cy="14" r="2" fill="white"/>
       <circle cx="22" cy="14" r="2" fill="white"/>
       <path d="M12 24Q17 20 22 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
@@ -198,8 +217,8 @@ function getContextLine(
     const n = stats?.count ?? 1
     return { text: `One of ${n} report${n !== 1 ? 's' : ''} here`, color: 'var(--n-400)' }
   }
-  if (rate > stats.median) return { text: `↑ Above ${areaLabel} average`, color: '#B33C28' }
-  if (rate < stats.median) return { text: `↓ Below ${areaLabel} average`, color: '#2A7D41' }
+  if (rate > stats.median) return { text: `↑ Above ${areaLabel} average`, color: 'var(--neg-500)' }
+  if (rate < stats.median) return { text: `↓ Below ${areaLabel} average`, color: 'var(--pos-500)' }
   return { text: 'Around the area average', color: 'var(--n-400)' }
 }
 
@@ -280,8 +299,8 @@ function HoverPreview({
       </span>
       <span style={{
         fontFamily: "'IBM Plex Mono', monospace",
-        fontSize:   10,
-        color:      '#B8B7B1',
+        fontSize:   11,
+        color:      'var(--n-400)',
         marginLeft: 6,
       }}>
         · click for details
@@ -374,8 +393,8 @@ function PanelContent({
         {commentExcerpt && (
           <>
             <div className={styles.divider} />
-            <div style={{ fontSize: 12, color: '#5E5D56', lineHeight: 1.55, fontStyle: 'italic' }}>
-              <span style={{ color: '#B8B7B1' }}>&#8220;</span>{commentExcerpt}
+            <div style={{ fontSize: 12, color: 'var(--n-600)', lineHeight: 1.55, fontStyle: 'italic' }}>
+              <span style={{ color: 'var(--n-300)' }}>&#8220;</span>{commentExcerpt}
             </div>
           </>
         )}
@@ -384,10 +403,10 @@ function PanelContent({
         {sub.verified && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path d="M2 6l3 3 5-5" stroke="#1F6132"
+              <path d="M2 6l3 3 5-5" stroke="var(--pos-600)"
                     strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span style={{ fontSize: 11, fontWeight: 500, color: '#1F6132' }}>Verified renewal</span>
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--pos-600)' }}>Verified renewal</span>
           </div>
         )}
 
@@ -436,7 +455,7 @@ function LockedPanel({
 
   const isViewerArea = viewerFsa != null && sub.fsa.toUpperCase() === viewerFsa.toUpperCase()
 
-  const borderLeft  = isViewerArea ? '3px solid #4A50B0' : '1px solid #E2E1DD'
+  const borderLeft  = isViewerArea ? '3px solid var(--p-500)' : '1px solid var(--n-150)'
   const paddingLeft = isViewerArea ? 11 : 16
 
   // Touch gesture handlers for swipe-down dismissal
@@ -490,14 +509,14 @@ function LockedPanel({
           transition={{ duration: prefersReduced ? 0 : 0.15, ease: [0.25, 0, 0.3, 1] as [number,number,number,number] }}
           onTouchEnd={onClose}
           onClick={onClose}
-          style={{ zIndex: 199 /* z-panel - 1: backdrop below the detail sheet */ }}
+          style={{ zIndex: TOKENS.zIndex.zPanelBackdrop /* --z-panel-backdrop: 199 — below the detail sheet */ }}
         />
         {/* Mobile bottom sheet */}
         <motion.div
           ref={sheetRef}
           className={styles.sheet}
           style={{
-            zIndex:      200, // z-panel
+            zIndex:      TOKENS.zIndex.zPanel, // --z-panel: 200
             borderLeft,
             paddingLeft,
           }}
@@ -530,10 +549,10 @@ function LockedPanel({
         top:             y - 8,
         transform:       'translateX(-50%) translateY(-100%)',
         transformOrigin: 'bottom center',
-        zIndex:          200, // z-panel
-        borderTop:       '1px solid #E2E1DD',
-        borderRight:     '1px solid #E2E1DD',
-        borderBottom:    '1px solid #E2E1DD',
+        zIndex:          TOKENS.zIndex.zPanel, // --z-panel: 200
+        borderTop:       '1px solid var(--n-150)',
+        borderRight:     '1px solid var(--n-150)',
+        borderBottom:    '1px solid var(--n-150)',
         borderLeft,
         paddingLeft,
       }}
@@ -766,25 +785,31 @@ export default function MapView({
           .from('submissions')
           .select(`
             id,
+            created_at,
             fsa,
+            neighbourhood,
             provider,
             insurance_type,
             rate_change_pct,
             rate_change_dollar,
-            renewal_year,
-            sentiment,
-            verified,
-            created_at,
-            comment_raw,
+            mode,
             years_licensed,
             at_fault_claims,
             convictions,
-            home_claims
+            home_claims,
+            sentiment,
+            comment_raw,
+            comment_explanation,
+            comment_loyalty,
+            comment_shopping,
+            comment_tone,
+            verified,
+            renewal_year
           `)
           .order('created_at', { ascending: false })
           .limit(500)
 
-        setSubmissions((data ?? []) as unknown as Submission[])
+        setSubmissions((data ?? []) as Submission[])
 
         if (error) {
           console.error('[MapView] fetch error:', error.message)

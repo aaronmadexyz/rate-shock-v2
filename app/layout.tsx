@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, IBM_Plex_Mono } from 'next/font/google'
-import Nav from '@/components/Nav'
 import '@/styles/globals.css'
 
 // Variable font — axes: ['opsz'] loads the optical-size axis (range 14–32).
@@ -26,10 +25,10 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
+  // WCAG 1.4.4 + 1.4.10: users must be able to zoom to 200% without loss
+  // of content. Pinch-zoom must not be blocked globally.
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
 }
 
@@ -41,7 +40,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${ibmPlexMono.variable}`}>
       <body>
-        <Nav />
         {children}
       </body>
     </html>
