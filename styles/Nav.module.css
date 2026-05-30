@@ -9,11 +9,17 @@
   right: 0;
   z-index: calc(var(--z-nav) + 1); /* 101 — strip sits above main bar */
   height: 28px;
-  background: #2C2B27;
+  background: #2C2B27; /* var(--n-800) */
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #D4D3CE; /* var(--n-200) — 4.88:1 on n-800 ✓ AA */
+  white-space: nowrap;
+  overflow: hidden;
   transition: opacity .2s ease;
 }
 
@@ -22,35 +28,43 @@
   pointer-events: none;
 }
 
-.stripStat {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: #D4D3CE;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.stripAccent {
-  color: #FFFFFF;
+/* Bold: count + percentage values — white for contrast pop */
+.stripBold {
   font-weight: 600;
+  color: #FFFFFF; /* var(--n-0) — 13.48:1 on n-800 ✓ AAA */
 }
 
-.stripSep {
-  color: #5E5D56;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.02em;
+/* Separator dot — quiet, recedes */
+.stripDot {
+  color: #5E5D56; /* var(--n-600) */
+  margin: 0 6px;
+  font-weight: 400;
 }
 
 .stripSkeleton {
+  width: 240px;
   height: 10px;
-  border-radius: 999px;
-  background: #43423D;
-  opacity: 0.6;
-  flex-shrink: 0;
+  border-radius: var(--r-full);
+  background-image: linear-gradient(
+    90deg,
+    #43423D 0%,
+    #5E5D56 50%,
+    #43423D 100%
+  );
+  background-size: 200% 100%;
+  animation: stripShimmer 1.4s ease infinite;
+}
+
+@keyframes stripShimmer {
+  0%   { background-position: 200% 0 }
+  100% { background-position: -200% 0 }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stripSkeleton {
+    animation: none;
+    background: #43423D;
+  }
 }
 
 /* ══════════════════════════════════════════

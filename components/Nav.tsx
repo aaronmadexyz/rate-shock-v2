@@ -118,9 +118,11 @@ export default function Nav({
   const [activityCount, setActivityCount] = useState(0)
 
   // ── Strip stats ────────────────────────────────────────────────────────────
-  const [stripCount,  setStripCount]  = useState<number | null>(null)
-  const [stripAvg,    setStripAvg]    = useState<number | null>(null)
-  const [stripLoaded, setStripLoaded] = useState(false)
+  const [stripStats, setStripStats] = useState<{
+    count:   number
+    autoAvg: number | null
+    homeAvg: number | null
+  } | null>(null)
 
   // ── Search ─────────────────────────────────────────────────────────────────
   const [searchValue,  setSearchValue]  = useState('')
@@ -178,24 +180,22 @@ export default function Nav({
         .then(({ count }) => { if (count && count > 0) setActivityCount(count) })
     }
 
-    // Strip stats
-    Promise.all([
-      supabase.from('submissions').select('*', { count: 'exact', head: true }),
-      supabase
-        .from('submissions')
-        .select('rate_change_pct')
-        .not('rate_change_pct', 'is', null)
-        .limit(500)
-        .order('created_at', { ascending: false }),
-    ]).then(([countRes, avgRes]) => {
-      setStripCount(countRes.count ?? 0)
-      if (avgRes.data && avgRes.data.length > 0) {
-        const vals = (avgRes.data as { rate_change_pct: number }[]).map(r => r.rate_change_pct)
-        const avg  = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10
-        setStripAvg(avg)
-      }
-      setStripLoaded(true)
-    })
+    // Strip stats — per insurance type
+    supabase
+      .from('submissions')
+      .select('insurance_type, rate_change_pct')
+      .not('rate_change_pct', 'is', null)
+      .limit(500)
+      .then(({ data, error }) => {
+        if (error || !data) { setStripStats({ count: 0, autoAvg: null, homeAvg: null }); return }
+        const auto = data.filter(r => r.insurance_type === 'auto')
+        const home = data.filter(r => r.insurance_type === 'home')
+        const avg = (rows: typeof data): number | null =>
+          rows.length === 0
+            ? null
+            : Math.round(rows.reduce((s, r) => s + (r.rate_change_pct ?? 0), 0) / rows.length * 10) / 10
+        setStripStats({ count: data.length, autoAvg: avg(auto), homeAvg: avg(home) })
+      })
 
     const onNavEvent = (e: Event) => setState((e as CustomEvent<SubmissionState>).detail)
     window.addEventListener(NAV_EVENT, onNavEvent)
@@ -290,7 +290,11 @@ export default function Nav({
   const neighbourhood   = searchValue.length === 3 ? getAreaLabel(searchValue) : ''
   const showSearchStatus = searchStatus === 'pioneer' || searchStatus === 'invalid'
   const badgeLabel      = activityCount > 9 ? '9+' : String(activityCount)
-  const stripEmpty      = stripLoaded && !stripCount
+  const stripIsEmpty    = stripStats !== null && stripStats.count === 0
+
+  function fmtAvg(n: number): string {
+    return (n >= 0 ? '+' : '') + n.toFixed(1) + '%'
+  }
 
   // ── CTA content ───────────────────────────────────────────────────────────
 
@@ -329,29 +333,29 @@ export default function Nav({
   return (
     <>
       {/* ── Data strip ─────────────────────────────────────────────────────── */}
-      <div className={stripEmpty ? `${styles.strip} ${styles.stripEmpty}` : styles.strip}>
-        {!stripLoaded ? (
+      <div className={stripIsEmpty ? `${styles.strip} ${styles.stripEmpty}` : styles.strip}>
+        {stripStats === null ? (
+          <div className={styles.stripSkeleton} />
+        ) : stripStats.count > 0 ? (
           <>
-            <span className={styles.stripSkeleton} style={{ width: 120 }} />
-            <span className={styles.stripSkeleton} style={{ width: 80 }} />
-          </>
-        ) : (
-          <>
-            <span className={styles.stripStat}>
-              <span className={styles.stripAccent}>
-                {(stripCount ?? 0).toLocaleString()}
-              </span>
-              {' '}renewals shared
-            </span>
-            <span className={styles.stripSep} aria-hidden="true">·</span>
-            {stripAvg !== null && (
-              <span className={styles.stripStat}>
-                avg increase{' '}
-                <span className={styles.stripAccent}>+{stripAvg}%</span>
-              </span>
+            <span className={styles.stripBold}>{stripStats.count.toLocaleString()}</span>
+            {' renewals shared'}
+            {stripStats.autoAvg !== null && (
+              <>
+                <span className={styles.stripDot} aria-hidden="true">·</span>
+                {'Auto '}
+                <span className={styles.stripBold}>{fmtAvg(stripStats.autoAvg)}</span>
+              </>
+            )}
+            {stripStats.homeAvg !== null && (
+              <>
+                <span className={styles.stripDot} aria-hidden="true">·</span>
+                {'Home '}
+                <span className={styles.stripBold}>{fmtAvg(stripStats.homeAvg)}</span>
+              </>
             )}
           </>
-        )}
+        ) : null}
       </div>
 
       {/* ── Main bar ───────────────────────────────────────────────────────── */}
@@ -490,17 +494,6 @@ export default function Nav({
                     </motion.span>
                   </AnimatePresence>
                 </motion.button>
-
-                {/* Trigger tagline — social proof, hidden until count loads */}
-                {state === 'new' && mounted && (stripCount ?? 0) > 0 && (
-                  <p style={{
-                    fontSize: 11, color: 'var(--n-500)', textAlign: 'center',
-                    lineHeight: 1.55, margin: '4px 0 0', pointerEvents: 'none',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    Join {(stripCount ?? 0).toLocaleString()} Ontario driver{stripCount === 1 ? '' : 's'} who shared
-                  </p>
-                )}
 
                 {/* Activity badge — Rule 5: origin-aware (top right) */}
                 {activityCount > 0 && (
