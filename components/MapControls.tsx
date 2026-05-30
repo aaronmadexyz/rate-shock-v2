@@ -131,6 +131,7 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
 
 interface MapControlsProps {
   activeCount:    number
+  matchCount:     number
   onClick:        () => void
   isFilterOpen:   boolean
   onFilterClose:  () => void
@@ -147,7 +148,7 @@ interface MapControlsProps {
 const NUDGE_SESSION_KEY = 'rateshock_filter_nudge_seen'
 
 function MapControls({
-  activeCount, onClick, isFilterOpen, onFilterClose, onFilterChange,
+  activeCount, matchCount, onClick, isFilterOpen, onFilterClose, onFilterChange,
   hasSubmission, likeMeMode, onLikeMeToggle, userProfile, cohortResult,
 }: MapControlsProps) {
   const isActive       = activeCount > 0
@@ -262,6 +263,7 @@ function MapControls({
           isOpen={isFilterOpen}
           onClose={onFilterClose}
           onChange={onFilterChange}
+          matchCount={matchCount}
         />
 
         {/* First-visit attention nudge tooltip */}

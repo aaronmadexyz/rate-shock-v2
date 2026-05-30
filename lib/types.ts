@@ -29,11 +29,10 @@ export interface FeatureRequest {
 }
 
 export interface FilterState {
-  types:    { auto: boolean; home: boolean }
-  provs:    string[]
-  rMin:     number
-  rMax:     number
-  verified: boolean
+  insuranceType: 'auto' | 'home' | null
+  provider:      string | null
+  rMin:          number
+  rMax:          number
 }
 
 export interface MapViewHandle {

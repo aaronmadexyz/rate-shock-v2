@@ -31,11 +31,10 @@ const MapView = lazyLoad(() => import('@/components/MapView'), {
 })
 
 const DEFAULT_FILTERS: FilterState = {
-  types: { auto: true, home: true },
-  provs: [],
-  rMin: 0,
-  rMax: 50,
-  verified: false,
+  insuranceType: null,
+  provider:      null,
+  rMin:          -30,
+  rMax:          50,
 }
 
 export default function Page() {
@@ -45,6 +44,7 @@ export default function Page() {
   const [frOpen,       setFrOpen]       = useState(false)
   const [filterOpen,   setFilterOpen]   = useState(false)
   const [filters,      setFilters]      = useState<FilterState>(DEFAULT_FILTERS)
+  const [matchCount,   setMatchCount]   = useState(0)
   const [likeMeMode,   setLikeMeMode]   = useState(false)
   const [userProfile,  setUserProfile]  = useState<UserProfile | null>(null)
   const [hasSubmission, setHasSubmission] = useState(false)
@@ -166,6 +166,7 @@ export default function Page() {
           userProfile={userProfile}
           onCohortResult={handleCohortResult}
           onCtaClick={() => setModalOpen(true)}
+          onMatchCountChange={setMatchCount}
         />
       </MapErrorBoundary>
 
@@ -181,6 +182,7 @@ export default function Page() {
         <div className={mcStyles.bottomLeft}>
           <MapControls
             activeCount={activeFilterCount}
+            matchCount={matchCount}
             onClick={() => setFilterOpen(f => !f)}
             isFilterOpen={filterOpen}
             onFilterClose={() => setFilterOpen(false)}

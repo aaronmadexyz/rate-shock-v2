@@ -83,15 +83,13 @@ const SKELETON_COORDS: Array<[number, number]> = [
 // UNCHANGED
 
 function getMarkerMatchState(s: Submission, f: FilterState): boolean {
-  if (!f.types.auto && s.insurance_type === 'auto') return false
-  if (!f.types.home && s.insurance_type === 'home') return false
-  if (f.provs.length > 0 && !f.provs.includes(s.provider ?? '')) return false
+  if (f.insuranceType !== null && f.insuranceType !== s.insurance_type) return false
+  if (f.provider !== null && f.provider !== (s.provider ?? '')) return false
   // Dollar-mode submissions (null pct) always pass the rate range filter
   if (s.rate_change_pct !== null) {
     const pct = s.rate_change_pct
     if (pct < f.rMin || pct > f.rMax) return false
   }
-  if (f.verified && !s.verified) return false
   return true
 }
 
@@ -635,13 +633,14 @@ function MapMarker({
 // ─── MapViewProps ─────────────────────────────────────────────────────────────
 
 interface MapViewProps {
-  filters:         FilterState
-  onReady?:        (handle: MapViewHandle) => void
-  onLeafletReady?: (map: L.Map) => void
-  likeMeMode?:     boolean
-  userProfile?:    UserProfile | null
-  onCohortResult?: (result: CohortResult | null) => void
-  onCtaClick?:     () => void
+  filters:              FilterState
+  onReady?:             (handle: MapViewHandle) => void
+  onLeafletReady?:      (map: L.Map) => void
+  likeMeMode?:          boolean
+  userProfile?:         UserProfile | null
+  onCohortResult?:      (result: CohortResult | null) => void
+  onCtaClick?:          () => void
+  onMatchCountChange?:  (n: number) => void
 }
 
 // ─── MapView ──────────────────────────────────────────────────────────────────
@@ -649,7 +648,7 @@ interface MapViewProps {
 export default function MapView({
   filters, onReady, onLeafletReady,
   likeMeMode = false, userProfile = null,
-  onCohortResult, onCtaClick,
+  onCohortResult, onCtaClick, onMatchCountChange,
 }: MapViewProps) {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [isLoading,   setIsLoading]   = useState(true)
@@ -828,6 +827,15 @@ export default function MapView({
     () => submissions.filter(s => getCentroid(s.fsa) !== null),
     [submissions],
   )
+
+  const matchCount = useMemo(
+    () => allWithCentroid.filter(s => getMarkerMatchState(s, filters)).length,
+    [allWithCentroid, filters],
+  )
+
+  useEffect(() => {
+    onMatchCountChange?.(matchCount)
+  }, [matchCount, onMatchCountChange])
 
   const cohortResult = useMemo(() => {
     if (!likeMeMode || !userProfile) return null

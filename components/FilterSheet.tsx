@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence, useDragControls, useReducedMotion } from 'framer-motion'
 import { springs } from '@/lib/springs'
 import { supabase } from '@/lib/supabase'
@@ -11,9 +11,10 @@ export type { FilterState } from '@/lib/types'
 import type { FilterState } from '@/lib/types'
 
 interface FilterSheetProps {
-  isOpen: boolean
-  onClose: () => void
-  onChange: (filters: FilterState) => void
+  isOpen:     boolean
+  onClose:    () => void
+  onChange:   (filters: FilterState) => void
+  matchCount: number
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -24,34 +25,32 @@ const PROVIDERS = [
   'Gore Mutual', 'Sonnet', 'Allstate',
 ]
 
-const DEFAULT_FILTERS: FilterState = {
-  types: { auto: true, home: true },
-  provs: [],
-  rMin: 0,
-  rMax: 50,
-  verified: false,
+export const DEFAULT_FILTERS: FilterState = {
+  insuranceType: null,
+  provider:      null,
+  rMin:          -30,
+  rMax:          50,
 }
 
 export function countFilters(f: FilterState): number {
   let n = 0
-  if (!f.types.auto || !f.types.home) n++
-  n += f.provs.length
-  if (f.rMin > 0 || f.rMax < 50) n++
-  if (f.verified) n++
+  if (f.insuranceType !== null) n++
+  if (f.provider !== null) n++
+  if (f.rMin > -30 || f.rMax < 50) n++
   return n
 }
 
 // ─── Shared style ─────────────────────────────────────────────────────────────
 
 const sectionLabel: React.CSSProperties = {
-  fontFamily: "'IBM Plex Mono', monospace",
-  fontSize: 10,
-  fontWeight: 500,
+  fontFamily:    "'IBM Plex Mono', monospace",
+  fontSize:      10,
+  fontWeight:    500,
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
-  color: 'var(--n-400)',
-  display: 'block',
-  margin: '14px 0 8px',
+  color:         'var(--n-400)',
+  display:       'block',
+  marginBottom:  8,
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -76,39 +75,47 @@ function HomeIcon() {
   )
 }
 
+// ─── DualRange ────────────────────────────────────────────────────────────────
+
 interface DualRangeProps {
-  valueMin: number
-  valueMax: number
+  valueMin:    number
+  valueMax:    number
   onMinChange: (v: number) => void
   onMaxChange: (v: number) => void
 }
 
+const RANGE_MIN = -30
+const RANGE_MAX = 50
+const RANGE_SPAN = RANGE_MAX - RANGE_MIN // 80
 const MIN_GAP = 1
 
 function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangeProps) {
-  const fillLeft  = (valueMin / 50) * 100
-  const fillRight = 100 - (valueMax / 50) * 100
+  const fillLeft  = ((valueMin - RANGE_MIN) / RANGE_SPAN) * 100
+  const fillRight = 100 - ((valueMax - RANGE_MIN) / RANGE_SPAN) * 100
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: 4, marginTop: 4 }}>
+    <div style={{ position: 'relative', width: '100%', height: 6, marginTop: 6 }}>
+      {/* Track background */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0,
-        height: 4, borderRadius: 2, background: 'var(--n-100)',
+        height: 6, borderRadius: 3, background: 'var(--n-150)',
       }} />
+      {/* Track fill */}
       <div style={{
         position: 'absolute', top: 0,
         left: fillLeft + '%', right: fillRight + '%',
-        height: 4, borderRadius: 2, background: 'var(--n-900)',
+        height: 6, borderRadius: 3, background: 'var(--n-900)',
         transition: 'left .05s, right .05s',
       }} />
+      {/* Min handle */}
       <input
         type="range"
         className="fs-rh"
-        min={0} max={50} step={1}
+        min={RANGE_MIN} max={RANGE_MAX} step={1}
         value={valueMin}
-        aria-label="Minimum rate increase"
+        aria-label="Minimum rate"
         aria-valuenow={valueMin}
-        aria-valuemin={0}
+        aria-valuemin={RANGE_MIN}
         aria-valuemax={valueMax - MIN_GAP}
         aria-valuetext={`${valueMin} percent`}
         onChange={e => {
@@ -118,15 +125,16 @@ function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangePr
           onMinChange(clamped)
         }}
       />
+      {/* Max handle */}
       <input
         type="range"
         className="fs-rh"
-        min={0} max={50} step={1}
+        min={RANGE_MIN} max={RANGE_MAX} step={1}
         value={valueMax}
-        aria-label="Maximum rate increase"
+        aria-label="Maximum rate"
         aria-valuenow={valueMax}
         aria-valuemin={valueMin + MIN_GAP}
-        aria-valuemax={50}
+        aria-valuemax={RANGE_MAX}
         aria-valuetext={valueMax >= 50 ? '50 percent or more' : `${valueMax} percent`}
         onChange={e => {
           const newMax = parseInt(e.target.value)
@@ -139,14 +147,14 @@ function DualRange({ valueMin, valueMax, onMinChange, onMaxChange }: DualRangePr
   )
 }
 
-// ─── Range input thumb styles ─────────────────────────────────────────────────
+// ─── Thumb + track CSS ────────────────────────────────────────────────────────
 
 const RANGE_THUMB_CSS = `
   .fs-rh {
     position: absolute;
     width: 100%;
-    top: -7px;
-    height: 18px;
+    top: -9px;
+    height: 24px;
     -webkit-appearance: none;
     appearance: none;
     background: transparent;
@@ -155,38 +163,45 @@ const RANGE_THUMB_CSS = `
   }
   .fs-rh::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 18px; height: 18px; border-radius: 50%;
-    background: #FFFFFF;
-    border: 1.5px solid #B8B7B1;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--n-0);
+    border: 1.5px solid var(--n-300);
     box-shadow: 0 1px 3px rgba(26,25,23,.12);
     cursor: pointer;
     pointer-events: all;
     transition: border-color .15s, transform .1s;
   }
-  .fs-rh::-webkit-slider-thumb:hover { border-color: #5E5D56; }
-  .fs-rh:active::-webkit-slider-thumb { transform: scale(1.18); }
+  .fs-rh::-webkit-slider-thumb:hover { border-color: var(--n-600); }
+  .fs-rh:active::-webkit-slider-thumb { transform: scale(1.15); }
   .fs-rh::-moz-range-thumb {
-    width: 18px; height: 18px; border-radius: 50%;
-    background: #FFFFFF;
-    border: 1.5px solid #B8B7B1;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--n-0);
+    border: 1.5px solid var(--n-300);
     box-shadow: 0 1px 3px rgba(26,25,23,.12);
     cursor: pointer;
     pointer-events: all;
   }
 `
 
+// ─── Section divider ──────────────────────────────────────────────────────────
+
+const Divider = () => (
+  <div style={{ height: 1, background: 'var(--n-100)', margin: '20px -20px' }} />
+)
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetProps) {
-  const [filters, setFilters]   = useState<FilterState>(DEFAULT_FILTERS)
-  const [isMobile, setIsMobile] = useState(false)
-  const [dist, setDist]         = useState<number[]>([])
-  const distFetched             = useRef(false)
-  const dragControls            = useDragControls()
-  const prefersReduced          = useReducedMotion()
-  const cardRef                 = useRef<HTMLDivElement>(null)
-  const triggerRef              = useRef<HTMLElement | null>(null)
-  const hasOpenedBefore         = useRef(false)
+export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: FilterSheetProps) {
+  const [filters,       setFilters]       = useState<FilterState>(DEFAULT_FILTERS)
+  const [isMobile,      setIsMobile]      = useState(false)
+  const [dist,          setDist]          = useState<number[]>([])
+  const [providerCounts, setProviderCounts] = useState<Record<string, number>>({})
+  const statsFetched    = useRef(false)
+  const dragControls    = useDragControls()
+  const prefersReduced  = useReducedMotion()
+  const cardRef         = useRef<HTMLDivElement>(null)
+  const triggerRef      = useRef<HTMLElement | null>(null)
+  const hasOpenedBefore = useRef(false)
 
   // Mobile detection
   useEffect(() => {
@@ -196,26 +211,46 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // Fetch rate distribution on first open
+  // Fetch distribution + provider counts once on first open
   useEffect(() => {
-    if (!isOpen || distFetched.current) return
-    distFetched.current = true
+    if (!isOpen || statsFetched.current) return
+    statsFetched.current = true
     ;(async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('submissions')
-        .select('rate_change_pct')
-        .not('rate_change_pct', 'is', null)
-      if (error || !data) return
-      const buckets = Array<number>(50).fill(0)
+        .select('rate_change_pct, provider')
+        .limit(500)
+      if (!data?.length) return
+
+      const buckets  = new Array(81).fill(0) // indices 0–80 → -30% to +50%
+      const counts: Record<string, number> = {}
+
       for (const row of data) {
-        const slot = Math.min(49, Math.max(0, Math.floor(row.rate_change_pct as number)))
-        buckets[slot]++
+        if (row.rate_change_pct != null) {
+          const v   = Math.max(-30, Math.min(50, Math.round(row.rate_change_pct as number)))
+          buckets[v + 30]++
+        }
+        if (row.provider) {
+          counts[row.provider] = (counts[row.provider] ?? 0) + 1
+        }
       }
       setDist(buckets)
+      setProviderCounts(counts)
     })()
   }, [isOpen])
 
-  // Focus management: capture trigger on open, return focus on close
+  // Sort providers: higher count first, then alphabetical
+  const sortedProviders = useMemo(() =>
+    [...PROVIDERS].sort((a, b) => {
+      const ca = providerCounts[a] ?? 0
+      const cb = providerCounts[b] ?? 0
+      if (ca !== cb) return cb - ca
+      return a.localeCompare(b)
+    }),
+    [providerCounts]
+  )
+
+  // Focus management
   useEffect(() => {
     if (isOpen) {
       triggerRef.current = document.activeElement as HTMLElement
@@ -246,7 +281,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
     }
   }, [isOpen, isMobile, onClose])
 
-  // Escape key (both modes)
+  // Escape key
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) onClose()
@@ -255,7 +290,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
     return () => document.removeEventListener('keydown', handler)
   }, [isOpen, onClose])
 
-  // Tab focus trap (desktop only)
+  // Tab focus trap (desktop)
   useEffect(() => {
     if (!isOpen || isMobile) return
     const handleTab = (e: KeyboardEvent) => {
@@ -271,11 +306,9 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
       const first = focusable[0]
       const last  = focusable[focusable.length - 1]
       if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault()
-        last.focus()
+        e.preventDefault(); last.focus()
       } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
+        e.preventDefault(); first.focus()
       }
     }
     document.addEventListener('keydown', handleTab)
@@ -300,33 +333,16 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
   }, [onChange])
 
   const clearAll = () => update(DEFAULT_FILTERS)
+  const setRMin  = (v: number) => update({ ...filters, rMin: v })
+  const setRMax  = (v: number) => update({ ...filters, rMax: v })
 
-  const toggleType = (t: 'auto' | 'home') => {
-    const types = { ...filters.types }
-    const both = types.auto && types.home
-    if (both) {
-      types[t === 'auto' ? 'home' : 'auto'] = false
-    } else {
-      types[t] = !types[t]
-      if (!types.auto && !types.home) types[t] = true
-    }
-    update({ ...filters, types })
-  }
+  const hasActiveFilters =
+    filters.insuranceType !== null ||
+    filters.provider !== null ||
+    filters.rMin > -30 ||
+    filters.rMax < 50
 
-  const toggleProv = (name: string) => {
-    const provs = filters.provs.includes(name)
-      ? filters.provs.filter(p => p !== name)
-      : [...filters.provs, name]
-    update({ ...filters, provs })
-  }
-
-  const setRMin = (v: number) => update({ ...filters, rMin: v })
-  const setRMax = (v: number) => update({ ...filters, rMax: v })
-  const toggleVerified = () => update({ ...filters, verified: !filters.verified })
-
-  const hasFilters = countFilters(filters) > 0
-
-  // ── Desktop animation (Rule 3: instant on subsequent opens) ─────────────────
+  // ── Desktop animation ────────────────────────────────────────────────────────
 
   const isFirstOpen = !hasOpenedBefore.current
   const desktopEntryTransition = prefersReduced
@@ -335,30 +351,52 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
       ? { type: 'spring' as const, ...springs.responsive }
       : { duration: 0 }
 
-  // ── Shared filter body ───────────────────────────────────────────────────────
+  // ── Filter body ──────────────────────────────────────────────────────────────
 
   const filterBody = (
     <>
-      {/* Insurance type */}
-      <div style={{ display: 'flex', gap: 8 }}>
+      {/* ─ Insurance type ─────────────────────────────────────────────────── */}
+      <span style={{
+        ...sectionLabel,
+        color: filters.insuranceType === null ? 'var(--n-300)' : 'var(--n-400)',
+      }}>
+        {filters.insuranceType === null
+          ? 'TYPE'
+          : filters.insuranceType === 'auto'
+          ? 'TYPE · Auto only'
+          : 'TYPE · Home only'}
+      </span>
+      <div
+        role="group"
+        aria-label="Insurance type filter"
+        style={{ display: 'flex', gap: 8 }}
+      >
         {(['auto', 'home'] as const).map(t => {
-          const on = filters.types[t]
+          const isSelected    = filters.insuranceType === t
+          const isOtherActive = filters.insuranceType !== null && filters.insuranceType !== t
           return (
             <button
               key={t}
               type="button"
-              onClick={() => toggleType(t)}
+              onClick={() => update({ ...filters, insuranceType: isSelected ? null : t })}
               style={{
-                flex: 1, fontFamily: 'inherit',
-                fontSize: 13, fontWeight: 500,
-                padding: '10px 8px', borderRadius: 10,
-                border: `1.5px solid ${on ? 'var(--n-900)' : 'var(--n-200)'}`,
-                background: on ? 'var(--n-900)' : 'var(--n-0)',
-                color: on ? 'var(--n-0)' : 'var(--n-600)',
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                transition: 'all .18s cubic-bezier(.16,1,.3,1)',
-                letterSpacing: '-0.01em',
+                flex:           1,
+                fontFamily:     'inherit',
+                fontSize:       13,
+                fontWeight:     500,
+                padding:        '10px 8px',
+                borderRadius:   'var(--r-md)',
+                border:         `1.5px solid ${isSelected ? 'var(--n-900)' : 'var(--n-150)'}`,
+                background:     isSelected ? 'var(--n-900)' : isOtherActive ? 'var(--n-0)' : 'var(--n-100)',
+                color:          isSelected ? 'var(--n-0)' : isOtherActive ? 'var(--n-300)' : 'var(--n-700)',
+                opacity:        isOtherActive ? 0.6 : 1,
+                cursor:         'pointer',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                gap:            6,
+                transition:     'all .18s cubic-bezier(.16,1,.3,1)',
+                letterSpacing:  '-0.01em',
               }}
             >
               {t === 'auto' ? <AutoIcon /> : <HomeIcon />}
@@ -367,167 +405,220 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
           )
         })}
       </div>
-      <div style={{ height: 1, background: 'var(--n-100)', marginTop: 16 }} />
 
-      {/* Provider pills */}
+      <Divider />
+
+      {/* ─ Provider pills ─────────────────────────────────────────────────── */}
       <span style={sectionLabel}>Provider</span>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-        {PROVIDERS.map(name => {
-          const on = filters.provs.includes(name)
+      <div
+        role="group"
+        aria-label="Provider filter"
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+      >
+        {sortedProviders.map(name => {
+          const on    = filters.provider === name
+          const count = providerCounts[name] ?? 0
           return (
             <button
               key={name}
               type="button"
-              onClick={() => toggleProv(name)}
+              role="checkbox"
+              aria-checked={on}
+              onClick={() => update({ ...filters, provider: on ? null : name })}
               style={{
-                fontFamily: 'inherit',
-                fontSize: 12, fontWeight: 500,
-                padding: '6px 13px', borderRadius: 9999,
-                border: `1px solid ${on ? 'var(--n-900)' : 'var(--n-200)'}`,
-                background: on ? 'var(--n-900)' : 'var(--n-0)',
-                color: on ? 'var(--n-0)' : 'var(--n-600)',
-                cursor: 'pointer',
-                transition: 'all .18s cubic-bezier(.16,1,.3,1)',
+                fontFamily:    'inherit',
+                fontSize:      12,
+                fontWeight:    500,
+                padding:       '8px 12px',
+                borderRadius:  9999,
+                border:        `1px solid ${on ? 'var(--n-900)' : 'var(--n-400)'}`,
+                background:    on ? 'var(--n-900)' : 'var(--n-0)',
+                color:         on ? 'var(--n-0)' : 'var(--n-600)',
+                cursor:        'pointer',
+                transition:    'all .18s cubic-bezier(.16,1,.3,1)',
                 letterSpacing: '-0.01em',
-                whiteSpace: 'nowrap', lineHeight: 1,
+                whiteSpace:    'nowrap',
+                lineHeight:    1,
+                display:       'inline-flex',
+                alignItems:    'center',
+                gap:           4,
+                opacity:       count === 0 ? 0.45 : 1,
               }}
             >
               {name}
+              {count > 0 && (
+                <span style={{
+                  fontFamily:    "'IBM Plex Mono', monospace",
+                  fontSize:      10,
+                  fontWeight:    500,
+                  color:         on ? 'var(--n-300)' : 'var(--n-400)',
+                  letterSpacing: '0.02em',
+                }}>
+                  {count}
+                </span>
+              )}
             </button>
           )
         })}
       </div>
 
-      {/* Rate increase range */}
-      <span style={sectionLabel}>Rate increase</span>
-      <div role="group" aria-label="Rate increase range filter" style={{ position: 'relative', paddingBottom: 4 }}>
+      <Divider />
+
+      {/* ─ Rate range ──────────────────────────────────────────────────────── */}
+      <span style={sectionLabel}>Rate</span>
+      <div role="group" aria-label="Rate increase range" style={{ position: 'relative', paddingBottom: 4 }}>
+        {/* Endpoint display — compact 14px */}
         <div style={{
           display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between', marginBottom: 10,
+          justifyContent: 'space-between', marginBottom: 8,
         }}>
           <span style={{
-            fontSize: 22, fontWeight: 600, color: 'var(--n-900)',
-            letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums',
+            fontFamily:         "'IBM Plex Mono', monospace",
+            fontSize:           14, fontWeight: 600,
+            color:              'var(--n-900)',
+            letterSpacing:      '-0.02em',
+            fontVariantNumeric: 'tabular-nums',
           }}>
-            {filters.rMin}%
+            {filters.rMin < 0 ? `−${Math.abs(filters.rMin)}%` : `${filters.rMin}%`}
           </span>
-          <span style={{ fontSize: 13, color: 'var(--n-400)' }}>to</span>
+          <span style={{ fontSize: 11, color: 'var(--n-400)', fontFamily: "'IBM Plex Mono', monospace" }}>to</span>
           <span style={{
-            fontSize: 22, fontWeight: 600, color: 'var(--n-900)',
-            letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums',
+            fontFamily:         "'IBM Plex Mono', monospace",
+            fontSize:           14, fontWeight: 600,
+            color:              'var(--n-900)',
+            letterSpacing:      '-0.02em',
+            fontVariantNumeric: 'tabular-nums',
           }}>
             {filters.rMax >= 50 ? '50%+' : `${filters.rMax}%`}
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 20, marginBottom: 4 }}>
-          {(() => {
-            const bars = dist.length > 0 ? dist : Array<number>(50).fill(0)
-            const distMax = Math.max(...bars, 1)
-            return bars.map((v, i) => (
-              <div
-                key={i}
-                style={{
-                  flex: 1, borderRadius: '2px 2px 0 0',
-                  background: i >= filters.rMin && i <= filters.rMax ? 'var(--p-200)' : 'var(--n-100)',
-                  height: `${Math.max(3, Math.round(v / distMax * 20))}px`,
-                  transition: 'background .2s',
-                }}
-              />
-            ))
-          })()}
-        </div>
+
+        {/* Distribution bars — hidden while loading / no data */}
+        {dist.some(v => v > 0) && (() => {
+          const distMax = Math.max(...dist, 1)
+          return (
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 20, marginBottom: 4 }}>
+              {dist.map((v, i) => {
+                const pct     = i - 30 // -30 to +50
+                const inRange = pct >= filters.rMin && pct <= filters.rMax
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      flex:         1,
+                      borderRadius: '2px 2px 0 0',
+                      background:   inRange ? 'var(--n-500)' : 'var(--n-150)',
+                      height:       `${Math.max(2, Math.round(v / distMax * 20))}px`,
+                      transition:   'background .2s',
+                    }}
+                  />
+                )
+              })}
+            </div>
+          )
+        })()}
+
         <DualRange
           valueMin={filters.rMin} valueMax={filters.rMax}
-          onMinChange={setRMin} onMaxChange={setRMax}
+          onMinChange={setRMin}   onMaxChange={setRMax}
         />
+
+        {/* Axis labels — n-500 at 11px for WCAG 5.05:1 ✓ */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-          {['0%', '10%', '20%', '30%', '40%', '50%+'].map(l => (
-            <span key={l} style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: 'var(--n-400)' }}>
+          {['-30%', '0%', '10%', '20%', '30%', '40%', '50%+'].map(l => (
+            <span key={l} style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize:   11,
+              color:      'var(--n-500)',
+            }}>
               {l}
             </span>
           ))}
         </div>
       </div>
-
-      {/* Verified only */}
-      <span style={{ ...sectionLabel, color: 'var(--n-400)' }}>Trust</span>
-      <div style={{
-        display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', padding: '10px 0',
-      }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--n-600)', letterSpacing: '-0.01em' }}>
-            Verified posts only
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 2, lineHeight: 1.4 }}>
-            Show only posts backed by a renewal letter
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={toggleVerified}
-          aria-pressed={filters.verified}
-          style={{
-            width: 42, height: 24, borderRadius: 9999,
-            background: filters.verified ? 'var(--n-900)' : 'var(--n-200)',
-            border: 'none', cursor: 'pointer',
-            position: 'relative', flexShrink: 0, marginLeft: 16,
-            transition: 'background .2s cubic-bezier(.16,1,.3,1)',
-          }}
-        >
-          <span style={{
-            position: 'absolute', width: 18, height: 18, borderRadius: '50%',
-            background: 'var(--n-0)', top: 3,
-            left: filters.verified ? 21 : 3,
-            boxShadow: '0 1px 3px rgba(26,25,23,.14)',
-            transition: 'left .22s cubic-bezier(.16,1,.3,1)',
-            display: 'block',
-          }} />
-        </button>
-      </div>
     </>
   )
 
-  // ── Shared close button ──────────────────────────────────────────────────────
+  // ── Headers (shared between desktop and mobile) ───────────────────────────
 
-  const closeBtn = (size: number) => (
-    <button
-      type="button"
-      onClick={onClose}
-      aria-label="Close filter"
-      style={{
-        width: size, height: size, borderRadius: '50%',
-        border: '1px solid var(--n-150)',
-        background: 'var(--n-0)',
-        cursor: 'pointer', display: 'flex',
-        alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0, transition: 'background .15s', padding: 0,
-      }}
-      onMouseEnter={e => (e.currentTarget.style.background = 'var(--n-50)')}
-      onMouseLeave={e => (e.currentTarget.style.background = 'var(--n-0)')}
-    >
-      <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
-        <path d="M1 1l6 6M7 1l-6 6" stroke="var(--n-400)" strokeWidth="1.4" strokeLinecap="round"/>
-      </svg>
-    </button>
-  )
+  const header = (padding: string) => (
+    <div style={{
+      display:        'flex',
+      alignItems:     'center',
+      justifyContent: 'space-between',
+      padding,
+      borderBottom:   '1px solid var(--n-100)',
+      flexShrink:     0,
+    }}>
+      {/* Left: title + live count */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span style={{
+          fontSize:      15,
+          fontWeight:    500,
+          color:         'var(--n-900)',
+          letterSpacing: '-0.01em',
+        }}>
+          Filter
+        </span>
+        <span style={{
+          fontFamily:    "'IBM Plex Mono', monospace",
+          fontSize:      11,
+          fontWeight:    500,
+          color:         matchCount === 0 ? 'var(--neg-500)' : 'var(--n-400)',
+          letterSpacing: '0.02em',
+        }}>
+          {matchCount === 0 ? 'No results' : `${matchCount} marker${matchCount === 1 ? '' : 's'}`}
+        </span>
+      </div>
 
-  const clearAllBtn = (fontSize: number) => (
-    <button
-      type="button"
-      onClick={hasFilters ? clearAll : undefined}
-      style={{
-        fontFamily: 'inherit', fontSize, fontWeight: 500,
-        color: hasFilters ? 'var(--p-600)' : 'var(--n-300)',
-        background: 'none', border: 'none',
-        cursor: hasFilters ? 'pointer' : 'default',
-        padding: 4, letterSpacing: '-0.01em',
-        pointerEvents: hasFilters ? 'all' : 'none',
-        transition: 'color .15s',
-      }}
-    >
-      Clear all
-    </button>
+      {/* Right: Clear all + Close */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={clearAll}
+            style={{
+              fontFamily:    'inherit',
+              fontSize:      13,
+              fontWeight:    500,
+              color:         'var(--p-600)',
+              background:    'none',
+              border:        'none',
+              cursor:        'pointer',
+              padding:       '4px 0',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Clear all
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close filter"
+          style={{
+            width:          26,
+            height:         26,
+            borderRadius:   '50%',
+            border:         '1px solid var(--n-150)',
+            background:     'var(--n-0)',
+            cursor:         'pointer',
+            display:        'flex',
+            alignItems:     'center',
+            justifyContent: 'center',
+            flexShrink:     0,
+            transition:     'background .15s',
+            padding:        0,
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--n-50)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'var(--n-0)')}
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+            <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="var(--n-400)" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
   )
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -536,7 +627,7 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
     <>
       <style>{RANGE_THUMB_CSS}</style>
 
-      {/* ── Desktop floating card (position: absolute relative to filterWrapper) ── */}
+      {/* ── Desktop floating card ─────────────────────────────────────────── */}
       <AnimatePresence>
         {isOpen && !isMobile && (
           <motion.div
@@ -545,17 +636,17 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
             role="region"
             aria-label="Map filters"
             style={{
-              position: 'absolute',
-              bottom: 'calc(100% + 8px)',
-              left: 0,
-              width: 280,
-              background: 'var(--n-0)',
-              border: '1px solid var(--n-150)',
-              borderRadius: 14,
-              boxShadow: '0 8px 28px rgba(26,25,23,.08), 0 2px 6px rgba(26,25,23,.04)',
-              overflow: 'hidden',
-              zIndex: 450, // z-overlay
-              willChange: 'transform, opacity',
+              position:        'absolute',
+              bottom:          'calc(100% + 8px)',
+              left:            0,
+              width:           280,
+              background:      'var(--n-0)',
+              border:          '1px solid var(--n-150)',
+              borderRadius:    'var(--r-lg)',
+              boxShadow:       'var(--sh-lg)',
+              overflow:        'hidden',
+              zIndex:          450, // z-overlay
+              willChange:      'transform, opacity',
               transformOrigin: 'bottom left',
             }}
             initial={{ opacity: 0, scale: 0.95, y: 6 }}
@@ -572,34 +663,15 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
               }
             }}
           >
-            {/* Card header */}
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '14px 16px 10px',
-              borderBottom: '1px solid var(--n-100)',
-              flexShrink: 0,
-            }}>
-              <span style={{
-                fontSize: 13, fontWeight: 500,
-                color: 'var(--n-900)', letterSpacing: '-0.01em',
-              }}>
-                Filter
-              </span>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                {clearAllBtn(12)}
-                {closeBtn(22)}
-              </div>
-            </div>
-
-            {/* Card body */}
-            <div style={{ padding: '12px 16px 16px', overflowY: 'auto', maxHeight: 480 }}>
+            {header('14px 16px 12px')}
+            <div style={{ padding: '16px 20px 28px', overflowY: 'auto', maxHeight: 480 }}>
               {filterBody}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Mobile bottom sheet (position: fixed, covers full viewport) ─────── */}
+      {/* ── Mobile bottom sheet ───────────────────────────────────────────── */}
       <AnimatePresence>
         {isOpen && isMobile && (
           <>
@@ -612,8 +684,9 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
               transition={{ duration: 0.3 }}
               onClick={onClose}
               style={{
-                position: 'fixed', inset: 0,
-                zIndex: 400, // z-overlay-bg
+                position:   'fixed',
+                inset:      0,
+                zIndex:     400, // z-overlay-bg
                 background: 'rgba(26,25,23,0.28)',
               }}
             />
@@ -637,70 +710,42 @@ export default function FilterSheet({ isOpen, onClose, onChange }: FilterSheetPr
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 400, damping: 40 }}
               style={{
-                position: 'fixed',
-                bottom: 0, left: 0, right: 0,
-                zIndex: 450, // z-overlay
-                background: 'var(--n-0)',
-                borderRadius: '20px 20px 0 0',
-                boxShadow: '0 -4px 32px rgba(26,25,23,.1), 0 -1px 4px rgba(26,25,23,.05)',
-                maxHeight: '72vh',
-                display: 'flex',
+                position:      'fixed',
+                bottom:        0, left: 0, right: 0,
+                zIndex:        450, // z-overlay
+                background:    'var(--n-0)',
+                borderRadius:  '20px 20px 0 0',
+                boxShadow:     '0 -4px 32px rgba(26,25,23,.1), 0 -1px 4px rgba(26,25,23,.05)',
+                maxHeight:     '72vh',
+                display:       'flex',
                 flexDirection: 'column',
-                touchAction: 'none',
+                touchAction:   'none',
               }}
             >
               {/* Drag handle */}
               <div
                 onPointerDown={e => dragControls.start(e)}
                 style={{
-                  display: 'flex', justifyContent: 'center',
-                  padding: '12px 0 4px', cursor: 'grab',
-                  touchAction: 'none', flexShrink: 0,
+                  display:     'flex',
+                  justifyContent: 'center',
+                  padding:     '12px 0 4px',
+                  cursor:      'grab',
+                  touchAction: 'none',
+                  flexShrink:  0,
                 }}
               >
-                <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--n-200)' }} />
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--n-300)' }} />
               </div>
 
-              {/* Header */}
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '14px 20px 12px', flexShrink: 0,
-                borderBottom: '1px solid var(--n-100)',
-              }}>
-                <span style={{
-                  fontSize: 15, fontWeight: 500, color: 'var(--n-900)',
-                  letterSpacing: '-0.01em',
-                }}>
-                  Filter
-                </span>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  {clearAllBtn(13)}
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close filter"
-                    style={{
-                      width: 26, height: 26, borderRadius: '50%',
-                      border: '1px solid var(--n-100)', background: 'var(--n-0)',
-                      cursor: 'pointer', display: 'flex',
-                      alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, transition: 'background .15s', padding: 0,
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--n-50)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'var(--n-0)')}
-                  >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-                      <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="#767670" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
+              {header('14px 20px 12px')}
 
               {/* Scrollable body */}
               <div style={{
-                overflowY: 'auto', padding: '16px 20px 32px',
-                flex: 1, touchAction: 'pan-y',
-                overscrollBehavior: 'contain',
+                overflowY:               'auto',
+                padding:                 '16px 20px 28px',
+                flex:                    1,
+                touchAction:             'pan-y',
+                overscrollBehavior:      'contain',
                 WebkitOverflowScrolling: 'touch' as React.CSSProperties['WebkitOverflowScrolling'],
               }}>
                 {filterBody}
