@@ -74,7 +74,12 @@ function faceSvgHtml(s: number): string {
   return `<svg width="52" height="52" viewBox="0 0 34 34" aria-hidden="true"><circle cx="12" cy="13" r="2.1" fill="${c}"/><circle cx="22" cy="13" r="2.1" fill="${c}"/><path d="${m}" stroke="${c}" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>`
 }
 
-function sliderLabel(val: number, mode: 'pct' | 'dol'): { text: string; color: string } {
+function sliderLabel(val: number, mode: 'pct' | 'dol', sign: 'inc' | 'dec'): { text: string; color: string } {
+  if (sign === 'dec') {
+    if (val <= 3) return { text: 'Slight decrease', color: 'var(--pos-500)' }
+    if (val <= 8) return { text: 'Solid decrease · Better than most this year', color: 'var(--pos-500)' }
+    return { text: 'Significant decrease · Excellent result', color: 'var(--pos-600)' }
+  }
   if (mode === 'dol') {
     if (val < 150)  return { text: 'Below the typical increase', color: 'var(--n-400)' }
     if (val < 400)  return { text: 'Around the Ontario average', color: 'var(--n-400)' }
@@ -84,13 +89,14 @@ function sliderLabel(val: number, mode: 'pct' | 'dol'): { text: string; color: s
   }
   if (val <= 4)  return { text: 'Below average · Most Ontario renewals are higher', color: 'var(--n-400)' }
   if (val <= 9)  return { text: 'Around the Ontario average', color: 'var(--n-400)' }
-  if (val <= 16) return { text: 'Above the Ontario average', color: 'var(--cau-500)' }
-  if (val <= 24) return { text: 'Significantly above average', color: 'var(--cau-500)' }
+  if (val <= 16) return { text: 'Above the Ontario average', color: 'var(--cau-600)' }
+  if (val <= 24) return { text: 'Significantly above average', color: 'var(--cau-600)' }
   if (val <= 34) return { text: 'Well above average · Worth verifying this', color: 'var(--neg-500)' }
   return { text: 'Exceptionally high — this should definitely be verified', color: 'var(--neg-500)' }
 }
 
-function heroColor(val: number, mode: 'pct' | 'dol'): string {
+function heroColor(val: number, mode: 'pct' | 'dol', sign: 'inc' | 'dec'): string {
+  if (sign === 'dec') return 'var(--pos-600)'
   if (mode === 'dol') {
     if (val < 300)  return 'var(--n-600)'
     if (val < 800)  return 'var(--n-900)'
@@ -103,9 +109,14 @@ function heroColor(val: number, mode: 'pct' | 'dol'): string {
   return 'var(--neg-500)'
 }
 
-function formatSliderVal(val: number, mode: 'pct' | 'dol'): string {
-  if (mode === 'pct') return val >= 50 ? '50%+' : `${val}%`
-  return val >= 2000 ? '$2,000+' : `$${val.toLocaleString()}`
+function formatSliderVal(val: number, mode: 'pct' | 'dol', sign: 'inc' | 'dec'): string {
+  const pfx = sign === 'dec' ? '−' : '+'
+  if (mode === 'pct') {
+    if (sign === 'inc' && val >= 50) return '+50%+'
+    return `${pfx}${val}%`
+  }
+  if (sign === 'dec') return val >= 2000 ? '−$2,000+' : `−$${val.toLocaleString()}`
+  return val >= 2000 ? '+$2,000+' : `+$${val.toLocaleString()}`
 }
 
 function calculatePct(dollarIncrease: number, previousPremium: number): number {
@@ -366,6 +377,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     cv:  { v: 0, k: 0, dir: 'up' },
     hcl: { v: 0, k: 0, dir: 'up' },
   })
+  const [sign, setSign]           = useState<'inc' | 'dec'>('inc')
   const [mode, setMode]           = useState<'pct' | 'dol'>('dol')
   const [rval, setRval]           = useState(480)
   const [prevPrem, setPrevPrem]   = useState<number | null>(null)
@@ -416,7 +428,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const ripCrackRef   = useRef<HTMLDivElement>(null)
   const ptcWrapRef    = useRef<HTMLDivElement>(null)
   const envSceneRef   = useRef<HTMLDivElement>(null)
-  const amsgRef       = useRef<HTMLDivElement>(null)
+  const amsgRef         = useRef<HTMLDivElement>(null)
+  const consentBoxRef   = useRef<HTMLDivElement>(null)
   const rafRef          = useRef<number>(0)
   const pioneerNameRef  = useRef<HTMLElement>(null)
 
@@ -473,7 +486,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       steppers.cv.v !== 0  || steppers.hcl.v !== 0
     if (!meaningful) return
     safeSetItem(DRAFT_KEY, JSON.stringify({
-      fsa, type: insType, provider, mode,
+      fsa, type: insType, provider, sign, mode,
       rval, prevPrem, yrs: steppers.yrs.v, cl: steppers.cl.v,
       cv: steppers.cv.v, hcl: steppers.hcl.v, sent,
     }))
@@ -509,6 +522,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       }
       if (d.type)     setInsType(d.type)
       if (d.provider) setProvider(d.provider)
+      if (d.sign)        setSign(d.sign)
       if (d.mode)        setMode(d.mode)
       if (d.rval != null) setRval(d.rval)
       if (d.prevPrem != null) setPrevPrem(d.prevPrem)
@@ -600,7 +614,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       cv:  { v: 0, k: 0, dir: 'up' },
       hcl: { v: 0, k: 0, dir: 'up' },
     })
-    setMode('dol'); setRval(480); updateTrack(480, 0, 2000)
+    setSign('inc'); setMode('dol'); setRval(480); updateTrack(480, 0, 2000)
     setPrevPrem(null); setPrevPremError('')
     setSubmissionId(null); setDollarAmount(null)
     setPatchDone(false); setPatchLoading(false); setPatchError('')
@@ -678,15 +692,23 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   // ── Mode / range ────────────────────────────────────────────────────────────
   function switchMode(m: 'pct' | 'dol') {
     setMode(m)
-    if (m === 'pct') { setRval(12); updateTrack(12, 0, 50) }
+    if (m === 'pct') { const mx = sign === 'dec' ? 30 : 50; setRval(18); updateTrack(18, 0, mx) }
     else             { setRval(480); updateTrack(480, 0, 2000) }
+  }
+
+  function setSignFn(s: 'inc' | 'dec') {
+    setSign(s)
+    if (mode === 'pct') {
+      const maxVal = s === 'dec' ? 30 : 50
+      if (rval > maxVal) { setRval(maxVal); updateTrack(maxVal, 0, maxVal) }
+      else updateTrack(rval, 0, maxVal)
+    }
   }
   function onRange(v: number) {
     setRval(v)
     if (prevPremError) setPrevPremError('')
-    const mn = 0
-    const mx = mode === 'pct' ? 50 : 2000
-    updateTrack(v, mn, mx)
+    const mx = mode === 'pct' ? (sign === 'dec' ? 30 : 50) : 2000
+    updateTrack(v, 0, mx)
   }
 
   // ── Dollar-patch: update row with calculated rate_change_pct ────────────────
@@ -768,7 +790,12 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       setStep(2)
     } else if (step === 2) {
       if (sent === 0) { setSentErr(true); return }
-      if (!consent)   return
+      // Dollar mode submission gate: prevPrem required to calculate pct
+      if (mode === 'dol' && !(rval > 0 && prevPrem !== null && prevPrem > 0)) {
+        setPrevPremError('Add your previous premium to calculate your % change, or switch to % mode to enter directly.')
+        return
+      }
+      if (!consent) return
       await handleSubmit()
     }
   }
@@ -784,18 +811,19 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
     const fsaUpper = fsa.toUpperCase()
 
-    // Determine what to store based on mode + prevPrem
+    // Determine what to store; sign applies negative for decreases
+    const signMul = sign === 'dec' ? -1 : 1
     let ratePct: number | null = null
     let rateDollar: number | null = null
     if (mode === 'pct') {
-      ratePct   = rval
+      ratePct    = rval * signMul
       rateDollar = null
     } else if (prevPrem !== null && prevPrem > 0) {
-      ratePct   = calculatePct(rval, prevPrem)
+      ratePct    = calculatePct(rval, prevPrem) * signMul
       rateDollar = null
     } else {
-      ratePct   = null
-      rateDollar = rval
+      ratePct    = null
+      rateDollar = rval * signMul
     }
 
     // Guard: unreasonable percentage (wrong previous premium entered)
@@ -1095,10 +1123,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   // ── Count-up when animDone and data resolved ─────────────────────────────────
   useEffect(() => {
     if (!animDone || compLoading) return
+    const computedPct = mode === 'dol' && rval > 0 && prevPrem !== null && prevPrem > 0
+      ? calculatePct(rval, prevPrem)
+      : null
     const targetYou = mode === 'pct'
       ? Math.min(rval, 50)
-      : (prevPrem !== null && prevPrem > 0)
-        ? Math.min(calculatePct(rval, prevPrem), 200)
+      : computedPct !== null
+        ? Math.min(computedPct, 200)
         : 0
     const targetNbr = areaMed !== null ? Math.round(areaMed) : null
     const targetOnt = ontMed  !== null ? Math.round(ontMed)  : null
@@ -1195,9 +1226,21 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const nbrAbove      = hasAreaData && hasPct && areaMed! < userPctVal
 
   // ─── Render ──────────────────────────────────────────────────────────────────
-  const stepTitle = step === 1 ? 'About your policy' : step === 2 ? 'What did they charge you?' : ''
-  const label    = sliderLabel(rval, mode)
-  const valColor = heroColor(rval, mode)
+  const stepTitle  = step === 1 ? 'About your policy' : step === 2 ? 'What did they charge you?' : ''
+  // In dollar mode, use prevPrem-computed pct for contextual label when available
+  const triPct     = mode === 'dol' && rval > 0 && prevPrem !== null && prevPrem > 0
+    ? calculatePct(rval, prevPrem)
+    : null
+  const ctxVal     = mode === 'dol' && triPct !== null ? triPct : rval
+  const label      = sliderLabel(ctxVal, mode === 'dol' && triPct !== null ? 'pct' : mode, sign)
+  const valColor   = heroColor(rval, mode, sign)
+  const heroText   = mode === 'pct'
+    ? formatSliderVal(rval, 'pct', sign)
+    : triPct !== null
+      ? `${sign === 'dec' ? '−' : '+'}${triPct}%`
+      : rval > 0
+        ? formatSliderVal(rval, 'dol', sign)
+        : `${sign === 'dec' ? '−' : '+'}?%`
 
   return (
     <AnimatePresence>
@@ -1562,7 +1605,17 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                 role="radio"
                                 aria-checked={provider === p}
                                 tabIndex={provider === p ? 0 : (provider === '' && i === 0 ? 0 : -1)}
-                                onClick={() => { setProvider(p); setProvErr(false); setProvSearch('') }}
+                                onClick={e => {
+                                  setProvider(p); setProvErr(false); setProvSearch('')
+                                  if (!prefersReduced) {
+                                    const btn = e.currentTarget
+                                    btn.classList.remove('pill-snap')
+                                    requestAnimationFrame(() => {
+                                      btn.classList.add('pill-snap')
+                                      setTimeout(() => btn.classList.remove('pill-snap'), 200)
+                                    })
+                                  }
+                                }}
                                 style={{
                                   padding: '8px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
                                   border: `1px solid ${provider === p ? '#1A1917' : '#EEEDEA'}`,
@@ -1584,9 +1637,53 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 {/* ════ STEP 2 ════ */}
                 {step === 2 && (
                   <div>
-                    {/* Slider */}
+                    {/* Rate section */}
                     <div style={{ marginBottom: 16 }}>
-                      <label htmlFor="rng" style={LABEL_STYLE}>Premium increase this renewal</label>
+
+                      {/* Sign toggle — above hero */}
+                      <div
+                        role="group"
+                        aria-label="Increase or decrease"
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}
+                      >
+                        <span style={{
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          fontSize: 11, fontWeight: 500,
+                          letterSpacing: '.06em', textTransform: 'uppercase',
+                          color: 'var(--n-400)', marginRight: 2,
+                        }}>This was a</span>
+                        {(['inc', 'dec'] as const).map(s => {
+                          const isOn = sign === s
+                          const onStyle = s === 'inc'
+                            ? { borderColor: 'var(--cau-600)', background: 'var(--cau-50)', color: 'var(--cau-600)' }
+                            : { borderColor: 'var(--pos-600)', background: 'var(--pos-50)', color: 'var(--pos-600)' }
+                          return (
+                            <button
+                              key={s}
+                              type="button"
+                              aria-pressed={isOn}
+                              onClick={() => setSignFn(s)}
+                              style={{
+                                fontFamily: "'IBM Plex Mono', monospace",
+                                fontSize: 11, fontWeight: 500,
+                                letterSpacing: '.04em',
+                                padding: '12px 16px', borderRadius: 9999,
+                                border: '1.5px solid',
+                                cursor: 'pointer', transition: 'all .15s',
+                                ...(isOn ? onStyle : {
+                                  borderColor: 'var(--n-150)',
+                                  background: 'var(--n-0)',
+                                  color: 'var(--n-400)',
+                                }),
+                              }}
+                            >
+                              {s === 'inc' ? 'Increase' : 'Decrease'}
+                            </button>
+                          )
+                        })}
+                      </div>
+
+                      {/* Hero value + mode toggle */}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                         <div
                           id="slval"
@@ -1594,198 +1691,251 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           aria-atomic="true"
                           style={{
                             fontFamily: "'IBM Plex Mono', monospace",
-                            fontSize: 'clamp(36px, 8vw, 48px)',
+                            fontSize: 'clamp(40px, 8vw, 52px)',
                             fontWeight: 700,
                             letterSpacing: '-0.03em',
                             color: valColor,
                             lineHeight: 1,
                             fontVariantNumeric: 'tabular-nums',
-                            transition: 'color 0.15s ease',
+                            transition: 'color 0.18s ease',
                           }}
                         >
-                          {formatSliderVal(rval, mode)}
+                          {heroText}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', background: 'var(--n-100)', borderRadius: 9999, padding: 2 }}>
+                        <div
+                          role="group"
+                          aria-label="Input format"
+                          style={{ display: 'flex', alignItems: 'center', background: 'var(--n-100)', borderRadius: 9999, padding: 2 }}
+                        >
                           {(['pct', 'dol'] as const).map(m => (
                             <button
                               key={m}
                               type="button"
                               className="srm-mode-btn"
+                              aria-pressed={mode === m}
                               onClick={() => switchMode(m)}
                               style={{
                                 fontFamily: "'IBM Plex Mono', monospace",
                                 fontSize: 11, fontWeight: 500,
-                                padding: '4px 12px', borderRadius: 9999,
+                                padding: '8px 16px', borderRadius: 9999,
                                 border: 'none', cursor: 'pointer',
                                 letterSpacing: '0.02em',
                                 background: mode === m ? 'var(--n-0)' : 'transparent',
-                                color: mode === m ? 'var(--n-900)' : 'var(--n-400)',
-                                boxShadow: mode === m ? '0 1px 2px rgba(26,25,23,.08)' : 'none',
+                                color: mode === m ? 'var(--n-900)' : 'var(--n-600)',
+                                boxShadow: mode === m ? 'var(--sh-xs)' : 'none',
                                 transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
                               }}
                             >{m === 'pct' ? '%' : '$'}</button>
                           ))}
                         </div>
                       </div>
-                      <input
-                        id="rng"
-                        className="rng"
-                        type="range"
-                        min={0}
-                        max={mode === 'pct' ? 50 : 2000}
-                        step={mode === 'pct' ? 1 : 25}
-                        value={rval}
-                        aria-label="Premium increase this renewal"
-                        aria-valuemin={0}
-                        aria-valuemax={mode === 'pct' ? 50 : 2000}
-                        aria-valuenow={rval}
-                        aria-valuetext={
-                          mode === 'pct'
-                            ? (rval >= 50 ? '50 percent or more' : `${rval} percent`)
-                            : (rval >= 2000 ? '$2000 or more' : `$${rval}`)
-                        }
-                        onChange={e => onRange(Number(e.target.value))}
-                        style={{
-                          width: '100%', height: 4, borderRadius: 2, outline: 'none',
-                          WebkitAppearance: 'none', cursor: 'pointer', margin: '6px 0', display: 'block',
-                          background: trackBg,
-                        }}
-                      />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
-                        <span style={{ fontSize: 11, color: '#B8B7B1', fontFamily: "'IBM Plex Mono', monospace" }}>
-                          {mode === 'pct' ? '0%' : '$0'}
-                        </span>
-                        <span style={{ fontSize: 11, color: '#B8B7B1', fontFamily: "'IBM Plex Mono', monospace" }}>
-                          {mode === 'pct' ? '50%+' : '$2,000+'}
-                        </span>
-                      </div>
-                      <p aria-live="polite" aria-atomic="true" style={{ fontSize: 12, color: label.color, marginTop: 6, lineHeight: 1.5 }}>{label.text}</p>
-                    </div>
 
-                    {/* Previous premium — dollar mode only */}
-                    <AnimatePresence>
-                      {mode === 'dol' && (
-                        <motion.div
-                          key="prevPremWrap"
-                          initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                          animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
-                          exit={{    opacity: 0, height: 0, marginBottom: 0 }}
-                          transition={prefersReduced
-                            ? { duration: 0 }
-                            : { type: 'spring', stiffness: 240, damping: 24, mass: 1.0 }}
-                          style={{ overflow: 'hidden' }}
-                        >
-                          <label
-                            htmlFor="prevPremInput"
+                      {/* % slider (pct mode) */}
+                      {mode === 'pct' && (
+                        <>
+                          <input
+                            id="rng"
+                            className="rng"
+                            type="range"
+                            min={0}
+                            max={sign === 'dec' ? 30 : 50}
+                            step={1}
+                            value={rval}
+                            aria-label="Premium change this renewal"
+                            aria-valuemin={0}
+                            aria-valuemax={sign === 'dec' ? 30 : 50}
+                            aria-valuenow={rval}
+                            aria-valuetext={
+                              rval >= 50 && sign === 'inc'
+                                ? '50 percent or more increase'
+                                : `${rval} percent ${sign === 'dec' ? 'decrease' : 'increase'}`
+                            }
+                            onChange={e => onRange(Number(e.target.value))}
                             style={{
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: 10, fontWeight: 500,
-                              letterSpacing: '0.06em', textTransform: 'uppercase',
-                              color: 'var(--n-400)', display: 'block', marginBottom: 8,
+                              width: '100%', height: 4, borderRadius: 2, outline: 'none',
+                              WebkitAppearance: 'none', cursor: 'pointer', margin: '6px 0', display: 'block',
+                              background: trackBg,
                             }}
-                          >
-                            Previous annual premium
-                            <span
-                              aria-hidden="true"
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
+                            <span style={{ fontSize: 11, color: '#B8B7B1', fontFamily: "'IBM Plex Mono', monospace" }}>0%</span>
+                            <span style={{ fontSize: 11, color: '#B8B7B1', fontFamily: "'IBM Plex Mono', monospace" }}>
+                              {sign === 'dec' ? '30%' : '50%+'}
+                            </span>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Triangle $ inputs (dol mode) */}
+                      {mode === 'dol' && (
+                        <div style={{
+                          marginTop: 16, padding: '12px 16px',
+                          background: 'var(--n-25)', border: '1px solid var(--n-100)',
+                          borderRadius: 'var(--r-lg)',
+                        }}>
+                          <div style={{
+                            fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 500,
+                            letterSpacing: '.06em', textTransform: 'uppercase',
+                            color: 'var(--n-500)', marginBottom: 8,
+                            display: 'flex', alignItems: 'center', gap: 8,
+                          }}>
+                            Dollar amounts
+                            <span style={{
+                              fontFamily: "'Inter', system-ui, sans-serif",
+                              fontWeight: 400, letterSpacing: 0, textTransform: 'none',
+                              fontSize: 10, color: 'var(--n-500)',
+                            }}>— fill any two to calculate the third</span>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            {/* Amount changed */}
+                            <div>
+                              <label
+                                htmlFor="triDollar"
+                                style={{
+                                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
+                                  fontWeight: 500, letterSpacing: '.06em',
+                                  textTransform: 'uppercase', color: 'var(--n-500)',
+                                  marginBottom: 4, display: 'block',
+                                }}
+                              >Amount changed</label>
+                              <div
+                                style={{
+                                  display: 'flex', alignItems: 'center',
+                                  background: '#FFFFFF', border: '1.5px solid var(--n-200)',
+                                  borderRadius: 'var(--r-md)', padding: '0 12px', height: 44, gap: 4,
+                                  transition: 'border-color .15s, box-shadow .15s',
+                                }}
+                                onFocusCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#636AC5'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 3px rgba(99,106,197,.09)' }}
+                                onBlurCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--n-200)'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}
+                              >
+                                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 500, color: 'var(--n-400)', flexShrink: 0, userSelect: 'none' }}>
+                                  {sign === 'dec' ? '−$' : '+$'}
+                                </span>
+                                <input
+                                  id="triDollar"
+                                  type="number"
+                                  inputMode="numeric"
+                                  placeholder="360"
+                                  min={0} max={9999} step={1}
+                                  autoComplete="off"
+                                  aria-describedby="triResult"
+                                  value={rval > 0 ? String(rval) : ''}
+                                  onChange={e => {
+                                    const v = parseInt(e.target.value)
+                                    setRval(isNaN(v) || v < 0 ? 0 : v)
+                                    if (prevPremError) setPrevPremError('')
+                                  }}
+                                  style={{
+                                    flex: 1, fontFamily: "'IBM Plex Mono', monospace",
+                                    fontSize: 14, fontWeight: 500, color: 'var(--n-900)',
+                                    border: 'none', outline: 'none', background: 'transparent',
+                                    width: '100%', minWidth: 0, padding: 0,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            {/* Previous premium */}
+                            <div>
+                              <label
+                                htmlFor="triPrevPrem"
+                                style={{
+                                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
+                                  fontWeight: 500, letterSpacing: '.06em',
+                                  textTransform: 'uppercase', color: 'var(--n-500)',
+                                  marginBottom: 4, display: 'block',
+                                }}
+                              >Previous premium</label>
+                              <div
+                                style={{
+                                  display: 'flex', alignItems: 'center',
+                                  background: '#FFFFFF', border: '1.5px solid var(--n-200)',
+                                  borderRadius: 'var(--r-md)', padding: '0 12px', height: 44, gap: 4,
+                                  transition: 'border-color .15s, box-shadow .15s',
+                                }}
+                                onFocusCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#636AC5'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 3px rgba(99,106,197,.09)' }}
+                                onBlurCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--n-200)'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}
+                              >
+                                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 500, color: 'var(--n-400)', flexShrink: 0, userSelect: 'none' }}>$</span>
+                                <input
+                                  id="triPrevPrem"
+                                  type="number"
+                                  inputMode="numeric"
+                                  placeholder="1,800"
+                                  min={100} max={99999} step={1}
+                                  autoComplete="off"
+                                  aria-describedby="triResult"
+                                  value={prevPrem !== null ? String(prevPrem) : ''}
+                                  onChange={e => {
+                                    const v = parseInt(e.target.value)
+                                    setPrevPrem(isNaN(v) ? null : v)
+                                    if (prevPremError) setPrevPremError('')
+                                  }}
+                                  style={{
+                                    flex: 1, fontFamily: "'IBM Plex Mono', monospace",
+                                    fontSize: 14, fontWeight: 500, color: 'var(--n-900)',
+                                    border: 'none', outline: 'none', background: 'transparent',
+                                    width: '100%', minWidth: 0, padding: 0,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Triangle result card */}
+                          {triPct !== null && (
+                            <div
+                              id="triResult"
+                              className="tri-result-show"
                               style={{
-                                fontFamily: "'Inter', system-ui, sans-serif",
-                                fontWeight: 400, letterSpacing: 0,
-                                textTransform: 'none', fontSize: 11,
-                                color: 'var(--n-300)', marginLeft: 6,
+                                marginTop: 12, padding: '8px 12px',
+                                background: sign === 'dec' ? 'var(--pos-50)' : 'var(--p-50)',
+                                border: `1px solid ${sign === 'dec' ? 'rgba(58,155,85,.25)' : 'var(--p-200)'}`,
+                                borderRadius: 'var(--r-md)',
+                                display: 'flex', alignItems: 'center', gap: 8,
                               }}
                             >
-                              optional
-                            </span>
-                          </label>
-                          <div
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 8,
-                              background: 'var(--n-0)',
-                              border: '1.5px solid var(--n-150)',
-                              borderRadius: 10, padding: '0 14px', height: 48,
-                              transition: 'border-color .15s, box-shadow .15s',
-                            }}
-                            onFocusCapture={e => {
-                              const el = e.currentTarget as HTMLDivElement
-                              el.style.borderColor = 'var(--p-400)'
-                              el.style.boxShadow   = '0 0 0 3px rgba(99,106,197,.09)'
-                            }}
-                            onBlurCapture={e => {
-                              const el = e.currentTarget as HTMLDivElement
-                              el.style.borderColor = 'var(--n-150)'
-                              el.style.boxShadow   = 'none'
-                            }}
-                          >
-                            <span style={{
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: 16, fontWeight: 500,
-                              color: 'var(--n-400)', userSelect: 'none', flexShrink: 0,
-                            }}>$</span>
-                            <input
-                              id="prevPremInput"
-                              type="number"
-                              inputMode="numeric"
-                              placeholder="1,800"
-                              min={100}
-                              max={99999}
-                              step={1}
-                              autoComplete="off"
-                              aria-label="Previous annual premium in dollars, optional"
-                              aria-describedby="prevPremHelp"
-                              value={prevPrem !== null ? String(prevPrem) : ''}
-                              style={{
-                                flex: 1,
-                                fontFamily: "'IBM Plex Mono', monospace",
-                                fontSize: 16, fontWeight: 500,
-                                color: 'var(--n-900)',
-                                border: 'none', outline: 'none',
-                                background: 'transparent', padding: 0,
-                              }}
-                              onChange={e => {
-                                const v = parseInt(e.target.value)
-                                setPrevPrem(isNaN(v) ? null : v)
-                                if (prevPremError) setPrevPremError('')
-                              }}
-                            />
-                          </div>
+                              <span style={{
+                                fontFamily: "'IBM Plex Mono', monospace", fontSize: 15,
+                                fontWeight: 700, letterSpacing: '-.02em',
+                                color: sign === 'dec' ? 'var(--pos-600)' : 'var(--p-700)',
+                              }}>
+                                {sign === 'dec' ? '−' : '+'}{triPct}% {sign === 'dec' ? 'decrease' : 'increase'}
+                              </span>
+                              <span style={{
+                                fontFamily: "'Inter', system-ui, sans-serif", fontSize: 11,
+                                color: sign === 'dec' ? 'var(--pos-500)' : 'var(--p-500)',
+                                lineHeight: 1.45,
+                              }}>
+                                your post will be fully comparable with neighbours
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Submission gate error */}
                           {prevPremError && (
                             <p
                               role="alert"
                               style={{
-                                fontFamily: "'Inter', system-ui, sans-serif",
                                 fontSize: 11, color: 'var(--neg-500)',
-                                marginTop: 6, lineHeight: 1.4,
+                                marginTop: 8, lineHeight: 1.4,
+                                fontFamily: "'Inter', system-ui, sans-serif",
                               }}
                             >
                               {prevPremError}
                             </p>
                           )}
-                          {!prevPremError && prevPrem !== null && prevPrem > 0 ? (
-                            <p
-                              id="prevPremHelp"
-                              style={{
-                                fontFamily: "'IBM Plex Mono', monospace",
-                                fontSize: 11, color: 'var(--pos-600)',
-                                marginTop: 6, lineHeight: 1.4,
-                              }}
-                            >
-                              ≈ {calculatePct(rval, prevPrem)}% increase — your post will be fully comparable with neighbours
-                            </p>
-                          ) : (
-                            <p
-                              id="prevPremHelp"
-                              style={{
-                                fontFamily: "'Inter', system-ui, sans-serif",
-                                fontSize: 11, color: 'var(--n-400)',
-                                marginTop: 6, lineHeight: 1.4,
-                              }}
-                            >
-                              Helps us calculate your % increase so your post is fully comparable. Find it on last year's renewal letter.
-                            </p>
-                          )}
-                        </motion.div>
+                        </div>
                       )}
-                    </AnimatePresence>
+
+                      {/* Contextual label */}
+                      <p
+                        aria-live="polite"
+                        aria-atomic="true"
+                        style={{ fontSize: 12, color: label.color, marginTop: 8, lineHeight: 1.5, fontWeight: 500, minHeight: 16 }}
+                      >
+                        {label.text}
+                      </p>
+                    </div>
 
                     {/* Sentiment */}
                     <div style={{ marginBottom: 16 }}>
@@ -1796,14 +1946,25 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             <button
                               key={n}
                               type="button"
-                              onClick={() => { setSent(n); setSentErr(false) }}
+                              onClick={e => {
+                                setSent(n); setSentErr(false)
+                                if (!prefersReduced) {
+                                  const btn = e.currentTarget
+                                  btn.classList.remove('sent-pulse')
+                                  requestAnimationFrame(() => {
+                                    btn.classList.add('sent-pulse')
+                                    setTimeout(() => btn.classList.remove('sent-pulse'), 220)
+                                  })
+                                }
+                              }}
                               style={{
                                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                                 padding: '9px 3px', borderRadius: 12, minHeight: 72,
                                 border: `1.5px solid ${sent === n ? SC[n] : '#EEEDEA'}`,
-                                cursor: 'pointer', transition: 'all .22s cubic-bezier(.16,1,.3,1)',
+                                cursor: 'pointer', transition: 'border-color .22s cubic-bezier(.16,1,.3,1), background .22s cubic-bezier(.16,1,.3,1)',
                                 background: sent === n ? SC[n] + '28' : '#FFFFFF',
                                 fontFamily: "'Inter', system-ui, sans-serif",
+                                willChange: 'transform',
                               }}
                               aria-label={SENT_LABELS[n]}
                               aria-pressed={sent === n}
@@ -1824,63 +1985,90 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     </div>
 
                     {/* Note */}
-                    <div style={{ marginBottom: 16 }}>
-                      <label htmlFor="note" style={LABEL_STYLE}>
-                        Additional comments{' '}
-                        <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
-                      </label>
-                      <textarea
-                        id="note"
-                        value={note}
-                        maxLength={500}
-                        placeholder="What would you want your neighbours to know?"
-                        onChange={handleNoteChange}
-                        style={{
-                          width: '100%', padding: '11px 13px',
-                          fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
-                          border: '1.5px solid #EEEDEA', borderRadius: 12,
-                          background: '#FFFFFF', color: '#1A1917', outline: 'none',
-                          resize: 'none', lineHeight: 1.6, minHeight: 76,
-                          transition: 'border-color .15s, box-shadow .15s', display: 'block',
-                        }}
-                        onFocus={e => { e.currentTarget.style.borderColor = '#4A50B0'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,80,176,.09)' }}
-                        onBlur={e => { e.currentTarget.style.borderColor = '#EEEDEA'; e.currentTarget.style.boxShadow = 'none' }}
-                      />
-                      <div
-                        id="cc"
-                        aria-live="off"
-                        aria-atomic="true"
-                        style={{ textAlign: 'right', fontSize: 11, color: '#B8B7B1', marginTop: 4 }}
-                      >
-                        {note.length} / 500
-                      </div>
-                    </div>
+                    {(() => {
+                      const remaining = 500 - note.length
+                      const showCounter = remaining <= 100
+                      return (
+                        <div style={{ marginBottom: 16 }}>
+                          <label
+                            htmlFor="note"
+                            style={{ display: 'block', fontSize: 11, fontWeight: 400, color: 'var(--n-500)', marginBottom: 6 }}
+                          >
+                            Anything useful for neighbours?
+                          </label>
+                          <textarea
+                            id="note"
+                            value={note}
+                            maxLength={500}
+                            placeholder={`e.g. "Intact raised mine 22% after 8 clean years — no claims, always on time"`}
+                            onChange={handleNoteChange}
+                            style={{
+                              width: '100%', padding: '11px 13px',
+                              fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
+                              border: '1.5px solid #EEEDEA', borderRadius: 12,
+                              background: '#FFFFFF', color: '#1A1917', outline: 'none',
+                              resize: 'none', lineHeight: 1.6, minHeight: 76,
+                              transition: 'border-color .15s, box-shadow .15s', display: 'block',
+                            }}
+                            onFocus={e => { e.currentTarget.style.borderColor = '#4A50B0'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,80,176,.09)' }}
+                            onBlur={e => { e.currentTarget.style.borderColor = '#EEEDEA'; e.currentTarget.style.boxShadow = 'none' }}
+                          />
+                          {showCounter && (
+                            <div
+                              id="cc"
+                              aria-live="off"
+                              aria-atomic="true"
+                              style={{
+                                textAlign: 'right', fontSize: 11, marginTop: 4,
+                                color: remaining <= 20 ? 'var(--cau-600)' : 'var(--n-500)',
+                                transition: 'color .2s',
+                              }}
+                            >
+                              {remaining <= 20
+                                ? `${remaining} characters left`
+                                : `${remaining} characters left — keep it brief for neighbours`}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })()}
 
                     {/* Consent */}
                     <div id="consentRow" style={{ marginBottom: 8 }}>
-                      <label htmlFor="consent-input" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                      <label htmlFor="consent-input" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', padding: '12px', background: 'var(--n-50)', borderRadius: 10 }}>
                         <input
                           type="checkbox"
                           id="consent-input"
                           checked={consent}
-                          onChange={() => setConsent(c => !c)}
+                          onChange={e => {
+                            const checked = e.target.checked
+                            setConsent(checked)
+                            if (!prefersReduced) {
+                              const box = consentBoxRef.current
+                              if (box) {
+                                box.classList.remove('consent-confirm', 'consent-uncheck')
+                                requestAnimationFrame(() => {
+                                  box.classList.add(checked ? 'consent-confirm' : 'consent-uncheck')
+                                  setTimeout(() => box.classList.remove('consent-confirm', 'consent-uncheck'), checked ? 280 : 170)
+                                })
+                              }
+                            }
+                          }}
                           style={{
-                            position: 'absolute',
-                            width: 1, height: 1,
-                            padding: 0, margin: -1,
-                            overflow: 'hidden',
-                            whiteSpace: 'nowrap',
-                            borderWidth: 0,
+                            position: 'absolute', width: 1, height: 1,
+                            padding: 0, margin: -1, overflow: 'hidden',
+                            whiteSpace: 'nowrap', borderWidth: 0,
                           }}
                         />
                         <div
+                          ref={consentBoxRef}
                           aria-hidden="true"
                           style={{
-                            width: 18, height: 18, borderRadius: 4,
+                            width: 18, height: 18, borderRadius: 5,
                             border: consent ? '1.5px solid #1A1917' : '1.5px solid #D4D3CE',
                             background: consent ? '#1A1917' : '#FFFFFF',
                             flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            marginTop: 2, transition: 'all .15s',
+                            marginTop: 1, transition: 'background .15s, border-color .15s',
                           }}
                         >
                           {consent && (
@@ -1974,11 +2162,17 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 {/* Success / comparison card */}
                 {animDone && (
                   <div ref={amsgRef} style={{ textAlign: 'center', animation: 'fadeUp .45s ease both', width: '100%', paddingBottom: 4 }}>
-                    {/* On-map confirmation */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 12 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#3A9B55', flexShrink: 0 }} />
-                      <span style={{ fontSize: 15, fontWeight: 500, color: '#1A1917' }}>Your renewal is on the map.</span>
-                    </div>
+                    {/* On-map confirmation — personalised from FSA */}
+                    {(() => {
+                      const hood = (areaLabel || fsa).replace(/\s*\(.*?\)$/, '').trim()
+                      const mapText = hood ? `${hood} is on the map.` : 'Your renewal is on the map.'
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
+                          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#3A9B55', flexShrink: 0, boxShadow: '0 0 0 3px rgba(58,155,85,.18)' }} />
+                          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--pos-500)' }}>{mapText}</span>
+                        </div>
+                      )
+                    })()}
 
                     {/* Urgency note */}
                     <div style={{
@@ -1989,54 +2183,103 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     </div>
 
                     {/* Comparison card */}
-                    <div style={{
-                      border: '1px solid #EEEDEA', borderRadius: 14, overflow: 'hidden', marginBottom: 14,
-                    }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
+                    <div style={{ border: '1px solid #EEEDEA', borderRadius: 14, overflow: 'hidden', marginBottom: 14 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: '#FFFFFF' }}>
                         {/* You column */}
-                        <div style={{ padding: '14px 12px', textAlign: 'center', borderRight: '1px solid #EEEDEA', background: '#FAFAF8' }}>
-                          <div id="cmpYours" aria-live="off" style={{ fontSize: 22, fontWeight: 600, color: '#1A1917', letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>
-                            {hasPct ? `${cntYou}%` : `+$${rval.toLocaleString()}`}
+                        <div style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid #EEEDEA' }}>
+                          <div
+                            style={{
+                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
+                              fontWeight: 500, letterSpacing: '.02em', textTransform: 'uppercase',
+                              color: 'var(--n-400)', marginBottom: 4, whiteSpace: 'nowrap',
+                            }}
+                          >You paid</div>
+                          <div
+                            id="cmpYours"
+                            aria-live="off"
+                            style={{
+                              fontSize: 20, fontWeight: 700,
+                              fontVariationSettings: "'opsz' 32",
+                              letterSpacing: '-.02em', lineHeight: 1,
+                              fontVariantNumeric: 'tabular-nums',
+                              color: '#D4503A', marginBottom: 3,
+                            }}
+                          >
+                            {hasPct ? `${cntYou >= 50 && sign === 'inc' ? '50+' : cntYou}%` : `+$${rval.toLocaleString()}`}
                           </div>
-                          <div style={{ fontSize: 10, color: 'var(--n-400)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>you paid</div>
-                          <div style={{ fontSize: 10, color: '#B8B7B1' }}>your renewal</div>
+                          <div style={{ fontSize: 10, color: 'var(--n-400)', marginTop: 3, lineHeight: 1.4 }}>your renewal</div>
                         </div>
                         {/* Area column */}
-                        <div style={{ padding: '14px 12px', textAlign: 'center', borderRight: '1px solid #EEEDEA' }}>
-                          <div id="cmpArea" aria-live="off" style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', color: compLoading ? '#D4D3CE' : (hasLimitedData ? 'var(--n-400)' : (hasAreaData ? '#1A1917' : '#D4D3CE')) }}>
+                        <div style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid #EEEDEA' }}>
+                          <div
+                            style={{
+                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
+                              fontWeight: 500, letterSpacing: '.02em', textTransform: 'uppercase',
+                              color: 'var(--n-400)', marginBottom: 4, whiteSpace: 'nowrap',
+                            }}
+                          >Your neighbours</div>
+                          <div
+                            id="cmpArea"
+                            aria-live="off"
+                            style={{
+                              fontSize: 20, fontWeight: 700,
+                              fontVariationSettings: "'opsz' 32",
+                              letterSpacing: '-.02em', lineHeight: 1,
+                              fontVariantNumeric: 'tabular-nums',
+                              color: compLoading ? '#D4D3CE' : (hasLimitedData ? 'var(--n-400)' : (hasAreaData ? '#AD7710' : '#D4D3CE')),
+                              marginBottom: 3,
+                            }}
+                          >
                             {compLoading ? '–' : hasAreaData ? `${cntNbr}%` : hasLimitedData ? `${Math.round(areaMed!)}%*` : '–'}
                           </div>
-                          <div style={{ fontSize: 10, color: 'var(--n-400)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>your area</div>
-                          <div style={{ fontSize: 10, color: '#B8B7B1' }}>
-                            {compLoading ? 'loading…' : hasAreaData ? 'area median' : hasLimitedData ? 'limited data' : 'no area data yet'}
+                          <div style={{ fontSize: 10, color: 'var(--n-400)', marginTop: 3, lineHeight: 1.4 }}>
+                            {compLoading ? 'loading…' : hasAreaData ? 'average increase' : hasLimitedData ? 'limited data' : 'no area data yet'}
                           </div>
                         </div>
                         {/* Ontario column */}
-                        <div style={{ padding: '14px 12px', textAlign: 'center' }}>
-                          <div id="cmpOnt" aria-live="off" style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, marginBottom: 4, fontVariantNumeric: 'tabular-nums', color: compLoading || ontMed === null ? '#D4D3CE' : '#1A1917' }}>
+                        <div style={{ padding: '12px 8px', textAlign: 'center' }}>
+                          <div
+                            style={{
+                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
+                              fontWeight: 500, letterSpacing: '.02em', textTransform: 'uppercase',
+                              color: 'var(--n-400)', marginBottom: 4, whiteSpace: 'nowrap',
+                            }}
+                          >Ontario</div>
+                          <div
+                            id="cmpOnt"
+                            aria-live="off"
+                            style={{
+                              fontSize: 20, fontWeight: 700,
+                              fontVariationSettings: "'opsz' 32",
+                              letterSpacing: '-.02em', lineHeight: 1,
+                              fontVariantNumeric: 'tabular-nums',
+                              color: compLoading || ontMed === null ? '#D4D3CE' : '#2A7D41',
+                              marginBottom: 3,
+                            }}
+                          >
                             {compLoading ? '–' : ontMed !== null ? `${cntOnt}%` : '–'}
                           </div>
-                          <div style={{ fontSize: 10, color: 'var(--n-400)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>ontario</div>
-                          <div style={{ fontSize: 10, color: '#B8B7B1' }}>province-wide</div>
+                          <div style={{ fontSize: 10, color: 'var(--n-400)', marginTop: 3, lineHeight: 1.4 }}>province-wide</div>
                         </div>
                       </div>
-                      {!compLoading && !hasPct && (
-                        <div style={{ padding: '10px 14px', borderTop: '1px solid #EEEDEA', background: '#FAFAF8' }}>
-                          <p style={{ fontSize: 12, color: 'var(--n-500)', lineHeight: 1.5 }}>
-                            Add your previous premium above to see how you compare as a percentage with your neighbours.
-                          </p>
-                        </div>
-                      )}
-                      {hasAreaData && hasPct && !compLoading && (
-                        <div style={{ padding: '10px 14px', borderTop: '1px solid #EEEDEA', background: '#FAFAF8' }}>
-                          <p style={{ fontSize: 12, color: 'var(--n-500)', lineHeight: 1.5 }}>
-                            {nbrAbove ? (
-                              <><strong style={{ fontWeight: 600, color: '#1A1917' }}>{provider || 'Other'} customers in your area are typically seeing lower increases.</strong>{' '}Yours is on the higher end — worth a closer look.</>
+                      {/* Insight line */}
+                      {!compLoading && (hasAreaData || !hasPct) && (
+                        <p style={{
+                          fontSize: 14, color: 'var(--n-900)', lineHeight: 1.65,
+                          textAlign: 'center', padding: '12px 16px', margin: 0,
+                          borderTop: '1px solid var(--n-100)', background: 'var(--n-25)',
+                          borderRadius: '0 0 14px 14px',
+                        }}>
+                          {!hasPct ? (
+                            <>Add your previous premium above to see how you compare as a percentage.</>
+                          ) : hasAreaData ? (
+                            nbrAbove ? (
+                              <><strong style={{ fontWeight: 600, color: 'var(--n-900)' }}>{provider || 'Other'} customers in your area are typically seeing lower increases.</strong>{' '}Yours is on the higher end — worth a closer look.</>
                             ) : (
-                              <><strong style={{ fontWeight: 600, color: '#1A1917' }}>Your renewal is at or below the {areaLabel || fsa} average.</strong></>
-                            )}
-                          </p>
-                        </div>
+                              <><strong style={{ fontWeight: 600, color: 'var(--n-900)' }}>You&apos;re at or below the {areaLabel || fsa} average.</strong>{' '}You&apos;re in a better position than most.</>
+                            )
+                          ) : null}
+                        </p>
                       )}
                     </div>
 
