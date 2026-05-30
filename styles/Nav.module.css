@@ -7,7 +7,7 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 101;
+  z-index: calc(var(--z-nav) + 1); /* 101 — strip sits above main bar */
   height: 28px;
   background: #2C2B27;
   display: flex;
@@ -62,7 +62,7 @@
   top: 28px;
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: var(--z-nav);
   height: 52px;
   background: #FFFFFF;
   border-bottom: 1px solid #EEEDEA;
@@ -192,21 +192,21 @@
 
 .searchStatus {
   position: absolute;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + var(--sp-2));
   left: 0;
   white-space: nowrap;
-  z-index: 10;
+  z-index: var(--z-markers); /* 10 — above map, inside nav stacking context */
   pointer-events: none;
 }
 
 .searchStatusPioneer {
   background: #FEF6E8;
   border: 1px solid #FACA6B;
-  border-radius: 8px;
-  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: var(--sp-2);
   pointer-events: all;
 }
 
@@ -237,8 +237,8 @@
   color: #B33C28;
   background: #FFFFFF;
   border: 1px solid #F2A597;
-  border-radius: 8px;
-  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
 }
 
 /* ══════════════════════════════════════════
@@ -266,11 +266,11 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px 10px;
-  border-radius: 9999px;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-full);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-2);
   line-height: 1;
   transition: color .15s, background .15s;
   position: relative;
@@ -292,18 +292,18 @@
 
 .shareToast {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + var(--sp-2));
   left: 50%;
   transform: translateX(-50%);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   background: #1A1917;
   color: #FFFFFF;
-  padding: 5px 14px;
-  border-radius: 999px;
+  padding: var(--sp-1) var(--sp-4);
+  border-radius: var(--r-full);
   pointer-events: none;
   white-space: nowrap;
-  z-index: 10;
+  z-index: var(--z-markers); /* 10 — inside nav stacking context */
 }
 
 /* ══════════════════════════════════════════
@@ -454,11 +454,11 @@
   display: none;
   width: 36px;
   height: 36px;
-  gap: 5px;
+  gap: var(--sp-1);
   border: 1px solid #D4D3CE;
   background: #FFFFFF;
   cursor: pointer;
-  border-radius: 9999px;
+  border-radius: var(--r-full);
   align-items: center;
   justify-content: center;
   flex-direction: column;
@@ -500,9 +500,9 @@
   margin: 4px 16px 12px;
   background: #FFFFFF;
   border: 1px solid #D4D3CE;
-  border-radius: 14px;
+  border-radius: var(--r-lg);
   box-shadow: 0 4px 12px rgba(26, 25, 23, .06), 0 1px 3px rgba(26, 25, 23, .04);
-  padding: 12px;
+  padding: var(--sp-3);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -514,8 +514,8 @@
   font-weight: 500;
   letter-spacing: -0.01em;
   width: 100%;
-  padding: 13px 16px;
-  border-radius: 12px;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-lg);
   border: none;
   cursor: pointer;
   display: flex;
@@ -547,7 +547,7 @@
   font-size: 12px;
   color: var(--n-400);
   text-align: center;
-  padding: 6px 4px 2px;
+  padding: var(--sp-2) var(--sp-1) var(--sp-1);
   line-height: 1.5;
 }
 
@@ -559,8 +559,8 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
   display: flex;
   align-items: center;
   gap: 8px;

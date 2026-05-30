@@ -324,7 +324,7 @@ function Stepper({
       </div>
       <div style={{
         display: 'flex', alignItems: 'center',
-        border: '1px solid #EEEDEA', borderRadius: 10,
+        border: '1px solid #EEEDEA', borderRadius: 'var(--r-md)',
         overflow: 'hidden', width: 'fit-content',
       }}>
         <button
@@ -1275,9 +1275,9 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               width:        '100%',
               margin:       0,
               background:   '#FFFFFF',
-              borderRadius: '20px 20px 0 0',
+              borderRadius: 'var(--r-xl) var(--r-xl) 0 0',
               border:       '1px solid #E2E1DD',
-              boxShadow:    '0 8px 32px rgba(26,25,23,.12), 0 2px 8px rgba(26,25,23,.06)',
+              boxShadow:    'var(--sh-lg)',
               zIndex:       600, // z-modal
               display:      'flex',
               flexDirection:'column',
@@ -1289,9 +1289,9 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               width:        'calc(100vw - 48px)',
               maxWidth:     468,
               background:   '#FFFFFF',
-              borderRadius: 20,
+              borderRadius: 'var(--r-xl)',
               border:       '1px solid #E2E1DD',
-              boxShadow:    '0 8px 32px rgba(26,25,23,.12), 0 2px 8px rgba(26,25,23,.06)',
+              boxShadow:    'var(--sh-lg)',
               zIndex:       600, // z-modal
               display:      'flex',
               flexDirection:'column',
@@ -1396,7 +1396,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     {showRestoreNotice && (
                       <div style={{
                         display: 'flex', alignItems: 'center', gap: 6,
-                        background: '#EEEFFA', borderRadius: 8,
+                        background: '#EEEFFA', borderRadius: 'var(--r-sm)',
                         padding: '8px 12px', marginBottom: 12,
                         fontSize: 12, color: '#4A50B0',
                       }}>
@@ -1435,7 +1435,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           fontSize: 22, fontWeight: 500,
                           width: '100%', padding: '12px 16px',
                           border: fsaError ? '1.5px solid #D4503A' : '1.5px solid #EEEDEA',
-                          borderRadius: 14, background: '#FFFFFF', color: '#1A1917',
+                          borderRadius: 'var(--r-lg)', background: '#FFFFFF', color: '#1A1917',
                           outline: 'none', letterSpacing: '.14em', textTransform: 'uppercase',
                           transition: 'border-color .15s, box-shadow .15s', display: 'block',
                         }}
@@ -1492,7 +1492,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             type="button"
                             onClick={() => setInsType(t)}
                             style={{
-                              flex: 1, padding: '11px 8px', borderRadius: 10, fontSize: 13, fontWeight: 500,
+                              flex: 1, padding: '11px 8px', borderRadius: 'var(--r-md)', fontSize: 13, fontWeight: 500,
                               border: `1.5px solid ${insType === t ? '#1A1917' : '#EEEDEA'}`,
                               background: insType === t ? '#1A1917' : '#FFFFFF',
                               color: insType === t ? '#FFFFFF' : 'var(--n-500)',
@@ -1567,7 +1567,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             fontSize: 13,
                             padding: '8px 12px',
                             border: '1.5px solid #EEEDEA',
-                            borderRadius: 8,
+                            borderRadius: 'var(--r-sm)',
                             background: '#FFFFFF',
                             color: '#1A1917',
                             outline: 'none',
@@ -1581,6 +1581,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           id="provGrid"
                           role="radiogroup"
                           aria-labelledby="provLegend"
+                          aria-describedby={provErr ? 'ferrProv' : undefined}
                           onKeyDown={handleProvKeyDown}
                           style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}
                         >
@@ -1628,7 +1629,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             ))
                           })()}
                         </div>
-                        {provErr && <p role="alert" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>Please select your provider</p>}
+                        {provErr && <p id="ferrProv" role="alert" aria-live="assertive" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>Please select your provider</p>}
                       </fieldset>
                     </div>
                   </div>
@@ -1939,9 +1940,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
                     {/* Sentiment */}
                     <div style={{ marginBottom: 16 }}>
-                      <fieldset style={{ border: 'none', padding: 0, margin: 0 }} aria-invalid={sentErr}>
+                      <fieldset
+                        style={{ border: 'none', padding: 0, margin: 0 }}
+                        aria-invalid={sentErr}
+                        aria-describedby={sentErr ? 'serr' : undefined}
+                      >
                         <legend className="fl">How do you feel about your renewal?</legend>
-                        <div style={{ display: 'flex', gap: 5, marginBottom: 2 }}>
+                        <div style={{ display: 'flex', gap: 'var(--sp-1)', marginBottom: 2 }}>
                           {[1, 2, 3, 4, 5].map(n => (
                             <button
                               key={n}
@@ -1959,7 +1964,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               }}
                               style={{
                                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                                padding: '9px 3px', borderRadius: 12, minHeight: 72,
+                                padding: '9px 3px', borderRadius: 'var(--r-lg)', minHeight: 72,
                                 border: `1.5px solid ${sent === n ? SC[n] : '#EEEDEA'}`,
                                 cursor: 'pointer', transition: 'border-color .22s cubic-bezier(.16,1,.3,1), background .22s cubic-bezier(.16,1,.3,1)',
                                 background: sent === n ? SC[n] + '28' : '#FFFFFF',
@@ -1980,7 +1985,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             </button>
                           ))}
                         </div>
-                        {sentErr && <p role="alert" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>Please select how you feel about your renewal</p>}
+                        {sentErr && <p id="serr" role="alert" aria-live="assertive" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>Please select how you feel about your renewal</p>}
                       </fieldset>
                     </div>
 
@@ -2005,7 +2010,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             style={{
                               width: '100%', padding: '11px 13px',
                               fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
-                              border: '1.5px solid #EEEDEA', borderRadius: 12,
+                              border: '1.5px solid #EEEDEA', borderRadius: 'var(--r-lg)',
                               background: '#FFFFFF', color: '#1A1917', outline: 'none',
                               resize: 'none', lineHeight: 1.6, minHeight: 76,
                               transition: 'border-color .15s, box-shadow .15s', display: 'block',
@@ -2035,7 +2040,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
                     {/* Consent */}
                     <div id="consentRow" style={{ marginBottom: 8 }}>
-                      <label htmlFor="consent-input" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', padding: '12px', background: 'var(--n-50)', borderRadius: 10 }}>
+                      <label htmlFor="consent-input" style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--sp-2)', cursor: 'pointer', padding: 'var(--sp-3)', background: 'var(--n-50)', borderRadius: 'var(--r-md)' }}>
                         <input
                           type="checkbox"
                           id="consent-input"
@@ -2064,7 +2069,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           ref={consentBoxRef}
                           aria-hidden="true"
                           style={{
-                            width: 18, height: 18, borderRadius: 5,
+                            width: 18, height: 18, borderRadius: 'var(--r-sm)',
                             border: consent ? '1.5px solid #1A1917' : '1.5px solid #D4D3CE',
                             background: consent ? '#1A1917' : '#FFFFFF',
                             flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -2176,14 +2181,14 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
                     {/* Urgency note */}
                     <div style={{
-                      background: '#FEF6E8', border: '1px solid #FACA6B', borderRadius: 10,
+                      background: '#FEF6E8', border: '1px solid #FACA6B', borderRadius: 'var(--r-md)',
                       padding: '10px 14px', marginBottom: 14, textAlign: 'left',
                     }}>
                       <p style={{ fontSize: 12, color: '#845A0C', lineHeight: 1.55 }}>{urgencyText}</p>
                     </div>
 
                     {/* Comparison card */}
-                    <div style={{ border: '1px solid #EEEDEA', borderRadius: 14, overflow: 'hidden', marginBottom: 14 }}>
+                    <div style={{ border: '1px solid #EEEDEA', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 14 }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: '#FFFFFF' }}>
                         {/* You column */}
                         <div style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid #EEEDEA' }}>
@@ -2298,7 +2303,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             : { type: 'spring', stiffness: 240, damping: 24, mass: 1.0, delay: 0.3 }}
                           style={{
                             background: 'var(--p-50)', border: '1px solid var(--p-200)',
-                            borderRadius: 12, padding: '14px 16px',
+                            borderRadius: 'var(--r-lg)', padding: '14px 16px',
                             marginBottom: 14, textAlign: 'left',
                             transformOrigin: 'top center',
                           }}
@@ -2337,7 +2342,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                     flex: 1, display: 'flex', alignItems: 'center',
                                     background: 'var(--n-0)',
                                     border: '1.5px solid var(--p-200)',
-                                    borderRadius: 8, padding: '0 12px', height: 40,
+                                    borderRadius: 'var(--r-sm)', padding: '0 12px', height: 40,
                                     transition: 'border-color .15s, box-shadow .15s',
                                   }}
                                   onFocusCapture={e => {
@@ -2385,7 +2390,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                   aria-busy={patchLoading}
                                   aria-label={patchLoading ? 'Calculating…' : 'Calculate percentage'}
                                   style={{
-                                    height: 40, padding: '0 16px', borderRadius: 8,
+                                    height: 40, padding: '0 16px', borderRadius: 'var(--r-sm)',
                                     background: 'var(--p-600)', color: 'var(--n-0)',
                                     fontSize: 13, fontWeight: 500,
                                     border: 'none', cursor: patchLoading ? 'default' : 'pointer',
@@ -2473,7 +2478,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         style={{
                           background:   '#EEEFFA',
                           border:       '1px solid #B0B4E6',
-                          borderRadius: 10,
+                          borderRadius: 'var(--r-md)',
                           padding:      '12px 14px',
                           margin:       '10px 0',
                           display:      'flex',
@@ -2528,7 +2533,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     {fsaCount < 5 && (
                       <div style={{
                         background: '#EEEFFA', border: '1px solid #B0B4E6',
-                        borderRadius: 10, padding: '10px 14px', marginBottom: 14, textAlign: 'left',
+                        borderRadius: 'var(--r-md)', padding: '10px 14px', marginBottom: 14, textAlign: 'left',
                       }}>
                         <p style={{ fontSize: 12, color: '#2D3170', lineHeight: 1.55, margin: 0, fontWeight: 500 }}>
                           {'You just put '}

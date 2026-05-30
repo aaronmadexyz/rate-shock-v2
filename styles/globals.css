@@ -635,26 +635,43 @@ input[type="checkbox"]:focus + div {
 /* ─── REDUCED MOTION ────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .fsa-hint-resolving {
+  /* FSA hint blur crossfade */
+  .fsa-hint-resolving,
+  .hint-resolve {
     animation: none;
     opacity: 1;
     filter: none;
   }
+
+  /* Tooltip entrance */
   .tip-portal {
     transition: opacity .12s;
   }
+
+  /* Delight animations — all disabled */
   .sent-pulse,
   .pill-snap,
   .tri-result-show,
+  .tri-result-enter,
   .consent-confirm,
   .consent-uncheck {
     animation: none;
+    opacity: 1;
+    transform: none;
   }
 
+  /* Stepper tick animations */
+  .tick-up,
+  .tick-down {
+    animation: none;
+  }
+
+  /* Envelope bob */
   .envelope-marker {
     animation-play-state: paused !important;
   }
 
+  /* Envelope hover — no scale, no filter motion */
   .env-hover-wrap,
   .env-hover-wrap:hover {
     transition: none;
@@ -662,6 +679,10 @@ input[type="checkbox"]:focus + div {
     filter:     none;
   }
 
+  /* Scale presses (:active transform: scale(.97)) are NOT disabled —
+     they are instantaneous and not vestibular triggers */
+
+  /* Safety net — catch any animation/transition not listed above */
   * {
     transition-duration:  0.01ms !important;
     animation-duration:   0.01ms !important;

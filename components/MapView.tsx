@@ -492,7 +492,7 @@ function LockedPanel({
           transition={{ duration: prefersReduced ? 0 : 0.15, ease: [0.25, 0, 0.3, 1] as [number,number,number,number] }}
           onTouchEnd={onClose}
           onClick={onClose}
-          style={{ zIndex: 199 }}
+          style={{ zIndex: 199 /* z-panel - 1: backdrop below the detail sheet */ }}
         />
         {/* Mobile bottom sheet */}
         <motion.div
