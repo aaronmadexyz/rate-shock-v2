@@ -11,9 +11,9 @@ const ITEMS = [
 function EnvelopeSvg({ w, h }: { w: number; h: number }) {
   return (
     <svg width={w} height={h} viewBox="0 0 40 28" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <rect x="0.5" y="0.5" width="39" height="27" rx="2.5" fill="#F0EDE8" stroke="#D4D3CE" strokeWidth="0.8"/>
-      <polygon points="0,0 40,0 20,15" fill="#E8E4DD" opacity="0.8"/>
-      <circle cx="20" cy="6.5" r="4" fill="#D4D3CE"/>
+      <rect x="0.5" y="0.5" width="39" height="27" rx="2.5" fill="var(--n-50)" stroke="var(--n-200)" strokeWidth="0.8"/>
+      <polygon points="0,0 40,0 20,15" fill="var(--n-100)" opacity="0.8"/>
+      <circle cx="20" cy="6.5" r="4" fill="var(--n-200)"/>
     </svg>
   )
 }
@@ -30,17 +30,21 @@ export default function MapLegend() {
   }, [])
 
   return (
-    <div style={{
-      position:     'fixed',
-      bottom:       isMobile ? 20 : 28,
-      right:        isMobile ? 68 : 80,
-      zIndex:       20,
-      background:   '#FFFFFF',
-      border:       '1px solid #E2E1DD',
-      borderRadius: 10,
-      padding:      '10px 12px',
-      boxShadow:    '0 1px 3px rgba(26,25,23,.06), 0 1px 2px rgba(26,25,23,.04)',
-    }}>
+    <div
+      role="img"
+      aria-label="Envelope size legend"
+      style={{
+        position:     'fixed',
+        bottom:       isMobile ? 20 : 28,
+        right:        isMobile ? 68 : 80,
+        zIndex:       20, // z-controls
+        background:   'var(--n-0)',
+        border:       '1px solid var(--n-150)',
+        borderRadius: 'var(--r-md)',
+        padding:      '10px 12px',
+        boxShadow:    'var(--sh-sm)',
+      }}
+    >
       <div style={{
         fontFamily:    "'IBM Plex Mono', monospace",
         fontSize:      9,
@@ -52,14 +56,14 @@ export default function MapLegend() {
       }}>
         Envelope size
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {ITEMS.map(({ w, h, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <EnvelopeSvg w={w} h={h} />
             <span style={{
               fontFamily: "'Inter', system-ui, sans-serif",
               fontSize:   11,
-              color:      '#5E5D56',
+              color:      'var(--n-600)',
               lineHeight: 1,
             }}>
               {label}

@@ -138,7 +138,7 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
 
   return (
     <div style={{ position: 'relative' }}>
-      <style>{`.pcs-inp::placeholder { color: #B8B7B1; }`}</style>
+      <style>{`.pcs-inp::placeholder { color: var(--n-300); }`}</style>
 
       {/* Status messages — above the pill */}
       <AnimatePresence>
@@ -153,25 +153,25 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
               position:  'absolute',
               bottom:    'calc(100% + 8px)',
               left:      0,
-              zIndex:    10,
+              zIndex:    10, // z-markers
               whiteSpace: 'nowrap',
             }}
           >
             {status === 'pioneer' && (
               <div style={{
-                background:   '#FEF6E8',
-                border:       '1px solid #FACA6B',
-                borderRadius: 8,
-                padding:      '7px 10px',
+                background:   'var(--p-50)',
+                border:       '1px solid var(--p-200)',
+                borderRadius: 'var(--r-md)',
+                padding:      '8px 12px',
                 display:      'flex',
                 alignItems:   'flex-start',
-                gap:          6,
+                gap:          8,
               }}>
                 <ClockIcon />
                 <span style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontSize:   12,
-                  color:      '#845A0C',
+                  color:      'var(--p-600)',
                   lineHeight: 1.5,
                 }}>
                   No reports in {neighbourhood} yet.{' '}
@@ -182,7 +182,7 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
                       fontFamily:     'inherit',
                       fontSize:       12,
                       fontWeight:     600,
-                      color:          '#845A0C',
+                      color:          'var(--p-600)',
                       background:     'none',
                       border:         'none',
                       padding:        0,
@@ -201,11 +201,11 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
                 display:    'block',
                 fontFamily: "'Inter', system-ui, sans-serif",
                 fontSize:   12,
-                color:      '#B33C28',
-                background: '#FFFFFF',
-                border:     '1px solid #F2A597',
-                borderRadius: 8,
-                padding:    '6px 10px',
+                color:      'var(--neg-500)',
+                background: 'var(--n-0)',
+                border:     '1px solid var(--neg-200)',
+                borderRadius: 'var(--r-md)',
+                padding:    '8px 12px',
               }}>
                 Try a valid Ontario postal code — like M5V or L6T
               </span>
@@ -222,8 +222,8 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
           transformOrigin: 'left center',
           height:          40,
           borderRadius:    9999,
-          background:      '#FFFFFF',
-          border:          isExpanded ? '1.5px solid #636AC5' : '1px solid #D4D3CE',
+          background:      'var(--n-0)',
+          border:          isExpanded ? '1.5px solid var(--p-400)' : '1px solid var(--n-200)',
           boxShadow:       isExpanded ? '0 0 0 3px rgba(74,80,176,.09)' : SH_SM,
           overflow:        'hidden',
           display:         'flex',
@@ -270,7 +270,7 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
                 style={{
                   fontFamily:  "'IBM Plex Mono', monospace",
                   fontSize:    13,
-                  color:       '#1A1917',
+                  color:       'var(--n-900)',
                   border:      'none',
                   outline:     'none',
                   background:  'transparent',

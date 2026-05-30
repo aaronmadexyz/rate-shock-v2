@@ -162,7 +162,7 @@ html {
 }
 
 body {
-  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-family: var(--font, 'Inter', system-ui, sans-serif);
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -202,7 +202,7 @@ p {
 }
 
 .font-mono {
-  font-family: var(--font-mono);
+  font-family: var(--mono);
 }
 
 /* ─── KEYFRAMES ─────────────────────────────────────────────────────────── */

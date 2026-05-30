@@ -138,10 +138,10 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
     bottom:       isMobile ? 72 : 80,
     right:        isMobile ? 16 : 24,
     width:        isMobile ? 'calc(100vw - 32px)' : 320,
-    background:   '#FFFFFF',
-    borderRadius: 16,
-    border:       '1px solid #E2E1DD',
-    boxShadow:    '0 8px 28px rgba(26,25,23,.1), 0 2px 6px rgba(26,25,23,.05)',
+    background:   'var(--n-0)',
+    borderRadius: 'var(--r-lg)',
+    border:       '1px solid var(--n-150)',
+    boxShadow:    'var(--sh-lg)',
     padding:      20,
     zIndex:       600, // z-modal
     transformOrigin: 'top right',
@@ -198,7 +198,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                   width:        40,
                   height:       40,
                   borderRadius: '50%',
-                  background:   '#EDF7F0',
+                  background:   'var(--pos-50)',
                   border:       '1px solid rgba(58,155,85,.2)',
                   display:      'flex',
                   alignItems:   'center',
@@ -210,7 +210,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                   fontFamily:  "'Inter', system-ui, sans-serif",
                   fontSize:    15,
                   fontWeight:  500,
-                  color:       '#1A1917',
+                  color:       'var(--n-900)',
                   marginTop:   12,
                   textAlign:   'center',
                 }}>
@@ -238,7 +238,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                       fontFamily: "'Inter', system-ui, sans-serif",
                       fontSize:   14,
                       fontWeight: 500,
-                      color:      '#1A1917',
+                      color:      'var(--n-900)',
                       lineHeight: 1.3,
                     }}>
                       What should we build next?
@@ -264,7 +264,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                       height:         26,
                       borderRadius:   '50%',
                       border:         '1px solid #EEEDEA',
-                      background:     '#FFFFFF',
+                      background:     'var(--n-0)',
                       color:          'var(--n-400)',
                       cursor:         'pointer',
                       flexShrink:     0,
@@ -295,21 +295,21 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                           borderBottom: i < TOP_REQUESTS.length - 1 ? '1px solid #EEEDEA' : 'none',
                         }}
                       >
-                        <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#D4D3CE', flexShrink: 0 }} />
+                        <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--n-200)', flexShrink: 0 }} />
                         <span style={{
                           fontFamily: "'Inter', system-ui, sans-serif",
-                          fontSize: 12, color: '#5E5D56', lineHeight: 1.4,
+                          fontSize: 12, color: 'var(--n-600)', lineHeight: 1.4,
                         }}>{req}</span>
                       </div>
                     ))}
-                    <div style={{ height: 1, background: '#EEEDEA', margin: '14px 0' }} />
+                    <div style={{ height: 1, background: 'var(--n-100)', margin: '14px 0' }} />
                   </div>
                 )}
 
                 {/* Textarea */}
                 <div style={{ marginTop: uiState === 'loading' ? 14 : 0 }}>
                   <style>{`
-                    .frb-ta::placeholder { color: #D4D3CE; }
+                    .frb-ta::placeholder { color: var(--n-300); }
                     .frb-ta:focus {
                       border-color: #636AC5 !important;
                       box-shadow: 0 0 0 3px rgba(74,80,176,.12) !important;
@@ -331,10 +331,10 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                       width:        '100%',
                       minHeight:    88,
                       padding:      '10px 12px',
-                      border:       '1.5px solid #EEEDEA',
+                      border:       '1.5px solid var(--n-100)',
                       borderRadius: 10,
-                      background:   '#FFFFFF',
-                      color:        '#1A1917',
+                      background:   'var(--n-0)',
+                      color:        'var(--n-900)',
                       resize:       'none',
                       outline:      'none',
                       boxSizing:    'border-box',
@@ -344,7 +344,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                   <p style={{
                     fontFamily: "'IBM Plex Mono', monospace",
                     fontSize:   11,
-                    color:      '#B8B7B1',
+                    color:      'var(--n-400)',
                     marginTop:  4,
                     textAlign:  'right',
                   }}>
@@ -361,8 +361,8 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                   style={{
                     marginTop:    12,
                     width:        '100%',
-                    background:   '#3A3F8F',
-                    color:        '#FFFFFF',
+                    background:   'var(--p-600)',
+                    color:        'var(--n-0)',
                     fontFamily:   "'Inter', system-ui, sans-serif",
                     fontSize:     14,
                     fontWeight:   500,
@@ -375,11 +375,11 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                   }}
                   onMouseEnter={e => {
                     if (!isEmpty && !isLoading) {
-                      (e.currentTarget as HTMLButtonElement).style.background = '#2D3170'
+                      (e.currentTarget as HTMLButtonElement).style.background = 'var(--p-700)'
                     }
                   }}
                   onMouseLeave={e => {
-                    (e.currentTarget as HTMLButtonElement).style.background = '#3A3F8F'
+                    (e.currentTarget as HTMLButtonElement).style.background = 'var(--p-600)'
                   }}
                 >
                   {isLoading ? 'Sending…' : 'Send feedback'}
@@ -390,7 +390,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                   <p style={{
                     fontFamily: "'Inter', system-ui, sans-serif",
                     fontSize:   12,
-                    color:      '#B33C28',
+                    color:      'var(--neg-500)',
                     marginTop:  8,
                   }}>
                     Couldn't send that — try again.

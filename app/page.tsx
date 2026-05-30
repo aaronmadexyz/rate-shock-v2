@@ -26,7 +26,7 @@ import OnboardingOverlay from '@/components/OnboardingOverlay'
 const MapView = lazyLoad(() => import('@/components/MapView'), {
   ssr: false,
   loading: () => (
-    <div style={{ position: 'fixed', inset: 0, background: '#F5F4F1', zIndex: 0 }} />
+    <div style={{ position: 'fixed', inset: 0, background: 'var(--n-50)', zIndex: 0 /* z-map */ }} />
   ),
 })
 
@@ -223,7 +223,7 @@ export default function Page() {
               position:      'fixed',
               top:           88,
               left:          '50%',
-              zIndex:        19,
+              zIndex:        20, // z-controls — decorative hint, pointer-events none
               pointerEvents: 'none',
               width:         'calc(100vw - 48px)',
               maxWidth:      480,
@@ -234,13 +234,13 @@ export default function Page() {
               background:           'rgba(255,255,255,0.92)',
               backdropFilter:       'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
-              border:               '1px solid #E2E1DD',
+              border:               '1px solid var(--n-150)',
               borderRadius:         9999,
               padding:              'clamp(8px, 2vw, 10px) clamp(14px, 4vw, 20px)',
               fontFamily:           "'Inter', system-ui, sans-serif",
               fontSize:             13,
               fontWeight:           500,
-              color:                '#1A1917',
+              color:                'var(--n-900)',
               boxShadow:            '0 1px 3px rgba(26,25,23,.06)',
               pointerEvents:        'none',
               textAlign:            'center',

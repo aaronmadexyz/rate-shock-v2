@@ -9,15 +9,15 @@ const inter = Inter({
   subsets: ['latin'],
   axes:    ['opsz'],
   display: 'swap',
-  variable: '--font-sans',
+  variable: '--font',
 })
 
 // IBM Plex Mono is not a variable font — load only the weights we use.
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
-  weight:  ['400', '500'],
+  weight:  ['400', '500', '600', '700'],
   display: 'swap',
-  variable: '--font-mono',
+  variable: '--mono',
 })
 
 export const metadata: Metadata = {
