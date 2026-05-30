@@ -54,7 +54,7 @@
   position: fixed;
   inset: 0;
   background: rgba(26,25,23,0.4);
-  z-index: calc(var(--z-panel) - 1); /* 199 — below panel/sheet, above map */
+  z-index: var(--z-tooltip); /* 300 — above panels/filter sheet, below overlays */
   cursor: pointer;
   display: none;
 }

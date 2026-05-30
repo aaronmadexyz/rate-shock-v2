@@ -3,7 +3,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: calc(var(--z-nav) - 1); /* 99 — below nav bar, above markers */
+  z-index: var(--z-controls); /* 20 — canvas-attached controls, above tiles and markers */
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -93,7 +93,7 @@
   left: 0;
   right: 0;
   height: 22px;
-  z-index: calc(var(--z-controls) + 5); /* 25 — above zoom controls, below nav */
+  z-index: var(--z-controls); /* 20 — attribution bar, same canvas layer as controls */
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
