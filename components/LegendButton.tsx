@@ -18,7 +18,7 @@ function EnvelopeSvg({ w, h }: { w: number; h: number }) {
   return (
     <svg width={w} height={h} viewBox="0 0 40 28" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
       <rect x="0.5" y="0.5" width="39" height="27" rx="2.5" fill="#F0EDE8" stroke="#D4D3CE" strokeWidth="0.8"/>
-      <polygon points="0,0 40,0 20,15" fill="#E8E4DD" opacity="0.8"/>
+      <polygon points="0,0 40,0 20,15" fill={TOKENS.colors.n150} opacity="0.8"/>
       <circle cx="20" cy="6.5" r="4" fill="#D4D3CE"/>
     </svg>
   )
@@ -91,7 +91,7 @@ export default function LegendButton() {
           width:          40,
           height:         40,
           borderRadius:   9999,
-          background:     '#FFFFFF',
+          background:     'var(--n-0)',
           border:         '1px solid var(--n-200)',
           boxShadow:      SH_SM,
           display:        'flex',
@@ -123,9 +123,9 @@ export default function LegendButton() {
               transformOrigin: 'bottom right',
               pointerEvents:   'none',
               whiteSpace:      'nowrap',
-              background:      '#FFFFFF',
+              background:      'var(--n-0)',
               border:          '1px solid var(--n-150)',
-              borderRadius:    10,
+              borderRadius:    'var(--r-md)',
               padding:         '12px 14px',
               boxShadow:       SH_MD,
               zIndex:          TOKENS.zIndex.zTooltip, // --z-tooltip: 300
@@ -149,7 +149,7 @@ export default function LegendButton() {
                   <span style={{
                     fontFamily: "'Inter', system-ui, sans-serif",
                     fontSize:   11,
-                    color:      '#5E5D56',
+                    color:      'var(--n-600)',
                     lineHeight: 1,
                   }}>
                     {label}

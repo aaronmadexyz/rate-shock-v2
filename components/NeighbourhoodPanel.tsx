@@ -105,7 +105,11 @@ function SparseBody({ stats, fsa, onCtaClick }: SparseBodyProps) {
         <p className={styles.sparseLabel}>{fsa.toUpperCase()}</p>
         <p className={styles.pioneerText}>
           No reports yet. Be the first to share yours{' '}
-          <button className={styles.inlineLink} onClick={onCtaClick}>→</button>
+          <button
+            className={styles.inlineLink}
+            onClick={onCtaClick}
+            aria-label={`Share your renewal in ${fsa.toUpperCase()}`}
+          >→</button>
         </p>
       </>
     )
@@ -139,14 +143,22 @@ function SparseBody({ stats, fsa, onCtaClick }: SparseBodyProps) {
             1 report in this area so far.
             <br />
             Be the second to share yours{' '}
-            <button className={styles.inlineLink} onClick={onCtaClick}>→</button>
+            <button
+              className={styles.inlineLink}
+              onClick={onCtaClick}
+              aria-label={`Share your renewal in ${stats.neighbourhood}`}
+            >→</button>
           </>
         ) : (
           <>
             {stats.totalCount} reports here.
             <br />
             Add yours to build the picture{' '}
-            <button className={styles.inlineLink} onClick={onCtaClick}>→</button>
+            <button
+              className={styles.inlineLink}
+              onClick={onCtaClick}
+              aria-label={`Share your renewal in ${stats.neighbourhood}`}
+            >→</button>
           </>
         )}
       </p>

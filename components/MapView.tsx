@@ -42,10 +42,10 @@ L.Icon.Default.mergeOptions({
 // UNCHANGED — do not modify anything in this section
 
 function sealColor(sentiment: number | null): string {
-  if (sentiment == null) return '#D49316'
-  if (sentiment <= 2) return '#3A9B55'
-  if (sentiment === 3) return '#D49316'
-  return '#D4503A'
+  if (sentiment == null) return TOKENS.colors.cau400
+  if (sentiment <= 2) return TOKENS.colors.pos400
+  if (sentiment === 3) return TOKENS.colors.cau400
+  return TOKENS.colors.neg400
 }
 
 function markerScale(pct: number | null): number {
@@ -151,14 +151,15 @@ function MapSetup({
 // ─── Tooltip helpers ──────────────────────────────────────────────────────────
 
 const SENTIMENT_COLORS: Record<number, string> = {
-  1: '#3A9B55', 2: '#93D1A2', 3: '#D49316', 4: '#F2A597', 5: '#D4503A',
+  1: TOKENS.colors.pos400, 2: TOKENS.colors.pos200, 3: TOKENS.colors.cau400,
+  4: TOKENS.colors.neg200, 5: TOKENS.colors.neg400,
 }
 
 function rateColor(sentiment: number | null): string {
   if (sentiment == null) return 'var(--cau-500)'
-  if (sentiment <= 2) return '#2A7D41'
+  if (sentiment <= 2) return TOKENS.colors.pos500
   if (sentiment === 3) return 'var(--cau-500)'
-  return '#B33C28'
+  return TOKENS.colors.neg500
 }
 
 // Sentiment face — exact filled-circle style from the submission form.
@@ -166,7 +167,7 @@ function rateColor(sentiment: number | null): string {
 function SentimentFace({ sentiment, size }: { sentiment: number | null; size: number }) {
   if (sentiment === 1) return (
     <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
-      <circle cx="17" cy="17" r="15" fill="#3A9B55"/>
+      <circle cx="17" cy="17" r="15" fill={TOKENS.colors.pos400}/>
       <circle cx="12" cy="14" r="2" fill="white"/>
       <circle cx="22" cy="14" r="2" fill="white"/>
       <path d="M10 21Q17 27 24 21" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
@@ -174,7 +175,7 @@ function SentimentFace({ sentiment, size }: { sentiment: number | null; size: nu
   )
   if (sentiment === 2) return (
     <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
-      <circle cx="17" cy="17" r="15" fill="#93D1A2"/>
+      <circle cx="17" cy="17" r="15" fill={TOKENS.colors.pos200}/>
       <circle cx="12" cy="14" r="2" fill="#1F6132"/>
       <circle cx="22" cy="14" r="2" fill="#1F6132"/>
       <path d="M12 21Q17 24.5 22 21" stroke="#1F6132" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
@@ -182,7 +183,7 @@ function SentimentFace({ sentiment, size }: { sentiment: number | null; size: nu
   )
   if (sentiment === 3) return (
     <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
-      <circle cx="17" cy="17" r="15" fill="#D49316"/>
+      <circle cx="17" cy="17" r="15" fill={TOKENS.colors.cau400}/>
       <circle cx="12" cy="14" r="2" fill="white"/>
       <circle cx="22" cy="14" r="2" fill="white"/>
       <path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
@@ -199,7 +200,7 @@ function SentimentFace({ sentiment, size }: { sentiment: number | null; size: nu
   // sentiment 5
   return (
     <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
-      <circle cx="17" cy="17" r="15" fill="#D4503A"/>
+      <circle cx="17" cy="17" r="15" fill={TOKENS.colors.neg400}/>
       <circle cx="12" cy="13" r="2" fill="white"/>
       <circle cx="22" cy="13" r="2" fill="white"/>
       <path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
@@ -354,7 +355,7 @@ function PanelContent({
         {/* Section 1 — Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ marginRight: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#1A1917', lineHeight: 1.2 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--n-900)', lineHeight: 1.2 }}>
               {displayLabel}
             </div>
             <div style={{ fontSize: 11, color: 'var(--n-400)', fontWeight: 400, marginTop: 2 }}>
@@ -371,7 +372,7 @@ function PanelContent({
 
         {/* Section 2 — Rate + context */}
         <div className={styles.divider} />
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
           <SentimentFace sentiment={sub.sentiment} size={32} />
           <div>
             <div style={{

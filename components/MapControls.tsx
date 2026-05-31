@@ -37,14 +37,14 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
   if (!result) {
     return (
       <div style={{
-        background:   '#FFFFFF',
+        background:   'var(--n-0)',
         border:       `1px solid var(--n-150)`,
         borderRadius: 'var(--r-md)',
         padding:      '10px 12px',
         boxShadow:    SH_SM,
         maxWidth:     280,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <ProfilesIcon />
           <span style={{
             fontFamily: "'Inter', system-ui, sans-serif",
@@ -78,14 +78,14 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
 
   return (
     <div style={{
-      background:   '#FFFFFF',
+      background:   'var(--n-0)',
       border:       `1px solid var(--n-150)`,
       borderRadius: 'var(--r-md)',
       padding:      '10px 12px',
       boxShadow:    SH_SM,
       maxWidth:     280,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <ProfilesIcon active />
         <span style={{
           fontFamily:    "'Inter', system-ui, sans-serif",
@@ -98,7 +98,7 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{
           fontFamily:         "'Inter', system-ui, sans-serif",
-          fontSize:           22, fontWeight: 600, color: '#1A1917',
+          fontSize:           22, fontWeight: 600, color: 'var(--n-900)',
           letterSpacing:      '-.02em',
           fontVariantNumeric: 'tabular-nums',
         }}>
@@ -354,7 +354,7 @@ function MapControls({
             color:           isActive ? 'var(--p-600)' : 'var(--n-800)',
             boxShadow:       SH_SM,
           }}
-          whileHover={isActive ? {} : { backgroundColor: '#FAFAF8', borderColor: '#B8B7B1' }}
+          whileHover={isActive ? {} : { backgroundColor: 'var(--n-25)', borderColor: 'var(--n-300)' }}
           whileTap={{ scale: 0.97, transition: tapTransition }}
         >
           <FilterIcon />
@@ -367,9 +367,9 @@ function MapControls({
               fontWeight:      500,
               lineHeight:      1.4,
               backgroundColor: 'var(--p-600)',
-              color:           '#FFFFFF',
+              color:           'var(--n-0)',
               padding:         '2px 6px',
-              borderRadius:    999,
+              borderRadius:    9999,
             }}>
               {activeCount}
             </span>
@@ -405,7 +405,7 @@ function MapControls({
             letterSpacing:   '-0.01em',
             lineHeight:      1,
           }}
-          whileHover={likeMeMode ? {} : { backgroundColor: '#FAFAF8', borderColor: '#B8B7B1' }}
+          whileHover={likeMeMode ? {} : { backgroundColor: 'var(--n-25)', borderColor: 'var(--n-300)' }}
           whileTap={{ scale: 0.97, transition: tapTransition }}
         >
           <ProfilesIcon active={likeMeMode} />

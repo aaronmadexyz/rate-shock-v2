@@ -1,3 +1,5 @@
+import { TOKENS } from './tokens'
+
 export type TimeOfDayState = 'morning' | 'commute-am' |
   'day' | 'commute-pm' | 'evening' | 'night'
 
@@ -17,26 +19,26 @@ export function getTimeOfDay(): TimeOfDayState {
 export const timeOfDayTokens: Record<TimeOfDayState, Record<string, string>> = {
   'morning': {
     '--tod-bg':  '#F2EFE8', // +3% warm offset from n-50 — intentional
-    '--tod-cta': '#3A3F8F', // p-600
+    '--tod-cta': TOKENS.colors.p600,
   },
   'commute-am': {
     '--tod-bg':  '#F2EFE8', // +3% warm offset from n-50 — intentional
-    '--tod-cta': '#3A3F8F', // p-600
+    '--tod-cta': TOKENS.colors.p600,
   },
   'day': {
     '--tod-bg':  '#F5F4F1', // n-50 standard
-    '--tod-cta': '#3A3F8F', // p-600
+    '--tod-cta': TOKENS.colors.p600,
   },
   'commute-pm': {
     '--tod-bg':  '#F0EDE6', // +4% warm offset from n-50 — intentional
-    '--tod-cta': '#3A3F8F', // p-600
+    '--tod-cta': TOKENS.colors.p600,
   },
   'evening': {
     '--tod-bg':  '#EDEAE3', // +6% warm offset from n-50 — intentional
-    '--tod-cta': '#3A3F8F', // p-600
+    '--tod-cta': TOKENS.colors.p600,
   },
   'night': {
     '--tod-bg':  '#EDEAE3', // +6% warm offset from n-50 — intentional
-    '--tod-cta': '#3A3F8F', // p-600
+    '--tod-cta': TOKENS.colors.p600,
   },
 }
