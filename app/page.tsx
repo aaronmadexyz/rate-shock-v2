@@ -12,7 +12,6 @@ import Nav from '@/components/Nav'
 import MapControls from '@/components/MapControls'
 import { countFilters } from '@/components/FilterSheet'
 import type { FilterState } from '@/lib/types'
-import ShareRenewalModal from '@/components/ShareRenewalModal'
 import FeatureRequestButton from '@/components/FeatureRequestButton'
 import LegendButton from '@/components/LegendButton'
 import { MapErrorBoundary } from '@/components/MapErrorBoundary'
@@ -22,7 +21,6 @@ import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
 import { safeGetItem, safeSetItem } from '@/lib/storage'
 import { TOKENS } from '@/lib/tokens'
-import OnboardingOverlay from '@/components/OnboardingOverlay'
 
 // Leaflet requires browser APIs — skip SSR entirely
 const MapView = lazyLoad(() => import('@/components/MapView'), {
@@ -31,6 +29,18 @@ const MapView = lazyLoad(() => import('@/components/MapView'), {
     <div style={{ position: 'fixed', inset: 0, background: 'var(--n-50)', zIndex: 0 /* z-map */ }} />
   ),
 })
+
+// Modal is client-only (animations, localStorage, Supabase) — only shown on CTA tap
+const ShareRenewalModal = lazyLoad(
+  () => import('@/components/ShareRenewalModal'),
+  { ssr: false, loading: () => null }
+)
+
+// Overlay shown once on first visit — zero cost when sessionStorage flag is set
+const OnboardingOverlay = lazyLoad(
+  () => import('@/components/OnboardingOverlay'),
+  { ssr: false, loading: () => null }
+)
 
 const DEFAULT_FILTERS: FilterState = {
   insuranceType: null,

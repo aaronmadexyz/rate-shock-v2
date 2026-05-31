@@ -1,15 +1,21 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { springs } from '@/lib/springs'
 import { TOKENS } from '@/lib/tokens'
 import type { UserProfile } from '@/lib/types'
 import type { FilterState } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
-import FilterSheet from '@/components/FilterSheet'
 import { ComponentErrorBoundary } from '@/components/ComponentErrorBoundary'
 import styles from '@/styles/MapControls.module.css'
+
+// Sheet has its own slide-up entrance — only loaded when Filter is tapped
+const FilterSheet = dynamic(
+  () => import('@/components/FilterSheet'),
+  { ssr: false, loading: () => null }
+)
 
 const SH_SM = TOKENS.shadows.shadowSm
 
