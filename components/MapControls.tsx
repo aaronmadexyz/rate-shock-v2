@@ -8,6 +8,7 @@ import type { UserProfile } from '@/lib/types'
 import type { FilterState } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
 import FilterSheet from '@/components/FilterSheet'
+import { ComponentErrorBoundary } from '@/components/ComponentErrorBoundary'
 import styles from '@/styles/MapControls.module.css'
 
 const SH_SM = TOKENS.shadows.shadowSm
@@ -260,12 +261,14 @@ function MapControls({
 
       {/* Filter pill + floating card + nudge — wrapped in position:relative */}
       <div className={styles.filterWrapper}>
-        <FilterSheet
-          isOpen={isFilterOpen}
-          onClose={onFilterClose}
-          onChange={onFilterChange}
-          matchCount={matchCount}
-        />
+        <ComponentErrorBoundary name="FilterSheet">
+          <FilterSheet
+            isOpen={isFilterOpen}
+            onClose={onFilterClose}
+            onChange={onFilterChange}
+            matchCount={matchCount}
+          />
+        </ComponentErrorBoundary>
 
         {/* First-visit attention nudge tooltip */}
         <AnimatePresence>

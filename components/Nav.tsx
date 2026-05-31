@@ -26,6 +26,15 @@ const NAV_EVENT  = 'ratemap:nav-state'
 
 const ONTARIO_PREFIXES = new Set(['K', 'L', 'M', 'N', 'P'])
 
+const VALID_STATES: SubmissionState[] = ['new', 'unverified', 'verified']
+
+function parseSubmissionState(raw: string | null): SubmissionState {
+  if (raw !== null && VALID_STATES.includes(raw as SubmissionState)) {
+    return raw as SubmissionState
+  }
+  return 'new'
+}
+
 // ─── Exported API ─────────────────────────────────────────────────────────────
 
 export function setNavState(state: SubmissionState | string): void {
@@ -164,8 +173,7 @@ export default function Nav({
 
   // ── Mount ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const stored = safeGetItem(LS_KEY) as SubmissionState | null
-    if (stored === 'new' || stored === 'unverified' || stored === 'verified') setState(stored)
+    setState(parseSubmissionState(safeGetItem(LS_KEY)))
 
     if (pioneeredProp) {
       setIsPioneer(true)
@@ -184,7 +192,7 @@ export default function Nav({
     const storedFsa   = safeGetItem('ratemap_last_fsa')
     const lastVisit   = safeGetItem('rateshock_last_visit')
     safeSetItem('rateshock_last_visit', Date.now().toString())
-    const currentSt   = (safeGetItem(LS_KEY) ?? 'new') as SubmissionState
+    const currentSt   = parseSubmissionState(safeGetItem(LS_KEY))
     if (storedFsa && lastVisit && (currentSt === 'unverified' || currentSt === 'verified')) {
       supabase
         .from('submissions')

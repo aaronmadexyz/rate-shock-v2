@@ -16,6 +16,7 @@ import ShareRenewalModal from '@/components/ShareRenewalModal'
 import FeatureRequestButton from '@/components/FeatureRequestButton'
 import LegendButton from '@/components/LegendButton'
 import { MapErrorBoundary } from '@/components/MapErrorBoundary'
+import { ComponentErrorBoundary } from '@/components/ComponentErrorBoundary'
 import mcStyles from '@/styles/MapControls.module.css'
 import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
@@ -36,6 +37,16 @@ const DEFAULT_FILTERS: FilterState = {
   provider:      null,
   rMin:          -30,
   rMax:          50,
+}
+
+function parseUserProfile(raw: string): UserProfile | null {
+  try {
+    const parsed = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null || typeof parsed.fsa !== 'string') return null
+    return parsed as UserProfile
+  } catch {
+    return null
+  }
 }
 
 export default function Page() {
@@ -74,12 +85,13 @@ export default function Page() {
   useEffect(() => {
     const stored = safeGetItem('ratemap_user_profile')
     if (stored) {
-      try {
-        setUserProfile(JSON.parse(stored) as UserProfile)
+      const profile = parseUserProfile(stored)
+      if (profile) {
+        setUserProfile(profile)
         setHasSubmission(true)
         const savedMode = safeGetItem('rateshock_like_me_mode')
         if (savedMode === 'true') setLikeMeMode(true)
-      } catch { /* ignore */ }
+      }
     } else {
       setLikeMeMode(false)
     }
@@ -130,10 +142,8 @@ export default function Page() {
     // ShareRenewalModal writes ratemap_user_profile before calling onSubmitted
     const stored = safeGetItem('ratemap_user_profile')
     if (stored) {
-      try {
-        setUserProfile(JSON.parse(stored) as UserProfile)
-        setHasSubmission(true)
-      } catch { /* ignore */ }
+      const profile = parseUserProfile(stored)
+      if (profile) { setUserProfile(profile); setHasSubmission(true) }
     }
   }, [])
 
@@ -172,11 +182,13 @@ export default function Page() {
       </MapErrorBoundary>
 
       {/* Two-tier nav: data strip (z:101) + main bar (z:100) */}
-      <Nav
-        onCtaClick={() => setModalOpen(true)}
-        mapRef={leafletMapRef}
-        onOpenFeatureRequest={() => setFrOpen(true)}
-      />
+      <ComponentErrorBoundary name="Nav">
+        <Nav
+          onCtaClick={() => setModalOpen(true)}
+          mapRef={leafletMapRef}
+          onOpenFeatureRequest={() => setFrOpen(true)}
+        />
+      </ComponentErrorBoundary>
 
       {/* Bottom control bar */}
       <div className={mcStyles.bottomBar}>
@@ -204,14 +216,16 @@ export default function Page() {
       <FeatureRequestButton isOpen={frOpen} onClose={() => setFrOpen(false)} />
 
       {/* Renewal modal */}
-      <ShareRenewalModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onVerify={handleVerify}
-        onSubmitted={handleSubmitted}
-        onZoomToPost={handleZoomToPost}
-        onEnableLikeMe={() => setLikeMeMode(true)}
-      />
+      <ComponentErrorBoundary name="ShareRenewalModal">
+        <ShareRenewalModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onVerify={handleVerify}
+          onSubmitted={handleSubmitted}
+          onZoomToPost={handleZoomToPost}
+          onEnableLikeMe={() => setLikeMeMode(true)}
+        />
+      </ComponentErrorBoundary>
 
       {/* First-visit hero hint */}
       <AnimatePresence>

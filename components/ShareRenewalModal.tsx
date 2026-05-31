@@ -44,6 +44,21 @@ const PROVIDERS = [
 
 const ONTARIO_PREFIXES = new Set(['K', 'L', 'M', 'N', 'P'])
 
+function getSubmissionId(): string | null {
+  try {
+    const raw = localStorage.getItem('rateshock_submission_id')
+    if (!raw) return null
+    const { id, expires } = JSON.parse(raw)
+    if (Date.now() > expires) {
+      localStorage.removeItem('rateshock_submission_id')
+      return null
+    }
+    return typeof id === 'string' ? id : null
+  } catch {
+    return null
+  }
+}
+
 function validatePayload(payload: {
   fsa: string
   insurance_type: string
@@ -579,7 +594,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     try {
       const pendingMode   = localStorage.getItem('rateshock_submission_mode')
       const pendingDollar = localStorage.getItem('rateshock_dollar_amount')
-      const pendingId     = localStorage.getItem('rateshock_submission_id')
+      const pendingId     = getSubmissionId()
       if (pendingMode === 'dol' && pendingDollar && pendingId) {
         setSubmissionId(pendingId)
         setDollarAmount(parseInt(pendingDollar, 10))
@@ -798,11 +813,20 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
           supabase.from('submissions').select('rate_change_pct').eq('fsa', fsaUpper).not('rate_change_pct', 'is', null).limit(100),
           supabase.from('submissions').select('rate_change_pct').not('rate_change_pct', 'is', null).limit(500),
         ])
-        const areaPcts = (areaRes.data ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
-        const ontPcts  = (ontRes.data  ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
-        setAreaMed(medianOf(areaPcts))
-        setAreaMedCount(areaPcts.length)
-        setOntMed(medianOf(ontPcts))
+        if (areaRes.error) {
+          console.error('[SRM] area fetch error:', areaRes.error.message)
+          setAreaMed(null); setAreaMedCount(0)
+        } else {
+          const areaPcts = (areaRes.data ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
+          setAreaMed(medianOf(areaPcts)); setAreaMedCount(areaPcts.length)
+        }
+        if (ontRes.error) {
+          console.error('[SRM] ontario fetch error:', ontRes.error.message)
+          setOntMed(null)
+        } else {
+          const ontPcts = (ontRes.data ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
+          setOntMed(medianOf(ontPcts))
+        }
       } catch { /* non-critical */ }
     })()
     // Auto-dismiss card after 2000ms
@@ -945,7 +969,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
         if (rateDollar !== null) {
           setDollarAmount(rateDollar)
           try {
-            localStorage.setItem('rateshock_submission_id', String(inserted.id))
+            localStorage.setItem('rateshock_submission_id', JSON.stringify({
+              id: String(inserted.id),
+              expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+            }))
             localStorage.setItem('rateshock_submission_mode', 'dol')
             localStorage.setItem('rateshock_dollar_amount', String(rateDollar))
           } catch { /* ignore */ }
@@ -962,11 +989,20 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
           supabase.from('submissions').select('rate_change_pct').eq('fsa', fsaUpper).not('rate_change_pct', 'is', null).limit(100),
           supabase.from('submissions').select('rate_change_pct').not('rate_change_pct', 'is', null).limit(500),
         ])
-        const areaPcts = (areaRes.data ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
-        const ontPcts  = (ontRes.data  ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
-        setAreaMed(medianOf(areaPcts))
-        setAreaMedCount(areaPcts.length)
-        setOntMed(medianOf(ontPcts))
+        if (areaRes.error) {
+          console.error('[SRM] area fetch error:', areaRes.error.message)
+          setAreaMed(null); setAreaMedCount(0)
+        } else {
+          const areaPcts = (areaRes.data ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
+          setAreaMed(medianOf(areaPcts)); setAreaMedCount(areaPcts.length)
+        }
+        if (ontRes.error) {
+          console.error('[SRM] ontario fetch error:', ontRes.error.message)
+          setOntMed(null)
+        } else {
+          const ontPcts = (ontRes.data ?? []).map((r: { rate_change_pct: number | null }) => r.rate_change_pct).filter((v): v is number => v !== null)
+          setOntMed(medianOf(ontPcts))
+        }
       } catch (err) {
         console.error('[ShareRenewalModal] Comparison fetch error:', err)
       } finally {
