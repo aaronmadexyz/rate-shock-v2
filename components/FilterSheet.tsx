@@ -381,7 +381,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
       {/* ─ Insurance type ─────────────────────────────────────────────────── */}
       <span style={{
         ...sectionLabel,
-        color: filters.insuranceType === null ? 'var(--n-300)' : 'var(--n-400)',
+        color: filters.insuranceType === null ? 'var(--n-400)' : 'var(--n-400)',
       }}>
         {filters.insuranceType === null
           ? 'TYPE'
@@ -522,7 +522,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
         {dist.some(v => v > 0) && (() => {
           const distMax = Math.max(...dist, 1)
           return (
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 20, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 0, height: 20, marginBottom: 4 }}>
               {dist.map((v, i) => {
                 const pct     = i - 30 // -30 to +50
                 const inRange = pct >= filters.rMin && pct <= filters.rMax
@@ -550,10 +550,10 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
 
         {/* Boundary labels — range markers, deliberately quiet */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--n-300)' }}>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--n-400)' }}>
             {filters.rMin < 0 ? `−${Math.abs(filters.rMin)}%` : `${filters.rMin}%`}
           </span>
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--n-300)' }}>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--n-400)' }}>
             {filters.rMax >= 50 ? '50%+' : `${filters.rMax}%`}
           </span>
         </div>
@@ -737,7 +737,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
                 bottom:        0, left: 0, right: 0,
                 zIndex:        450, // z-overlay
                 background:    'var(--n-0)',
-                borderRadius:  '20px 20px 0 0',
+                borderRadius:  'var(--r-xl) var(--r-xl) 0 0',
                 boxShadow:     '0 -4px 32px rgba(26,25,23,.1), 0 -1px 4px rgba(26,25,23,.05)',
                 maxHeight:     '72vh',
                 display:       'flex',

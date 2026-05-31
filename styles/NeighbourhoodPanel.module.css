@@ -162,6 +162,12 @@
   color: var(--n-500); /* #706F67 — 5.05:1 on n-25 ✓ AA (TSX inline style overrides for real values) */
 }
 
+/* Applied when rate_change_pct is null — "—" no-data dash.
+   n-500 on n-25: 5.05:1 ✓ WCAG AA. Replaces the previous var(--n-300) inline style. */
+.typeAvgEmpty {
+  color: var(--n-500); /* #706F67 — 5.05:1 on n-25 ✓ AA */
+}
+
 .typeCount {
   font-size: 11px;
   color: var(--n-400);

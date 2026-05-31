@@ -65,13 +65,15 @@ function buildIcon(fill: string, seal: string, scale: number, duration = 0, dela
   const svgAria = ariaLabel
     ? `role="img" aria-label="${ariaLabel}"`
     : `aria-hidden="true"`
+  const trackColor = TOKENS.colors.n200 // #D4D3CE — envelope border / track
+  const paperColor = TOKENS.colors.n150 // #E2E1DD — envelope flap fill
   const html =
     `<div class="env-hover-wrap" style="display:inline-block;transform-origin:bottom center">` +
     `<div style="width:${W}px;height:${H}px;transform:scale(${scale.toFixed(3)});transform-origin:bottom center;overflow:visible">` +
     `<div class="envelope-marker" style="will-change:transform;${bobStyle}">` +
     `<svg width="${W}" height="${H}" viewBox="0 0 40 28" fill="none" ${svgAria} style="display:block;overflow:visible">` +
-    `<rect x="0.5" y="0.5" width="39" height="27" rx="2.5" fill="${fill}" stroke="#D4D3CE" stroke-width="0.8"/>` +
-    `<polygon points="0,0 40,0 20,15" fill="#E8E4DD" opacity="0.8"/>` +
+    `<rect x="0.5" y="0.5" width="39" height="27" rx="2.5" fill="${fill}" stroke="${trackColor}" stroke-width="0.8"/>` +
+    `<polygon points="0,0 40,0 20,15" fill="${paperColor}" opacity="0.8"/>` +
     `<circle cx="20" cy="6.5" r="4" fill="${seal}"/>` +
     `</svg></div></div></div>`
   return L.divIcon({ html, className: '', iconSize: [W * scale, H * scale], iconAnchor: [(W * scale) / 2, H * scale] })
@@ -176,9 +178,9 @@ function SentimentFace({ sentiment, size }: { sentiment: number | null; size: nu
   if (sentiment === 2) return (
     <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
       <circle cx="17" cy="17" r="15" fill={TOKENS.colors.pos200}/>
-      <circle cx="12" cy="14" r="2" fill="#1F6132"/>
-      <circle cx="22" cy="14" r="2" fill="#1F6132"/>
-      <path d="M12 21Q17 24.5 22 21" stroke="#1F6132" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
+      <circle cx="12" cy="14" r="2" fill={TOKENS.colors.pos600}/>
+      <circle cx="22" cy="14" r="2" fill={TOKENS.colors.pos600}/>
+      <path d="M12 21Q17 24.5 22 21" stroke={TOKENS.colors.pos600} strokeWidth="2.2" strokeLinecap="round" fill="none"/>
     </svg>
   )
   if (sentiment === 3) return (

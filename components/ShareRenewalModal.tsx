@@ -15,7 +15,20 @@ import type { Submission } from '@/lib/types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const SC = ['', '#3A9B55', '#93D1A2', '#D49316', '#F2A597', '#D4503A']
+/* ENVELOPE PAPER COLOURS
+   Visual-only SVG fills for the paper envelope animation. Intentionally
+   outside the main token palette — warm paper tones that complement n-150.
+   Not used for text or UI components. WCAG 1.1.1 decorative exemption applies.
+   Values: #E8E4DD #ECE9E3 #DED9D3 #CBC8C1 #C8C5BE                           */
+
+const SC = [
+  '',
+  TOKENS.colors.pos400, // sentiment 1 — very fair (green)
+  TOKENS.colors.pos200, // sentiment 2 — fair
+  TOKENS.colors.cau400, // sentiment 3 — neutral
+  TOKENS.colors.neg200, // sentiment 4 — unfair
+  TOKENS.colors.neg400, // sentiment 5 — very unfair (red)
+]
 const SENT_LABELS = ['', 'Very fair', 'Fair', 'Neutral', 'Unfair', 'Very unfair']
 const DRAFT_KEY       = 'rateshock_form_draft'
 const DRAFT_SHOWN_KEY = 'rateshock_draft_shown'
@@ -71,7 +84,7 @@ function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function faceSvgHtml(s: number): string {
-  const c = ['', '#3A9B55', '#2A7D41', '#845A0C', '#B33C28', '#8C2E1E'][s]
+  const c = ['', TOKENS.colors.pos400, TOKENS.colors.pos500, TOKENS.colors.cau600, TOKENS.colors.neg500, TOKENS.colors.neg600][s]
   const m = ['', 'M9 19Q17 26 25 19', 'M11 20Q17 24 23 20', 'M11 22L23 22', 'M11 24Q17 20 23 24', 'M9 25Q17 19 25 25'][s]
   return `<svg width="52" height="52" viewBox="0 0 34 34" aria-hidden="true"><circle cx="12" cy="13" r="2.1" fill="${c}"/><circle cx="22" cy="13" r="2.1" fill="${c}"/><path d="${m}" stroke="${c}" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>`
 }
@@ -221,10 +234,10 @@ function useTipPortal() {
         c.style.transform = 'translateX(-50%)'
         if (flip) {
           c.style.top = '-10px'; c.style.bottom = 'auto'
-          c.style.borderTopColor = 'transparent'; c.style.borderBottomColor = '#1A1917'
+          c.style.borderTopColor = 'transparent'; c.style.borderBottomColor = TOKENS.colors.n900
         } else {
           c.style.top = 'auto'; c.style.bottom = '-10px'
-          c.style.borderBottomColor = 'transparent'; c.style.borderTopColor = '#1A1917'
+          c.style.borderBottomColor = 'transparent'; c.style.borderTopColor = TOKENS.colors.n900
         }
       }
       el.classList.remove('measuring')
@@ -264,7 +277,7 @@ const LABEL_STYLE: React.CSSProperties = {
 }
 
 const SB_STYLE: React.CSSProperties = {
-  width: 40, height: 40, border: 'none', background: '#FFFFFF',
+  width: 40, height: 40, border: 'none', background: TOKENS.colors.n0,
   cursor: 'pointer', fontSize: 17, color: 'var(--n-400)',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   transition: 'background .12s', fontFamily: "'Inter', system-ui, sans-serif",
@@ -354,8 +367,8 @@ function Stepper({
             key={s.k}
             style={{
               minWidth: 40, textAlign: 'center', fontSize: 14, fontWeight: 500,
-              color: '#1A1917', lineHeight: '40px',
-              background: '#FFFFFF', display: 'block',
+              color: TOKENS.colors.n900, lineHeight: '40px',
+              background: TOKENS.colors.n0, display: 'block',
               animation: anim,
             }}
           >{displayVal}</span>
@@ -403,7 +416,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const [patchLoading, setPatchLoading]   = useState(false)
   const [patchError, setPatchError]       = useState('')
   const patchInputRef = useRef<HTMLInputElement>(null)
-  const [trackBg, setTrackBg]     = useState('linear-gradient(to right,#1A1917 24%,#D4D3CE 24%)')
+  const [trackBg, setTrackBg]     = useState(`linear-gradient(to right,${TOKENS.colors.n900} 24%,${TOKENS.colors.n200} 24%)`)
   const [sent, setSent]           = useState(0)
   const [sentErr, setSentErr]     = useState(false)
   const [note, setNote]           = useState('')
@@ -615,7 +628,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   // ── update track background ─────────────────────────────────────────────────
   const updateTrack = useCallback((v: number, mn: number, mx: number) => {
     const p = Math.round(((v - mn) / (mx - mn)) * 100)
-    setTrackBg(`linear-gradient(to right,#1A1917 ${p}%,#D4D3CE ${p}%)`)
+    setTrackBg(`linear-gradient(to right,${TOKENS.colors.n900} ${p}%,${TOKENS.colors.n200} ${p}%)`)
   }, [])
 
   // ── reset ───────────────────────────────────────────────────────────────────
@@ -645,13 +658,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     if (flapEdgeRef.current)   flapEdgeRef.current.setAttribute('points', '0,0 90,68 180,0')
     if (envFlapRef.current)  { envFlapRef.current.style.filter = 'none'; envFlapRef.current.style.zIndex = '4' }
     if (sealGroupRef.current)  sealGroupRef.current.style.opacity = '1'
-    if (sealCircleRef.current) sealCircleRef.current.setAttribute('fill', '#D4D3CE')
+    if (sealCircleRef.current) sealCircleRef.current.setAttribute('fill', TOKENS.colors.n200)
     if (envLetterRef.current) {
       envLetterRef.current.className = ''
-      envLetterRef.current.style.cssText = 'position:absolute;left:14px;right:14px;top:14px;height:140px;background:#FFFFFF;border:1px solid var(--n-150);border-radius:4px;box-shadow:0 2px 10px rgba(26,25,23,.1);z-index:2;opacity:0;transform:translateY(0px)'
+      envLetterRef.current.style.cssText = `position:absolute;left:14px;right:14px;top:14px;height:140px;background:${TOKENS.colors.n0};border:1px solid var(--n-150);border-radius:4px;box-shadow:0 2px 10px rgba(26,25,23,.1);z-index:2;opacity:0;transform:translateY(0px)`
     }
     if (letterFaceRef.current) { letterFaceRef.current.innerHTML = ''; letterFaceRef.current.style.opacity = '0' }
-    const ripStyle = 'position:absolute;left:14px;right:14px;top:14px;height:140px;background:#FFFFFF;border:1px solid var(--n-150);border-radius:4px;z-index:6;opacity:0;animation:none'
+    const ripStyle = `position:absolute;left:14px;right:14px;top:14px;height:140px;background:${TOKENS.colors.n0};border:1px solid var(--n-150);border-radius:4px;z-index:6;opacity:0;animation:none`
     if (ripLRef.current)    { ripLRef.current.style.cssText = ripStyle; ripLRef.current.innerHTML = '' }
     if (ripRRef.current)    { ripRRef.current.style.cssText = ripStyle; ripRRef.current.innerHTML = '' }
     if (ripCrackRef.current) ripCrackRef.current.style.cssText = 'position:absolute;left:50%;width:2px;top:14px;height:140px;margin-left:-1px;background:linear-gradient(to bottom,transparent,var(--neg-200) 15%,var(--neg-200) 85%,transparent);z-index:7;opacity:0;transform:scaleY(0);transform-origin:top'
@@ -1093,8 +1106,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
   const doRip = useCallback((s: number) => {
     const RISE_PX = 108
-    const inner = `<div style="padding:14px 13px 0"><div style="height:2px;background:#EEEDEA;border-radius:1px;margin-bottom:10px"></div><div style="height:2px;background:#EEEDEA;border-radius:1px;margin-bottom:10px;width:70%"></div><div style="height:2px;background:#EEEDEA;border-radius:1px;margin-bottom:10px;width:50%"></div><div style="height:2px;background:#EEEDEA;border-radius:1px;margin-bottom:10px"></div><div style="height:2px;background:#EEEDEA;border-radius:1px;width:70%"></div></div><div style="display:flex;align-items:center;justify-content:center;padding-top:10px">${faceSvgHtml(s)}</div>`
-    const shared = `position:absolute;left:14px;right:14px;height:140px;background:#FFFFFF;border:1px solid var(--n-150);border-radius:4px;z-index:6;top:calc(14px - ${RISE_PX}px);`
+    const inner = `<div style="padding:14px 13px 0"><div style="height:2px;background:${TOKENS.colors.n100};border-radius:1px;margin-bottom:10px"></div><div style="height:2px;background:${TOKENS.colors.n100};border-radius:1px;margin-bottom:10px;width:70%"></div><div style="height:2px;background:${TOKENS.colors.n100};border-radius:1px;margin-bottom:10px;width:50%"></div><div style="height:2px;background:${TOKENS.colors.n100};border-radius:1px;margin-bottom:10px"></div><div style="height:2px;background:${TOKENS.colors.n100};border-radius:1px;width:70%"></div></div><div style="display:flex;align-items:center;justify-content:center;padding-top:10px">${faceSvgHtml(s)}</div>`
+    const shared = `position:absolute;left:14px;right:14px;height:140px;background:${TOKENS.colors.n0};border:1px solid var(--n-150);border-radius:4px;z-index:6;top:calc(14px - ${RISE_PX}px);`
 
     if (ripLRef.current)  { ripLRef.current.innerHTML  = inner; ripLRef.current.style.cssText  = shared + 'clip-path:inset(0 50% 0 0 round 4px 0 0 4px);opacity:1' }
     if (ripRRef.current)  { ripRRef.current.innerHTML  = inner; ripRRef.current.style.cssText  = shared + 'clip-path:inset(0 0 0 50% round 0 4px 4px 0);opacity:1' }
@@ -1293,7 +1306,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
             key="srm-modal"
             role="dialog"
             aria-modal="true"
-            aria-label={stepTitle || 'Submitting renewal'}
+            aria-labelledby="srm-title"
             className={isMobile ? 'modal-mobile' : undefined}
             ref={modalRef}
             onKeyDown={handleKeyDown}
@@ -1305,7 +1318,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               top:          'auto',
               width:        '100%',
               margin:       0,
-              background:   '#FFFFFF',
+              background:   TOKENS.colors.n0,
               borderRadius: 'var(--r-xl) var(--r-xl) 0 0',
               border:       '1px solid var(--n-150)',
               boxShadow:    'var(--sh-lg)',
@@ -1319,7 +1332,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
               left:         '50%',
               width:        'calc(100vw - 48px)',
               maxWidth:     468,
-              background:   '#FFFFFF',
+              background:   TOKENS.colors.n0,
               borderRadius: 'var(--r-xl)',
               border:       '1px solid var(--n-150)',
               boxShadow:    'var(--sh-lg)',
@@ -1344,30 +1357,30 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
             {isMobile && (
               <div style={{
                 width: 36, height: 4, borderRadius: 2,
-                background: '#D4D3CE',
+                background: TOKENS.colors.n200,
                 margin: '12px auto 0', display: 'block',
               }} />
             )}
 
             {/* ── Header ── */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 22px 0', flexShrink: 0 }}>
-              <span style={{ fontSize: 15, fontWeight: 500, color: '#1A1917' }}>{stepTitle}</span>
+              <span id="srm-title" style={{ fontSize: 15, fontWeight: 500, color: TOKENS.colors.n900 }}>{stepTitle}</span>
               <button
                 type="button"
                 onClick={handleClose}
                 className="srm-close-btn"
                 style={{
                   width: 26, height: 26, borderRadius: '50%',
-                  border: '1px solid var(--n-100)', background: '#FFFFFF',
+                  border: '1px solid var(--n-100)', background: TOKENS.colors.n0,
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'background .15s', flexShrink: 0, padding: 0,
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#F5F4F1')}
-                onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}
+                onMouseEnter={e => (e.currentTarget.style.background = TOKENS.colors.n50)}
+                onMouseLeave={e => (e.currentTarget.style.background = TOKENS.colors.n0)}
                 aria-label="Close modal"
               >
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-                  <path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke="#767670" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke={TOKENS.colors.n400} strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </button>
             </div>
@@ -1390,7 +1403,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     style={{
                       width: step === n ? 18 : 5, height: 5,
                       borderRadius: step === n ? 3 : '50%',
-                      background: step === n ? '#1A1917' : '#D4D3CE',
+                      background: step === n ? TOKENS.colors.n900 : TOKENS.colors.n200,
                       transition: 'all .35s cubic-bezier(.16,1,.3,1)',
                     }}
                   />
@@ -1427,7 +1440,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     {showRestoreNotice && (
                       <div style={{
                         display: 'flex', alignItems: 'center', gap: 6,
-                        background: '#EEEFFA', borderRadius: 'var(--r-sm)',
+                        background: TOKENS.colors.p50, borderRadius: 'var(--r-sm)',
                         padding: '8px 12px', marginBottom: 12,
                         fontSize: 12, color: 'var(--p-500)',
                       }}>
@@ -1465,13 +1478,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           fontFamily: "'IBM Plex Mono', monospace",
                           fontSize: 22, fontWeight: 500,
                           width: '100%', padding: '12px 16px',
-                          border: fsaError ? '1.5px solid #D4503A' : '1.5px solid var(--n-100)',
-                          borderRadius: 'var(--r-lg)', background: '#FFFFFF', color: '#1A1917',
+                          border: fsaError ? `1.5px solid ${TOKENS.colors.neg400}` : '1.5px solid var(--n-100)',
+                          borderRadius: 'var(--r-lg)', background: TOKENS.colors.n0, color: TOKENS.colors.n900,
                           outline: 'none', letterSpacing: '.14em', textTransform: 'uppercase',
                           transition: 'border-color .15s, box-shadow .15s', display: 'block',
                         }}
                         onFocus={e => { e.currentTarget.style.borderColor = 'var(--p-400)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99,106,197,.12)' }}
-                        onBlur={e => { e.currentTarget.style.borderColor = fsaError ? '#D4503A' : 'var(--n-100)'; e.currentTarget.style.boxShadow = 'none' }}
+                        onBlur={e => { e.currentTarget.style.borderColor = fsaError ? TOKENS.colors.neg400 : 'var(--n-100)'; e.currentTarget.style.boxShadow = 'none' }}
                       />
                       <div style={{ marginTop: 4, marginBottom: 0, minHeight: 32 }}>
                         {fsaHint && !fsaError && (
@@ -1490,7 +1503,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         )}
                       </div>
                       {fsaError && (
-                        <p id="fsaError" role="alert" aria-live="assertive" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>
+                        <p id="fsaError" role="alert" aria-live="assertive" style={{ fontSize: 12, color: 'var(--neg-500)', marginTop: 4 }}>
                           Please enter your 3-character FSA to continue
                         </p>
                       )}
@@ -1504,9 +1517,9 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         borderRadius: 'var(--r-md)',
                       }}>
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }}>
-                          <circle cx="6" cy="6" r="5" stroke="#B8B7B1" strokeWidth="1"/>
-                          <path d="M6 5.5v3" stroke="#B8B7B1" strokeWidth="1.2" strokeLinecap="round"/>
-                          <circle cx="6" cy="3.75" r=".6" fill="#B8B7B1"/>
+                          <circle cx="6" cy="6" r="5" stroke={TOKENS.colors.n300} strokeWidth="1"/>
+                          <path d="M6 5.5v3" stroke={TOKENS.colors.n300} strokeWidth="1.2" strokeLinecap="round"/>
+                          <circle cx="6" cy="3.75" r=".6" fill={TOKENS.colors.n300}/>
                         </svg>
                         Only your 3-character area code is stored. Your exact address is never collected.
                       </p>
@@ -1524,11 +1537,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             onClick={() => setInsType(t)}
                             style={{
                               flex: 1, padding: '12px 8px', borderRadius: 'var(--r-md)', fontSize: 13, fontWeight: 500,
-                              border: `1.5px solid ${insType === t ? '#1A1917' : 'var(--n-100)'}`,
-                              background: insType === t ? '#1A1917' : '#FFFFFF',
-                              color: insType === t ? '#FFFFFF' : 'var(--n-500)',
+                              border: `1.5px solid ${insType === t ? TOKENS.colors.n900 : 'var(--n-100)'}`,
+                              background: insType === t ? TOKENS.colors.n900 : TOKENS.colors.n0,
+                              color: insType === t ? TOKENS.colors.n0 : 'var(--n-500)',
                               cursor: 'pointer', transition: 'all .2s cubic-bezier(.16,1,.3,1)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                               fontFamily: "'Inter', system-ui, sans-serif",
                             }}
                           >
@@ -1599,13 +1612,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             padding: '8px 12px',
                             border: '1.5px solid var(--n-100)',
                             borderRadius: 'var(--r-sm)',
-                            background: '#FFFFFF',
-                            color: '#1A1917',
+                            background: TOKENS.colors.n0,
+                            color: TOKENS.colors.n900,
                             outline: 'none',
                             marginBottom: 10,
                             boxSizing: 'border-box',
                           }}
-                          onFocus={e => { e.target.style.borderColor = '#636AC5'; e.target.style.boxShadow = '0 0 0 3px rgba(99,106,197,.12)' }}
+                          onFocus={e => { e.target.style.borderColor = TOKENS.colors.p400; e.target.style.boxShadow = '0 0 0 3px rgba(99,106,197,.12)' }}
                           onBlur={e => { e.target.style.borderColor = 'var(--n-100)'; e.target.style.boxShadow = 'none' }}
                         />
                         <div
@@ -1614,7 +1627,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           aria-labelledby="provLegend"
                           aria-describedby={provErr ? 'ferrProv' : undefined}
                           onKeyDown={handleProvKeyDown}
-                          style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}
+                          style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
                         >
                           {(() => {
                             const filtered = PROVIDERS.filter(p =>
@@ -1649,10 +1662,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                   }
                                 }}
                                 style={{
-                                  padding: '8px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
-                                  border: `1px solid ${provider === p ? '#1A1917' : 'var(--n-100)'}`,
-                                  background: provider === p ? '#1A1917' : '#FFFFFF',
-                                  color: provider === p ? '#FFFFFF' : 'var(--n-500)',
+                                  padding: '8px 12px', borderRadius: 9999, fontSize: 12, fontWeight: 500,
+                                  border: `1px solid ${provider === p ? TOKENS.colors.n900 : 'var(--n-100)'}`,
+                                  background: provider === p ? TOKENS.colors.n900 : TOKENS.colors.n0,
+                                  color: provider === p ? TOKENS.colors.n0 : 'var(--n-500)',
                                   cursor: 'pointer', transition: 'all .15s',
                                   fontFamily: "'Inter', system-ui, sans-serif",
                                 }}
@@ -1660,7 +1673,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             ))
                           })()}
                         </div>
-                        {provErr && <p id="ferrProv" role="alert" aria-live="assertive" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>Please select your provider</p>}
+                        {provErr && <p id="ferrProv" role="alert" aria-live="assertive" style={{ fontSize: 12, color: 'var(--neg-500)', marginTop: 4 }}>Please select your provider</p>}
                       </fieldset>
                     </div>
                   </div>
@@ -1790,8 +1803,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             }}
                           />
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
-                            <span style={{ fontSize: 11, color: '#B8B7B1', fontFamily: "'IBM Plex Mono', monospace" }}>0%</span>
-                            <span style={{ fontSize: 11, color: '#B8B7B1', fontFamily: "'IBM Plex Mono', monospace" }}>
+                            <span style={{ fontSize: 11, color: TOKENS.colors.n400, fontFamily: "'IBM Plex Mono', monospace" }}>0%</span>
+                            <span style={{ fontSize: 11, color: TOKENS.colors.n400, fontFamily: "'IBM Plex Mono', monospace" }}>
                               {sign === 'dec' ? '30%' : '50%+'}
                             </span>
                           </div>
@@ -1833,11 +1846,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               <div
                                 style={{
                                   display: 'flex', alignItems: 'center',
-                                  background: '#FFFFFF', border: '1.5px solid var(--n-200)',
+                                  background: TOKENS.colors.n0, border: '1.5px solid var(--n-200)',
                                   borderRadius: 'var(--r-md)', padding: '0 12px', height: 44, gap: 4,
                                   transition: 'border-color .15s, box-shadow .15s',
                                 }}
-                                onFocusCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#636AC5'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 3px rgba(99,106,197,.09)' }}
+                                onFocusCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = TOKENS.colors.p400; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 3px rgba(99,106,197,.09)' }}
                                 onBlurCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--n-200)'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}
                               >
                                 <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 500, color: 'var(--n-400)', flexShrink: 0, userSelect: 'none' }}>
@@ -1880,11 +1893,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               <div
                                 style={{
                                   display: 'flex', alignItems: 'center',
-                                  background: '#FFFFFF', border: '1.5px solid var(--n-200)',
+                                  background: TOKENS.colors.n0, border: '1.5px solid var(--n-200)',
                                   borderRadius: 'var(--r-md)', padding: '0 12px', height: 44, gap: 4,
                                   transition: 'border-color .15s, box-shadow .15s',
                                 }}
-                                onFocusCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#636AC5'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 3px rgba(99,106,197,.09)' }}
+                                onFocusCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = TOKENS.colors.p400; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 3px rgba(99,106,197,.09)' }}
                                 onBlurCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--n-200)'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}
                               >
                                 <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 500, color: 'var(--n-400)', flexShrink: 0, userSelect: 'none' }}>$</span>
@@ -1994,29 +2007,29 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                 }
                               }}
                               style={{
-                                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                                 padding: '8px 4px', borderRadius: 'var(--r-lg)', minHeight: 72,
                                 border: `1.5px solid ${sent === n ? SC[n] : 'var(--n-100)'}`,
                                 cursor: 'pointer', transition: 'border-color .22s cubic-bezier(.16,1,.3,1), background .22s cubic-bezier(.16,1,.3,1)',
-                                background: sent === n ? SC[n] + '28' : '#FFFFFF',
+                                background: sent === n ? SC[n] + '28' : TOKENS.colors.n0,
                                 fontFamily: "'Inter', system-ui, sans-serif",
                                 willChange: 'transform',
                               }}
                               aria-label={SENT_LABELS[n]}
                               aria-pressed={sent === n}
                             >
-                              {n === 1 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Very happy face</title><circle cx="17" cy="17" r="15" fill="#3A9B55"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M10 21Q17 27 24 21" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                              {n === 2 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Happy face</title><circle cx="17" cy="17" r="15" fill="#93D1A2"/><circle cx="12" cy="14" r="2" fill="#1F6132"/><circle cx="22" cy="14" r="2" fill="#1F6132"/><path d="M12 21Q17 24.5 22 21" stroke="#1F6132" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                              {n === 3 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Neutral face</title><circle cx="17" cy="17" r="15" fill="#D49316"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round"/></svg>}
+                              {n === 1 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Very happy face</title><circle cx="17" cy="17" r="15" fill={TOKENS.colors.pos400}/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M10 21Q17 27 24 21" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              {n === 2 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Happy face</title><circle cx="17" cy="17" r="15" fill={TOKENS.colors.pos200}/><circle cx="12" cy="14" r="2" fill={TOKENS.colors.pos600}/><circle cx="22" cy="14" r="2" fill={TOKENS.colors.pos600}/><path d="M12 21Q17 24.5 22 21" stroke={TOKENS.colors.pos600} strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              {n === 3 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Neutral face</title><circle cx="17" cy="17" r="15" fill={TOKENS.colors.cau400}/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round"/></svg>}
                               {n === 4 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Sad face</title><circle cx="17" cy="17" r="15" fill="var(--neg-200)"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 24Q17 20 22 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                              {n === 5 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Very sad face</title><circle cx="17" cy="17" r="15" fill="#D4503A"/><circle cx="12" cy="13" r="2" fill="white"/><circle cx="22" cy="13" r="2" fill="white"/><path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
+                              {n === 5 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Very sad face</title><circle cx="17" cy="17" r="15" fill={TOKENS.colors.neg400}/><circle cx="12" cy="13" r="2" fill="white"/><circle cx="22" cy="13" r="2" fill="white"/><path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
                               <span aria-hidden="true" style={{ fontSize: 10, color: 'var(--n-400)', textAlign: 'center', lineHeight: 1.3 }}>
                                 {n === 1 ? <>Very<br/>fair</> : n === 5 ? <>Very<br/>unfair</> : SENT_LABELS[n]}
                               </span>
                             </button>
                           ))}
                         </div>
-                        {sentErr && <p id="serr" role="alert" aria-live="assertive" style={{ fontSize: 12, color: '#D4503A', marginTop: 4 }}>Please select how you feel about your renewal</p>}
+                        {sentErr && <p id="serr" role="alert" aria-live="assertive" style={{ fontSize: 12, color: 'var(--neg-500)', marginTop: 4 }}>Please select how you feel about your renewal</p>}
                       </fieldset>
                     </div>
 
@@ -2042,7 +2055,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               width: '100%', padding: '12px 12px',
                               fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
                               border: '1.5px solid var(--n-100)', borderRadius: 'var(--r-lg)',
-                              background: '#FFFFFF', color: '#1A1917', outline: 'none',
+                              background: TOKENS.colors.n0, color: TOKENS.colors.n900, outline: 'none',
                               resize: 'none', lineHeight: 1.6, minHeight: 76,
                               transition: 'border-color .15s, box-shadow .15s', display: 'block',
                             }}
@@ -2092,7 +2105,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           }}
                           style={{
                             position: 'absolute', width: 1, height: 1,
-                            padding: 0, margin: -1, overflow: 'hidden',
+                            padding: 0, margin: 0, overflow: 'hidden',
                             whiteSpace: 'nowrap', borderWidth: 0,
                           }}
                         />
@@ -2101,15 +2114,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           aria-hidden="true"
                           style={{
                             width: 18, height: 18, borderRadius: 'var(--r-sm)',
-                            border: consent ? '1.5px solid #1A1917' : '1.5px solid #D4D3CE',
-                            background: consent ? '#1A1917' : '#FFFFFF',
+                            border: consent ? `1.5px solid ${TOKENS.colors.n900}` : `1.5px solid ${TOKENS.colors.n200}`,
+                            background: consent ? TOKENS.colors.n900 : TOKENS.colors.n0,
                             flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                             marginTop: 1, transition: 'background .15s, border-color .15s',
                           }}
                         >
                           {consent && (
                             <svg width="10" height="8" viewBox="0 0 10 8" fill="none" aria-hidden="true">
-                              <path d="M1 4l3 3 5-6" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M1 4l3 3 5-6" stroke={TOKENS.colors.n0} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           )}
                         </div>
@@ -2129,13 +2142,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 {/* Particles wrapper */}
                 <div
                   ref={ptcWrapRef}
-                  style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', borderRadius: '0 0 20px 20px' }}
+                  style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', borderRadius: '0 0 var(--r-xl) var(--r-xl)' }}
                 />
 
                 {/* Envelope scene */}
                 <div ref={envSceneRef} style={{ position: 'relative', width: 180, height: 118, margin: '70px auto 16px', overflow: 'visible', flexShrink: 0 }}>
                   {/* Z=1 Body */}
-                  <svg width="180" height="118" viewBox="0 0 180 118" style={{ position: 'absolute', top: 0, left: 0, zIndex: 1, display: 'block', overflow: 'visible' }} aria-hidden="true">
+                  <svg width="180" height="118" viewBox="0 0 180 118" style={{ position: 'absolute', top: 0, left: 0, zIndex: 1 /* canvas: base envelope body */, display: 'block', overflow: 'visible' }} aria-hidden="true">
                     <rect x="0" y="0" width="180" height="118" rx="7" fill="#F0EDE8"/>
                     <polygon points="0,0 0,118 90,68" fill="#E8E4DD"/>
                     <polygon points="180,0 180,118 90,68" fill="#E8E4DD"/>
@@ -2144,7 +2157,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     <line x1="180" y1="0"   x2="90" y2="68" stroke="#CBC8C1" strokeWidth="0.8"/>
                     <line x1="0"   y1="118" x2="90" y2="68" stroke="#CBC8C1" strokeWidth="0.8"/>
                     <line x1="180" y1="118" x2="90" y2="68" stroke="#CBC8C1" strokeWidth="0.8"/>
-                    <rect x=".5" y=".5" width="179" height="117" rx="6.5" fill="none" stroke="#D4D3CE" strokeWidth="1"/>
+                    <rect x=".5" y=".5" width="179" height="117" rx="6.5" fill="none" stroke={TOKENS.colors.n200} strokeWidth="1"/>
                   </svg>
 
                   {/* Z=2 Letter */}
@@ -2152,8 +2165,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     ref={envLetterRef}
                     style={{
                       position: 'absolute', left: 14, right: 14, top: 14, height: 140,
-                      background: '#FFFFFF', border: '1px solid var(--n-150)', borderRadius: 4,
-                      boxShadow: '0 2px 10px rgba(26,25,23,.1)', zIndex: 2, opacity: 0,
+                      background: TOKENS.colors.n0, border: '1px solid var(--n-150)', borderRadius: 4, /* 4px intentional: envelope corner radius — below r-sm by design */
+                      boxShadow: '0 2px 10px rgba(26,25,23,.1)', zIndex: 2 /* canvas: overlay highlight */, opacity: 0,
                     }}
                   >
                     <div style={{ padding: '14px 13px 0' }}>
@@ -2168,15 +2181,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                   </div>
 
                   {/* Z=3 Rip elements */}
-                  <div ref={ripLRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: '#FFFFFF', border: '1px solid var(--n-150)', borderRadius: 4, zIndex: 6, opacity: 0, clipPath: 'inset(0 50% 0 0 round 4px 0 0 4px)' }} />
-                  <div ref={ripRRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: '#FFFFFF', border: '1px solid var(--n-150)', borderRadius: 4, zIndex: 6, opacity: 0, clipPath: 'inset(0 0 0 50% round 0 4px 4px 0)' }} />
-                  <div ref={ripCrackRef} style={{ position: 'absolute', left: '50%', width: 2, top: 14, height: 140, marginLeft: -1, background: 'linear-gradient(to bottom,transparent,var(--neg-200) 15%,var(--neg-200) 85%,transparent)', zIndex: 7, opacity: 0, transform: 'scaleY(0)', transformOrigin: 'top' }} />
+                  <div ref={ripLRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: TOKENS.colors.n0, border: '1px solid var(--n-150)', borderRadius: 4, /* 4px intentional: envelope corner radius — below r-sm by design */ zIndex: 6 /* canvas: rip panels (left + right) */, opacity: 0, clipPath: 'inset(0 50% 0 0 round 4px 0 0 4px)' }} />
+                  <div ref={ripRRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: TOKENS.colors.n0, border: '1px solid var(--n-150)', borderRadius: 4, /* 4px intentional: envelope corner radius — below r-sm by design */ zIndex: 6 /* canvas: rip panels (left + right) */, opacity: 0, clipPath: 'inset(0 0 0 50% round 0 4px 4px 0)' }} />
+                  <div ref={ripCrackRef} style={{ position: 'absolute', left: '50%', width: 2, top: 14, height: 140, marginLeft: -1, background: 'linear-gradient(to bottom,transparent,var(--neg-200) 15%,var(--neg-200) 85%,transparent)', zIndex: 7 /* canvas: crack line — topmost */, opacity: 0, transform: 'scaleY(0)', transformOrigin: 'top' }} />
 
                   {/* Z=4 Flap */}
                   <svg
                     ref={envFlapRef}
                     width="180" height="118" viewBox="0 0 180 118"
-                    style={{ position: 'absolute', top: 0, left: 0, zIndex: 4, display: 'block', overflow: 'visible' }}
+                    style={{ position: 'absolute', top: 0, left: 0, zIndex: 4 /* canvas: flap SVG */, display: 'block', overflow: 'visible' }}
                     aria-hidden="true"
                   >
                     <defs>
@@ -2186,9 +2199,9 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     </defs>
                     <polygon ref={flapPolyRef} points="0,0 180,0 90,68" fill="#ECE9E3"/>
                     <polyline ref={flapEdgeRef} points="0,0 90,68 180,0" fill="none" stroke="#C8C5BE" strokeWidth="0.9" strokeLinejoin="round"/>
-                    <line x1="0" y1="0" x2="180" y2="0" stroke="#D4D3CE" strokeWidth="1"/>
+                    <line x1="0" y1="0" x2="180" y2="0" stroke={TOKENS.colors.n200} strokeWidth="1"/>
                     <g ref={sealGroupRef}>
-                      <circle ref={sealCircleRef} cx="90" cy="26" r="18" fill="#D4D3CE"/>
+                      <circle ref={sealCircleRef} cx="90" cy="26" r="18" fill={TOKENS.colors.n200}/>
                       <circle cx="90" cy="26" r="12" fill="none" stroke="white" strokeWidth="0.7" opacity="0.35"/>
                       <circle cx="84" cy="20" r="3" fill="white" opacity="0.28"/>
                     </g>
@@ -2204,7 +2217,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       const mapText = hood ? `${hood} is on the map.` : 'Your renewal is on the map.'
                       return (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
-                          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#3A9B55', flexShrink: 0, boxShadow: '0 0 0 3px rgba(58,155,85,.18)' }} />
+                          <div style={{ width: 7, height: 7, borderRadius: '50%', background: TOKENS.colors.pos400, flexShrink: 0, boxShadow: '0 0 0 3px rgba(58,155,85,.18)' }} />
                           <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--pos-500)' }}>{mapText}</span>
                         </div>
                       )
@@ -2212,15 +2225,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
                     {/* Urgency note */}
                     <div style={{
-                      background: '#FEF6E8', border: '1px solid #FACA6B', borderRadius: 'var(--r-md)',
+                      background: TOKENS.colors.cau50, border: `1px solid ${TOKENS.colors.cau200}`, borderRadius: 'var(--r-md)',
                       padding: '10px 14px', marginBottom: 14, textAlign: 'left',
                     }}>
-                      <p style={{ fontSize: 12, color: '#845A0C', lineHeight: 1.55 }}>{urgencyText}</p>
+                      <p style={{ fontSize: 12, color: TOKENS.colors.cau600, lineHeight: 1.55 }}>{urgencyText}</p>
                     </div>
 
                     {/* Comparison card */}
                     <div style={{ border: '1px solid var(--n-100)', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 14 }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: '#FFFFFF' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: TOKENS.colors.n0 }}>
                         {/* You column */}
                         <div style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid var(--n-100)' }}>
                           <div
@@ -2266,7 +2279,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               fontVariationSettings: "'opsz' 32",
                               letterSpacing: '-.02em', lineHeight: 1,
                               fontVariantNumeric: 'tabular-nums',
-                              color: compLoading ? '#D4D3CE' : (hasLimitedData ? 'var(--n-400)' : (hasAreaData ? 'var(--cau-500)' : '#D4D3CE')),
+                              color: compLoading ? TOKENS.colors.n200 : (hasLimitedData ? 'var(--n-400)' : (hasAreaData ? 'var(--cau-500)' : TOKENS.colors.n200)),
                               marginBottom: 3,
                             }}
                           >
@@ -2293,7 +2306,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               fontVariationSettings: "'opsz' 32",
                               letterSpacing: '-.02em', lineHeight: 1,
                               fontVariantNumeric: 'tabular-nums',
-                              color: compLoading || ontMed === null ? '#D4D3CE' : '#2A7D41',
+                              color: compLoading || ontMed === null ? TOKENS.colors.n200 : TOKENS.colors.pos500,
                               marginBottom: 3,
                             }}
                           >
@@ -2308,7 +2321,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           fontSize: 14, color: 'var(--n-900)', lineHeight: 1.65,
                           textAlign: 'center', padding: '12px 16px', margin: 0,
                           borderTop: '1px solid var(--n-100)', background: 'var(--n-25)',
-                          borderRadius: '0 0 14px 14px',
+                          borderRadius: '0 0 var(--r-lg) var(--r-lg)',
                         }}>
                           {!hasPct ? (
                             <>Add your previous premium above to see how you compare as a percentage.</>
@@ -2471,7 +2484,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             background: 'none', border: 'none', padding: 0,
                             transition: 'color 150ms',
                           }}
-                          onMouseEnter={e => (e.currentTarget.style.color = '#5E5D56')}
+                          onMouseEnter={e => (e.currentTarget.style.color = TOKENS.colors.n600)}
                           onMouseLeave={e => (e.currentTarget.style.color = 'var(--n-400)')}
                           onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
                           onMouseUp={e => (e.currentTarget.style.transform = '')}
@@ -2492,7 +2505,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           display: 'block',
                           fontSize: 12,
                           fontWeight: 500,
-                          color: '#3A3F8F',
+                          color: TOKENS.colors.p600,
                           textDecoration: 'none',
                           marginTop: 6,
                           fontFamily: "'Inter', system-ui, sans-serif",
@@ -2511,8 +2524,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ type: 'spring', stiffness: 240, damping: 24, mass: 1, delay: 0.3 }}
                         style={{
-                          background:   '#EEEFFA',
-                          border:       '1px solid #B0B4E6',
+                          background:   TOKENS.colors.p50,
+                          border:       `1px solid ${TOKENS.colors.p200}`,
                           borderRadius: 'var(--r-md)',
                           padding:      '12px 14px',
                           margin:       '10px 0',
@@ -2528,7 +2541,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           <path d="M11 9c1.7.4 3 1.9 3 3.5" stroke="var(--p-500)" strokeWidth="1.2" strokeLinecap="round"/>
                         </svg>
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: '#3A3F8F', marginBottom: 3, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: TOKENS.colors.p600, marginBottom: 3, fontFamily: "'Inter', system-ui, sans-serif" }}>
                             Filter the map to drivers like you
                           </div>
                           <div style={{ fontSize: 12, color: 'var(--p-500)', lineHeight: 1.5, fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -2548,15 +2561,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               marginTop:      8,
                               fontSize:       12,
                               fontWeight:     500,
-                              color:          '#3A3F8F',
+                              color:          TOKENS.colors.p600,
                               background:     'none',
                               border:         'none',
                               cursor:         'pointer',
                               padding:        0,
                               fontFamily:     "'Inter', system-ui, sans-serif",
                             }}
-                            onMouseEnter={e => (e.currentTarget.style.color = '#2D3170')}
-                            onMouseLeave={e => (e.currentTarget.style.color = '#3A3F8F')}
+                            onMouseEnter={e => (e.currentTarget.style.color = TOKENS.colors.p700)}
+                            onMouseLeave={e => (e.currentTarget.style.color = TOKENS.colors.p600)}
                           >
                             Try it on the map →
                           </button>
@@ -2567,10 +2580,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     {/* Pioneer moment */}
                     {fsaCount < 5 && (
                       <div style={{
-                        background: '#EEEFFA', border: '1px solid #B0B4E6',
+                        background: TOKENS.colors.p50, border: `1px solid ${TOKENS.colors.p200}`,
                         borderRadius: 'var(--r-md)', padding: '10px 14px', marginBottom: 14, textAlign: 'left',
                       }}>
-                        <p style={{ fontSize: 12, color: '#2D3170', lineHeight: 1.55, margin: 0, fontWeight: 500 }}>
+                        <p style={{ fontSize: 12, color: TOKENS.colors.p700, lineHeight: 1.55, margin: 0, fontWeight: 500 }}>
                           {'You just put '}
                           <strong
                             ref={pioneerNameRef as React.Ref<HTMLElement>}
@@ -2585,7 +2598,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
                     {/* Verify prompt — appears 2800ms after comparison card */}
                     {showVerify && <div style={{ marginBottom: 4 }}>
-                      <p style={{ fontSize: 13, fontWeight: 500, color: '#1A1917', marginBottom: 6 }}>
+                      <p style={{ fontSize: 13, fontWeight: 500, color: TOKENS.colors.n900, marginBottom: 6 }}>
                         Add your letter. Make it official.
                       </p>
                       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -2594,8 +2607,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           onClick={onVerify}
                           style={{
                             fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, fontWeight: 500,
-                            padding: '8px 20px', borderRadius: 999,
-                            border: 'none', background: '#1A1917', color: '#FFFFFF',
+                            padding: '8px 20px', borderRadius: 9999,
+                            border: 'none', background: TOKENS.colors.n900, color: TOKENS.colors.n0,
                             cursor: 'pointer', transition: 'opacity .15s',
                           }}
                           onMouseEnter={e => (e.currentTarget.style.opacity = '.82')}
@@ -2611,7 +2624,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             cursor: 'pointer', transition: 'background .15s, color .15s',
                             display: 'block', width: '100%', textAlign: 'center',
                           }}
-                          onMouseEnter={e => { e.currentTarget.style.background = '#F5F4F1'; e.currentTarget.style.color = '#5E5D56' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = TOKENS.colors.n50; e.currentTarget.style.color = TOKENS.colors.n600 }}
                           onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--n-400)' }}
                           onMouseDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)' }}
                           onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = '' }}
@@ -2630,7 +2643,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 ...(isMobile ? {
                   position:      'sticky',
                   bottom:        0,
-                  background:    '#FFFFFF',
+                  background:    TOKENS.colors.n0,
                   paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
                 } : {}),
               }}>
@@ -2640,12 +2653,12 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     onClick={goBack}
                     style={{
                       fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
-                      padding: '12px 16px', borderRadius: 999,
-                      border: '1px solid #D4D3CE', background: '#FFFFFF', cursor: 'pointer',
+                      padding: '12px 16px', borderRadius: 9999,
+                      border: `1px solid ${TOKENS.colors.n200}`, background: TOKENS.colors.n0, cursor: 'pointer',
                       color: 'var(--n-500)', transition: 'background .15s, transform .1s', whiteSpace: 'nowrap',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#F5F4F1')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}
+                    onMouseEnter={e => (e.currentTarget.style.background = TOKENS.colors.n50)}
+                    onMouseLeave={e => (e.currentTarget.style.background = TOKENS.colors.n0)}
                   >Back</button>
                 )}
                 <button
@@ -2658,16 +2671,16 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       const row = document.getElementById('consentRow')
                       if (!row) return
                       row.style.transition = 'background .15s'
-                      row.style.background = '#FEF6E8'
+                      row.style.background = TOKENS.colors.cau50
                       setTimeout(() => { row.style.background = '' }, 600)
                     }
                   }}
                   style={{
                     fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
-                    padding: '12px 0', borderRadius: 999,
+                    padding: '12px 0', borderRadius: 9999,
                     border: 'none',
-                    background: step === 2 && !consent ? '#D4D3CE' : '#1A1917',
-                    color: '#FFFFFF', cursor: step === 2 && !consent ? 'not-allowed' : 'pointer',
+                    background: step === 2 && !consent ? TOKENS.colors.n200 : TOKENS.colors.n900,
+                    color: TOKENS.colors.n0, cursor: step === 2 && !consent ? 'not-allowed' : 'pointer',
                     transition: 'opacity .15s, transform .1s', flex: 1, textAlign: 'center', display: 'block',
                     opacity: submitting ? 0.6 : 1,
                   }}

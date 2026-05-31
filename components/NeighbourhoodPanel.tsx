@@ -193,8 +193,8 @@ function AggregateBody({ stats }: AggregateBodyProps) {
             <span className={styles.typeLabel}>Auto</span>
           </div>
           <div
-            className={styles.typeAvg}
-            style={{ color: stats.autoAvgPct !== null ? tierColor(stats.autoAvgPct) : 'var(--n-300)' }}
+            className={`${styles.typeAvg}${stats.autoAvgPct === null ? ` ${styles.typeAvgEmpty}` : ''}`}
+            style={stats.autoAvgPct !== null ? { color: tierColor(stats.autoAvgPct) } : undefined}
             aria-label={rateAriaLabel(stats.autoAvgPct)}
           >
             {fmtRate(stats.autoAvgPct)}
@@ -221,8 +221,8 @@ function AggregateBody({ stats }: AggregateBodyProps) {
             <span className={styles.typeLabel}>Home</span>
           </div>
           <div
-            className={styles.typeAvg}
-            style={{ color: stats.homeAvgPct !== null ? tierColor(stats.homeAvgPct) : 'var(--n-300)' }}
+            className={`${styles.typeAvg}${stats.homeAvgPct === null ? ` ${styles.typeAvgEmpty}` : ''}`}
+            style={stats.homeAvgPct !== null ? { color: tierColor(stats.homeAvgPct) } : undefined}
             aria-label={rateAriaLabel(stats.homeAvgPct)}
           >
             {fmtRate(stats.homeAvgPct)}
