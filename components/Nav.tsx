@@ -133,6 +133,11 @@ export default function Nav({
     { duration: 500, decimals: 0 },
   )
 
+  // Tracks whether the count span is mid-animation; hidden from AT during
+  // roll-up so intermediate values are not announced (container aria-label
+  // provides the authoritative accessible announcement).
+  const [countAnimating, setCountAnimating] = useState(false)
+
   // ── Search ─────────────────────────────────────────────────────────────────
   const [searchValue,  setSearchValue]  = useState('')
   const [searchStatus, setSearchStatus] = useState<SearchStatus>('idle')
@@ -233,6 +238,21 @@ export default function Nav({
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
+  // ── Count animation guard ──────────────────────────────────────────────────
+  // Hide count span from AT during the 500ms roll-up. prefers-reduced-motion
+  // snaps to final value immediately (useAnimatedCounter) so no guard needed.
+  useEffect(() => {
+    if (stripStats?.count == null) return
+    const prefersReduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches
+    if (!prefersReduced) {
+      setCountAnimating(true)
+      const t = setTimeout(() => setCountAnimating(false), 500)
+      return () => clearTimeout(t)
+    }
+  }, [stripStats?.count])
+
   // ── Share ──────────────────────────────────────────────────────────────────
   const handleShare = useCallback(async () => {
     const url  = window.location.origin
@@ -301,12 +321,6 @@ export default function Nav({
   const badgeLabel      = activityCount > 9 ? '9+' : String(activityCount)
   const stripIsEmpty    = stripStats !== null && stripStats.count === 0
 
-  // Used only for the accessible aria-label — spells out the value in words
-  function formatPct(v: number | null): string {
-    if (v === null) return 'unavailable'
-    const sign = v >= 0 ? 'plus' : 'minus'
-    return `${sign} ${Math.abs(v).toFixed(1)} percent`
-  }
 
   // ── CTA content ───────────────────────────────────────────────────────────
 
@@ -345,20 +359,40 @@ export default function Nav({
   return (
     <>
       {/* ── Data strip ─────────────────────────────────────────────────────── */}
+      {/* role=status + aria-live=polite: announces once when data loads.
+          aria-atomic=true: re-reads the full label (not just the changed part).
+          polite (not assertive): informational update — must not interrupt the
+          user mid-sentence. Children are aria-hidden during animation;
+          the aria-label is the authoritative accessible representation. */}
       <div
         className={stripIsEmpty ? `${styles.strip} ${styles.stripEmpty}` : styles.strip}
         role="status"
-        aria-label={
-          stripStats
-            ? `${stripStats.count} renewals shared. Auto average ${formatPct(stripStats.autoAvg)}, Home average ${formatPct(stripStats.homeAvg)}`
-            : 'Loading renewal data'
-        }
         aria-live="polite"
         aria-atomic="true"
+        aria-label={
+          stripStats
+            ? `${stripStats.count} renewal${stripStats.count === 1 ? '' : 's'} shared.${
+                stripStats.autoAvg !== null
+                  ? ` Auto average ${stripStats.autoAvg >= 0 ? 'plus' : 'minus'} ${Math.abs(stripStats.autoAvg).toFixed(1)} percent.`
+                  : ''
+              }${
+                stripStats.homeAvg !== null
+                  ? ` Home average ${stripStats.homeAvg >= 0 ? 'plus' : 'minus'} ${Math.abs(stripStats.homeAvg).toFixed(1)} percent.`
+                  : ''
+              }`
+            : 'Loading renewal statistics'
+        }
       >
         {stripStats && stripStats.count > 0 && (
           <>
-            <span className={styles.stripBold}>{displayedCount}</span>
+            {/* aria-hidden during roll-up — intermediate values are meaningless
+                to AT; the container aria-label provides the settled value */}
+            <span
+              className={styles.stripBold}
+              aria-hidden={countAnimating}
+            >
+              {displayedCount}
+            </span>
             <span className={styles.stripText}>
               {' '}renewal{stripStats.count === 1 ? '' : 's'}{' '}shared
             </span>
@@ -381,9 +415,14 @@ export default function Nav({
           </>
         )}
 
-        {/* Skeleton while loading */}
+        {/* Skeleton while loading — role=presentation: purely decorative shimmer.
+            Loading state is announced via the container's aria-label above. */}
         {!stripStats && (
-          <span className={styles.stripSkeleton} aria-hidden="true" />
+          <span
+            className={styles.stripSkeleton}
+            aria-hidden="true"
+            role="presentation"
+          />
         )}
       </div>
 
