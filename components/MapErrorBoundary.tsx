@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { TOKENS } from '@/lib/tokens'
 
 interface Props  { children: React.ReactNode }
 interface State  { hasError: boolean }
@@ -23,7 +24,7 @@ export class MapErrorBoundary extends React.Component<Props, State> {
             flexDirection:  'column',
             alignItems:     'center',
             justifyContent: 'center',
-            background:     '#F5F4F1',
+            background:     TOKENS.colors.n50,
             gap:            8,
           }}
         >
@@ -39,9 +40,9 @@ export class MapErrorBoundary extends React.Component<Props, State> {
               padding:      '8px 20px',
               borderRadius: 9999,
               border:       '1px solid #D4D3CE',
-              background:   '#FFFFFF',
+              background:   TOKENS.colors.n0,
               cursor:       'pointer',
-              color:        '#2C2B27',
+              color:        TOKENS.colors.n800,
             }}
           >
             Refresh

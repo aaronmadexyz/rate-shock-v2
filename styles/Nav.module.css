@@ -149,7 +149,7 @@
 .brandWords {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px; /* sp-1 ✓ */
 }
 
 .brandName {
@@ -171,7 +171,7 @@
   text-transform: uppercase;
   color: var(--p-500);
   background: var(--p-50);
-  padding: 2px 7px;
+  padding: 4px 8px; /* sp-1 sp-2 ✓ */
   border-radius: 9999px;
   flex-shrink: 0;
 }
@@ -233,7 +233,7 @@
   transition: border-color .15s, box-shadow .15s, background .15s;
 }
 
-.searchInput:focus {
+.searchInput:focus-visible {
   background: #FFFFFF;
   border: 1.5px solid #636AC5; /* var(--p-400) */
   box-shadow: 0 0 0 3px rgba(99, 106, 197, .12); /* p-400 rgba ✓ */
@@ -479,7 +479,7 @@
   letter-spacing: .02em;
   background: rgba(212, 147, 22, .14);
   color: var(--cau-600);
-  padding: 2px 7px;
+  padding: 4px 8px; /* sp-1 sp-2 ✓ */
   border-radius: 999px;
   white-space: nowrap;
   line-height: 1.4;
@@ -664,7 +664,7 @@
   width: 100%;
   text-align: left;
   transition: background .15s;
-  margin-top: 2px;
+  margin-top: 4px; /* sp-1 ✓ */
 }
 
 .drawerFr:hover {
