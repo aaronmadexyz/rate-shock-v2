@@ -113,7 +113,7 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
       </div>
       <div style={{
         fontFamily: "'IBM Plex Mono', monospace",
-        fontSize:   11, color: 'var(--n-500)', marginTop: 2,
+        fontSize:   11, color: 'var(--n-500)', marginTop: 4,
       }}>
         Range: +{result.min}% – +{result.max}%
       </div>

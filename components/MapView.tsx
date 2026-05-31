@@ -360,7 +360,7 @@ function PanelContent({
             <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--n-900)', lineHeight: 1.2 }}>
               {displayLabel}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--n-400)', fontWeight: 400, marginTop: 2 }}>
+            <div style={{ fontSize: 11, color: 'var(--n-400)', fontWeight: 400, marginTop: 4 }}>
               {sub.provider} · {sub.insurance_type === 'auto' ? 'Auto' : 'Home'}
             </div>
           </div>

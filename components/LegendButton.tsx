@@ -142,7 +142,7 @@ export default function LegendButton() {
             }}>
               Envelope size
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {ITEMS.map(({ w, h, label }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <EnvelopeSvg w={w} h={h} />

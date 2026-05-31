@@ -412,7 +412,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
                 borderRadius:   'var(--r-md)',
                 border:         `1.5px solid ${isSelected ? 'var(--n-900)' : 'var(--n-150)'}`,
                 background:     isSelected ? 'var(--n-900)' : isOtherActive ? 'var(--n-0)' : 'var(--n-100)',
-                color:          isSelected ? 'var(--n-0)' : isOtherActive ? 'var(--n-300)' : 'var(--n-700)',
+                color:          isSelected ? 'var(--n-0)' : isOtherActive ? 'var(--n-400)' : 'var(--n-700)',
                 opacity:        isOtherActive ? 0.6 : 1,
                 cursor:         'pointer',
                 display:        'flex',
@@ -476,7 +476,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
                   fontFamily:    "'IBM Plex Mono', monospace",
                   fontSize:      11,
                   fontWeight:    500,
-                  color:         on ? 'var(--n-300)' : 'var(--n-400)',
+                  color:         on ? 'var(--n-200)' : 'var(--n-400)', /* n-200 on n-900 bg ≈ 6.7:1 ✓; n-400 on n-0 bg = 4.57:1 ✓ */
                   letterSpacing: '0.02em',
                 }}>
                   {count}
@@ -549,7 +549,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
         />
 
         {/* Boundary labels — range markers, deliberately quiet */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
           <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--n-400)' }}>
             {filters.rMin < 0 ? `−${Math.abs(filters.rMin)}%` : `${filters.rMin}%`}
           </span>
@@ -574,14 +574,18 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
     }}>
       {/* Left: title + live count */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span style={{
-          fontSize:      15,
-          fontWeight:    500,
-          color:         'var(--n-900)',
-          letterSpacing: '-0.01em',
-        }}>
+        <h2
+          id="filter-title"
+          style={{
+            fontSize:      15,
+            fontWeight:    500,
+            color:         'var(--n-900)',
+            letterSpacing: '-0.01em',
+            margin:        0,
+          }}
+        >
           Filter
-        </span>
+        </h2>
         <span style={{
           fontFamily:    "'IBM Plex Mono', monospace",
           fontSize:      11,
@@ -720,7 +724,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
               ref={cardRef}
               role="dialog"
               aria-modal="true"
-              aria-label="Filter map"
+              aria-labelledby="filter-title"
               id="filter-panel"
               drag="y"
               dragControls={dragControls}

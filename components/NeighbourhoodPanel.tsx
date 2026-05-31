@@ -9,7 +9,7 @@ import styles from '@/styles/NeighbourhoodPanel.module.css'
 // ─── Rate tier helpers ────────────────────────────────────────────────────────
 
 function tierColor(pct: number | null): string {
-  if (pct === null) return 'var(--n-300)'
+  if (pct === null) return 'var(--n-500)' /* #706F67 — 5.05:1 on white ✓ AA */
   if (pct < 0) return 'var(--pos-600)'
   if (pct <= 7) return 'var(--n-600)'
   if (pct <= 16) return 'var(--cau-600)'
