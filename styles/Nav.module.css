@@ -28,17 +28,56 @@
   pointer-events: none;
 }
 
-/* Bold: count + percentage values — white for contrast pop */
+/* Bold: animated count value — mono, white, tabular to prevent layout shift */
 .stripBold {
+  font-family: var(--mono);
+  font-size: 11px;
   font-weight: 600;
-  color: #FFFFFF; /* var(--n-0) — 13.48:1 on n-800 ✓ AAA */
+  color: var(--n-0);        /* #FFFFFF — 13.48:1 on n-800 ✓ AAA */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Regular strip text segments — "renewals shared", "Auto", "Home" */
+.stripText {
+  color: var(--n-200);      /* #D4D3CE — 4.88:1 on n-800 ✓ WCAG AA */
+  font-size: 11px;
 }
 
 /* Separator dot — quiet, recedes */
 .stripDot {
-  color: #5E5D56; /* var(--n-600) */
+  color: var(--n-600);      /* #5E5D56 — decorative separator ✓ */
   margin: 0 6px;
+  font-size: 11px;
   font-weight: 400;
+}
+
+/* Animated stat value (Auto / Home avg) — tabular-nums prevents layout shift
+   as digits change during the roll-up animation. Rule 4: ease-out easing in
+   the JS counter. */
+.statValue {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--n-0);        /* #FFFFFF — 13.48:1 on n-800 ✓ AAA */
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Inline skeleton for a single stat while data loads */
+.statSkeleton {
+  display: inline-block;
+  width: 32px;
+  height: 10px;
+  border-radius: var(--r-sm);
+  vertical-align: middle;
+  background: linear-gradient(
+    90deg,
+    var(--n-700) 0%,
+    var(--n-600) 50%,
+    var(--n-700) 100%
+  );
+  background-size: 200% 100%;
+  animation: stripShimmer 1.4s ease infinite;
 }
 
 .stripSkeleton {
@@ -64,6 +103,10 @@
   .stripSkeleton {
     animation: none;
     background: #43423D;
+  }
+  .statSkeleton {
+    animation: none;
+    background: var(--n-700);
   }
 }
 

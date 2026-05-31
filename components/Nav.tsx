@@ -10,6 +10,8 @@ import { fetchFsaCount } from '@/lib/fetchFsaCount'
 import { getCentroid } from '@/lib/fsaCentroids'
 import { getAreaLabel } from '@/lib/fsaData'
 import type { NavState } from '@/lib/types'
+import { useAnimatedCounter } from '@/lib/useAnimatedCounter'
+import { AnimatedStat } from '@/components/AnimatedStat'
 import styles from '@/styles/Nav.module.css'
 
 // ─── Types & constants ────────────────────────────────────────────────────────
@@ -123,6 +125,13 @@ export default function Nav({
     autoAvg: number | null
     homeAvg: number | null
   } | null>(null)
+
+  // Animated counter for submission count — 500ms, whole numbers
+  // Rule 4 (ease-out cubic) applied via useAnimatedCounter default easing.
+  const displayedCount = useAnimatedCounter(
+    stripStats?.count ?? null,
+    { duration: 500, decimals: 0 },
+  )
 
   // ── Search ─────────────────────────────────────────────────────────────────
   const [searchValue,  setSearchValue]  = useState('')
@@ -292,8 +301,11 @@ export default function Nav({
   const badgeLabel      = activityCount > 9 ? '9+' : String(activityCount)
   const stripIsEmpty    = stripStats !== null && stripStats.count === 0
 
-  function fmtAvg(n: number): string {
-    return (n >= 0 ? '+' : '') + n.toFixed(1) + '%'
+  // Used only for the accessible aria-label — spells out the value in words
+  function formatPct(v: number | null): string {
+    if (v === null) return 'unavailable'
+    const sign = v >= 0 ? 'plus' : 'minus'
+    return `${sign} ${Math.abs(v).toFixed(1)} percent`
   }
 
   // ── CTA content ───────────────────────────────────────────────────────────
@@ -333,29 +345,46 @@ export default function Nav({
   return (
     <>
       {/* ── Data strip ─────────────────────────────────────────────────────── */}
-      <div className={stripIsEmpty ? `${styles.strip} ${styles.stripEmpty}` : styles.strip}>
-        {stripStats === null ? (
-          <div className={styles.stripSkeleton} />
-        ) : stripStats.count > 0 ? (
+      <div
+        className={stripIsEmpty ? `${styles.strip} ${styles.stripEmpty}` : styles.strip}
+        role="status"
+        aria-label={
+          stripStats
+            ? `${stripStats.count} renewals shared. Auto average ${formatPct(stripStats.autoAvg)}, Home average ${formatPct(stripStats.homeAvg)}`
+            : 'Loading renewal data'
+        }
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {stripStats && stripStats.count > 0 && (
           <>
-            <span className={styles.stripBold}>{stripStats.count.toLocaleString()}</span>
-            {' renewals shared'}
+            <span className={styles.stripBold}>{displayedCount}</span>
+            <span className={styles.stripText}>
+              {' '}renewal{stripStats.count === 1 ? '' : 's'}{' '}shared
+            </span>
+
             {stripStats.autoAvg !== null && (
               <>
-                <span className={styles.stripDot} aria-hidden="true">·</span>
-                {'Auto '}
-                <span className={styles.stripBold}>{fmtAvg(stripStats.autoAvg)}</span>
+                <span className={styles.stripDot}>·</span>
+                <span className={styles.stripText}>Auto{' '}</span>
+                <AnimatedStat value={stripStats.autoAvg} loading={false} />
               </>
             )}
+
             {stripStats.homeAvg !== null && (
               <>
-                <span className={styles.stripDot} aria-hidden="true">·</span>
-                {'Home '}
-                <span className={styles.stripBold}>{fmtAvg(stripStats.homeAvg)}</span>
+                <span className={styles.stripDot}>·</span>
+                <span className={styles.stripText}>Home{' '}</span>
+                <AnimatedStat value={stripStats.homeAvg} loading={false} />
               </>
             )}
           </>
-        ) : null}
+        )}
+
+        {/* Skeleton while loading */}
+        {!stripStats && (
+          <span className={styles.stripSkeleton} aria-hidden="true" />
+        )}
       </div>
 
       {/* ── Main bar ───────────────────────────────────────────────────────── */}
