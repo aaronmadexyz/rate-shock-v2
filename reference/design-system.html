@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RateShock — Design System v1.4</title>
+<title>RateShock — Design System v1.5</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ─── PRIMITIVE TOKENS ─── */
@@ -52,14 +52,44 @@
   --border-subtle:var(--n-100);
   --border-default:var(--n-200);
   --border-strong:var(--n-300);
-  /* ─── SPACING TOKENS ─── */
-  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;
-  --sp-6:24px;--sp-7:28px;--sp-8:32px;--sp-10:40px;--sp-12:48px;
-  --sp-16:64px;--sp-20:80px;
-  /* ─── Z-INDEX SCALE ─── */
-  --z-map:0;--z-markers:10;--z-controls:20;--z-nav:100;--z-panel:200;
-  --z-tooltip:300;--z-overlay-bg:400;--z-overlay:450;
-  --z-backdrop:500;--z-modal:600;--z-alert:700;
+
+  /* ── RADII — design system v1.4 ── */
+  --r-sm:   6px;
+  --r-md:   10px;
+  --r-lg:   14px;
+  --r-xl:   20px;
+  --r-full: 9999px;
+
+  /* ── SPACING — 4px base grid ──
+     sp-5 (20px) and sp-7 (28px) added v1.4 */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-7:  28px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+
+  /* ── Z-INDEX SCALE — explicit, no magic numbers
+     Onboarding overlays (400/450) sit BELOW modal
+     system (500/600) — intentional layering.
+     z-overlay-bg (400) and z-overlay (450) added v1.4 ── */
+  --z-map:        0;    /* Leaflet base layer */
+  --z-markers:    10;   /* Envelope markers */
+  --z-controls:   20;   /* Map zoom + attribution */
+  --z-nav:        100;  /* Top nav */
+  --z-panel:      200;  /* Detail card, filter sheet */
+  --z-tooltip:    300;  /* Hover tooltips */
+  --z-overlay-bg: 400;  /* Onboarding backdrop */
+  --z-overlay:    450;  /* Onboarding card */
+  --z-backdrop:   500;  /* Modal backdrop */
+  --z-modal:      600;  /* Modal dialog */
+  --z-alert:      700;  /* Toast / system alerts */
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:var(--font);background:var(--n-0);color:var(--n-800);line-height:1.6;letter-spacing:0.012em;-webkit-font-smoothing:antialiased}
@@ -247,6 +277,15 @@ h1{font-variation-settings:'opsz' 32;font-size:40px;font-weight:600;color:var(--
 </div>
 </div>
 
+<div style="margin-top:16px">
+<div class="info-t">Comparison card label colours (v1.5)</div>
+<div class="info-b">
+  <strong>cmp-lbl</strong> (column headers: "YOU PAID", "YOUR NEIGHBOURS", "ONTARIO") and <strong>cmp-sub</strong> (sub-labels: "your renewal", "average increase") were raised from n-300 (#B8B7B1, 2.01:1) to n-400 (#767670, 4.57:1) in v1.5.<br><br>
+  These elements render on a white background (#FFFFFF) inside <code>.cmp-cols</code> which sets <code>background:#FFFFFF</code> independently of any parent surface. The contrast audit must test against white, not n-25.<br><br>
+  <strong>Rule:</strong> always check the computed background of the immediate rendering context, not the page or card background.
+</div>
+</div>
+
 <div style="margin-top:24px">
 <div class="grp">Sentiment chips — correct usage</div>
 <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:10px">
@@ -310,6 +349,18 @@ h1{font-variation-settings:'opsz' 32;font-size:40px;font-weight:600;color:var(--
 
 <!-- TYPOGRAPHY ACCESSIBILITY -->
 <div class="info" style="margin-top:24px">
+<div class="info-t">Border radius tokens</div>
+<div class="info-b">
+  <strong>r-sm: 6px</strong> · inputs, small chips<br>
+  <strong>r-md: 10px</strong> · cards, panels, tri-result<br>
+  <strong>r-lg: 14px</strong> · modals, large cards<br>
+  <strong>r-xl: 20px</strong> · bottom sheets<br>
+  <strong>r-full: 9999px</strong> · pills, fully-rounded buttons<br><br>
+  Use <code>border-radius: var(--r-md)</code> rather than hardcoded <code>10px</code>. If a radius value changes, it propagates everywhere.
+</div>
+</div>
+
+<div style="margin-top:24px">
 <div class="info-t">Minimum sizes &amp; WCAG text spacing</div>
 <div class="info-b">
 <strong>Minimum rendered size: 11px.</strong> Never render text below 11px in any component. IBM Plex Mono at 9–10px (swatch stop labels, token pills) is decorative supplementary text — it always accompanies a visible colour swatch and never carries meaning alone. It is exempt under WCAG 1.1.1 but must not be relied upon for communication.<br><br>

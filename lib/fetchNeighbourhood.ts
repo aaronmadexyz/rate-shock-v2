@@ -58,7 +58,7 @@ export async function fetchNeighbourhood(
 
   return {
     fsa:           fsa.toUpperCase(),
-    neighbourhood: data[0].neighbourhood ?? fsa.toUpperCase(),
+    neighbourhood: data[0]?.neighbourhood ?? fsa.toUpperCase(),
     totalCount:    data.length,
     autoCount:     auto.length,
     homeCount:     home.length,

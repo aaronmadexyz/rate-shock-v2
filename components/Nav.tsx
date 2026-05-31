@@ -279,7 +279,7 @@ export default function Nav({
       return
     }
 
-    if (!ONTARIO_PREFIXES.has(v[0])) {
+    if (!ONTARIO_PREFIXES.has(v[0]!)) {
       pendingFsaRef.current = ''
       setSearchStatus('invalid')
       return

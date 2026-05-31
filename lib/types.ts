@@ -24,13 +24,6 @@ export interface Submission {
   renewal_year:        number | null
 }
 
-export interface FeatureRequest {
-  id:         string
-  created_at: string
-  message:    string
-  fsa:        string | null
-  page_url:   string | null
-}
 
 export interface FilterState {
   insuranceType: 'auto' | 'home' | null

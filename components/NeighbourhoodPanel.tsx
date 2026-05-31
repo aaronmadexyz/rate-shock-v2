@@ -115,7 +115,7 @@ function SparseBody({ stats, fsa, onCtaClick }: SparseBodyProps) {
     )
   }
 
-  const report = stats.recentReports[0]
+  const report = stats.recentReports[0]! // recentReports.length > 0 confirmed above
 
   return (
     <>

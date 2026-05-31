@@ -152,11 +152,6 @@ function MapSetup({
 
 // ─── Tooltip helpers ──────────────────────────────────────────────────────────
 
-const SENTIMENT_COLORS: Record<number, string> = {
-  1: TOKENS.colors.pos400, 2: TOKENS.colors.pos200, 3: TOKENS.colors.cau400,
-  4: TOKENS.colors.neg200, 5: TOKENS.colors.neg400,
-}
-
 function rateColor(sentiment: number | null): string {
   if (sentiment == null) return 'var(--cau-500)'
   if (sentiment <= 2) return TOKENS.colors.pos500
@@ -210,22 +205,6 @@ function SentimentFace({ sentiment, size }: { sentiment: number | null; size: nu
   )
 }
 
-interface FsaStats { median: number; count: number }
-
-function getContextLine(
-  s: Submission,
-  stats: FsaStats | undefined,
-  areaLabel: string,
-): { text: string; color: string } {
-  const rate = s.rate_change_pct
-  if (!stats || stats.count < 3 || rate == null) {
-    const n = stats?.count ?? 1
-    return { text: `One of ${n} report${n !== 1 ? 's' : ''} here`, color: 'var(--n-400)' }
-  }
-  if (rate > stats.median) return { text: `↑ Above ${areaLabel} average`, color: 'var(--neg-500)' }
-  if (rate < stats.median) return { text: `↓ Below ${areaLabel} average`, color: 'var(--pos-500)' }
-  return { text: 'Around the area average', color: 'var(--n-400)' }
-}
 
 function pctString(pct: number | null): string {
   if (pct == null) return '–'
@@ -320,262 +299,7 @@ function HoverPreview({
   )
 }
 
-// ─── PanelContent — shared between desktop panel + mobile sheet ───────────────
-
-interface PanelContentProps {
-  sub:            Submission
-  fsaMedians:     Map<string, FsaStats>
-  viewerFsa:      string | null
-  prefersReduced: boolean
-  onClose:        () => void
-  onCtaClick:     () => void
-}
-
-function PanelContent({
-  sub, fsaMedians, viewerFsa, prefersReduced, onClose, onCtaClick,
-}: PanelContentProps) {
-  const isViewerArea   = viewerFsa != null && sub.fsa.toUpperCase() === viewerFsa.toUpperCase()
-  const displayLabel   = isViewerArea ? 'Your area' : getAreaLabel(sub.fsa)
-  const shortLabel     = getAreaLabel(sub.fsa).replace(/\s*\(.*\)/, '')
-  const ctx            = getContextLine(sub, fsaMedians.get(sub.fsa), shortLabel)
-  const rawComment     = sub.comment_raw?.trim() ?? ''
-  const commentExcerpt = rawComment
-    ? (rawComment.length > 80 ? rawComment.substring(0, 80) + '…' : rawComment)
-    : null
-
-  return (
-    // Rule 7 — blur crossfade when active submission changes while panel stays open
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={sub.id}
-        initial={{ filter: 'blur(2px)', opacity: 0 }}
-        animate={{ filter: 'blur(0px)', opacity: 1,
-                   transition: { duration: prefersReduced ? 0 : 0.1 } }}
-        exit={{ filter: 'blur(2px)', opacity: 0,
-                transition: { duration: prefersReduced ? 0 : 0.06 } }}
-      >
-        {/* Section 1 — Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div style={{ marginRight: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--n-900)', lineHeight: 1.2 }}>
-              {displayLabel}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--n-400)', fontWeight: 400, marginTop: 4 }}>
-              {sub.provider} · {sub.insurance_type === 'auto' ? 'Auto' : 'Home'}
-            </div>
-          </div>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Close panel">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-              <path d="M1.5 1.5l7 7M8.5 1.5l-7 7"
-                    stroke="#767670" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Section 2 — Rate + context */}
-        <div className={styles.divider} />
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-          <SentimentFace sentiment={sub.sentiment} size={32} />
-          <div>
-            <div style={{
-              fontVariationSettings: "'opsz' 32",
-              fontSize:              26,
-              fontWeight:            700,
-              letterSpacing:         '-0.02em',
-              fontVariantNumeric:    'tabular-nums',
-              color:                 rateColor(sub.sentiment),
-              lineHeight:            1,
-            }}>
-              {pctString(sub.rate_change_pct)}
-            </div>
-            <div className={styles.contextLine} style={{ color: ctx.color }}>
-              {ctx.text}
-            </div>
-          </div>
-        </div>
-
-        {/* Section 3 — Comment (conditional) */}
-        {commentExcerpt && (
-          <>
-            <div className={styles.divider} />
-            <div style={{ fontSize: 12, color: 'var(--n-600)', lineHeight: 1.55, fontStyle: 'italic' }}>
-              <span style={{ color: 'var(--n-300)' }}>&#8220;</span>{commentExcerpt}
-            </div>
-          </>
-        )}
-
-        {/* Section 4 — Verified badge (conditional) */}
-        {sub.verified && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path d="M2 6l3 3 5-5" stroke="var(--pos-600)"
-                    strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--pos-600)' }}>Verified renewal</span>
-          </div>
-        )}
-
-        {/* Section 5 — CTA */}
-        <div className={styles.divider} />
-        <button
-          className={styles.ctaBtn}
-          onClick={() => { onCtaClick(); onClose() }}
-        >
-          <span>See how yours compares</span>
-          <span aria-hidden="true">→</span>
-        </button>
-      </motion.div>
-    </AnimatePresence>
-  )
-}
-
-// ─── LockedPanel — Mode 2 (desktop panel + mobile sheet) ─────────────────────
-
-interface LockedPanelProps {
-  sub:            Submission
-  x:              number
-  y:              number
-  fsaMedians:     Map<string, FsaStats>
-  viewerFsa:      string | null
-  prefersReduced: boolean
-  isMobile:       boolean
-  onClose:        () => void
-  onCtaClick:     () => void
-}
-
-function LockedPanel({
-  sub, x, y, fsaMedians, viewerFsa, prefersReduced, isMobile, onClose, onCtaClick,
-}: LockedPanelProps) {
-  const sheetRef      = useRef<HTMLDivElement>(null)
-  const touchStartY   = useRef(0)
-  const touchDelta    = useRef(0)
-
-  // Escape key dismisses on desktop
-  useEffect(() => {
-    if (isMobile) return
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [isMobile, onClose])
-
-  const isViewerArea = viewerFsa != null && sub.fsa.toUpperCase() === viewerFsa.toUpperCase()
-
-  const borderLeft  = isViewerArea ? '3px solid var(--p-500)' : '1px solid var(--n-150)'
-  const paddingLeft = isViewerArea ? 11 : 16
-
-  // Touch gesture handlers for swipe-down dismissal
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY
-    touchDelta.current  = 0
-    if (sheetRef.current) sheetRef.current.style.transition = ''
-  }
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    const delta = e.touches[0].clientY - touchStartY.current
-    touchDelta.current = delta
-    if (delta > 0 && sheetRef.current) {
-      sheetRef.current.style.transform = `translateY(${delta}px)`
-      e.stopPropagation()
-    }
-  }
-
-  const onTouchEnd = () => {
-    if (touchDelta.current > 80) {
-      onClose()
-    } else if (sheetRef.current) {
-      sheetRef.current.style.transition =
-        'transform 300ms cubic-bezier(0.16, 1, 0.3, 1)'
-      sheetRef.current.style.transform = 'translateY(0)'
-      const el = sheetRef.current
-      setTimeout(() => { if (el) el.style.transition = '' }, 300)
-    }
-  }
-
-  const content = (
-    <PanelContent
-      sub={sub}
-      fsaMedians={fsaMedians}
-      viewerFsa={viewerFsa}
-      prefersReduced={prefersReduced}
-      onClose={onClose}
-      onCtaClick={onCtaClick}
-    />
-  )
-
-  if (isMobile) {
-    return (
-      <>
-        {/* Mobile backdrop */}
-        <motion.div
-          className={styles.backdrop}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: prefersReduced ? 0 : 0.15, ease: [0.25, 0, 0.3, 1] as [number,number,number,number] }}
-          onTouchEnd={onClose}
-          onClick={onClose}
-          style={{ zIndex: TOKENS.zIndex.zPanelBackdrop /* --z-panel-backdrop: 199 — below the detail sheet */ }}
-        />
-        {/* Mobile bottom sheet */}
-        <motion.div
-          ref={sheetRef}
-          className={styles.sheet}
-          style={{
-            zIndex:      TOKENS.zIndex.zPanel, // --z-panel: 200
-            borderLeft,
-            paddingLeft,
-          }}
-          initial={prefersReduced ? false : { y: '100%' }}
-          animate={{ y: 0 }}
-          exit={prefersReduced
-            ? { opacity: 0, transition: { duration: 0.15 } }
-            : { y: '100%' }}
-          transition={prefersReduced
-            ? { duration: 0 }
-            : { type: 'spring', stiffness: 240, damping: 24, mass: 1.0 }}
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
-          <div className={styles.dragHandle} />
-          {content}
-        </motion.div>
-      </>
-    )
-  }
-
-  // Desktop panel
-  return (
-    <motion.div
-      className={styles.panel}
-      style={{
-        position:        'fixed',
-        left:            x,
-        top:             y - 8,
-        transform:       'translateX(-50%) translateY(-100%)',
-        transformOrigin: 'bottom center',
-        zIndex:          TOKENS.zIndex.zPanel, // --z-panel: 200
-        borderTop:       '1px solid var(--n-150)',
-        borderRight:     '1px solid var(--n-150)',
-        borderBottom:    '1px solid var(--n-150)',
-        borderLeft,
-        paddingLeft,
-      }}
-      initial={prefersReduced
-        ? false
-        : { opacity: 0, scale: 0.97, y: 8 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={prefersReduced
-        ? { opacity: 0, transition: { duration: 0.15 } }
-        : { opacity: 0, scale: 0.97, y: 4 }}
-      transition={prefersReduced
-        ? { duration: 0 }
-        : { type: 'spring', stiffness: 240, damping: 24, mass: 1.0 }}
-    >
-      {content}
-    </motion.div>
-  )
-}
+// ─── MapMarker ────────────────────────────────────────────────────────────────
 
 // ─── MapMarker ────────────────────────────────────────────────────────────────
 
@@ -846,8 +570,6 @@ export default function MapView({
 
         if (error) {
           console.error('[MapView] fetch error:', error.message)
-        } else {
-          console.log('[MapView] fetched:', data?.length ?? 0, 'submissions')
         }
       } catch (err) {
         console.error('Unexpected error fetching submissions:', err)
@@ -859,27 +581,6 @@ export default function MapView({
     fetch()
   }, [])
 
-  // FSA median map for context lines
-  const fsaMedians = useMemo(() => {
-    const byFsa = new Map<string, number[]>()
-    for (const s of submissions) {
-      if (s.rate_change_pct != null) {
-        const arr = byFsa.get(s.fsa) ?? []
-        arr.push(s.rate_change_pct)
-        byFsa.set(s.fsa, arr)
-      }
-    }
-    const result = new Map<string, FsaStats>()
-    for (const [fsa, vals] of byFsa) {
-      const sorted = [...vals].sort((a, b) => a - b)
-      const mid    = Math.floor(sorted.length / 2)
-      const median = sorted.length % 2 === 0
-        ? (sorted[mid - 1] + sorted[mid]) / 2
-        : sorted[mid]
-      result.set(fsa, { median, count: sorted.length })
-    }
-    return result
-  }, [submissions])
 
   const allWithCentroid = useMemo(
     () => submissions.filter(s => getCentroid(s.fsa) !== null),

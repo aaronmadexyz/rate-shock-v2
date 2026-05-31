@@ -51,7 +51,7 @@ function validatePayload(payload: {
   sentiment: number
   rate_change_pct: number | null
 }): string | null {
-  if (!/^[A-Z][0-9][A-Z]$/.test(payload.fsa) || !ONTARIO_PREFIXES.has(payload.fsa[0])) {
+  if (!/^[A-Z][0-9][A-Z]$/.test(payload.fsa) || !ONTARIO_PREFIXES.has(payload.fsa[0]!)) {
     console.error('[ShareRenewalModal] Validation failed: fsa =', payload.fsa)
     return 'Invalid FSA'
   }
@@ -154,7 +154,7 @@ function medianOf(values: number[]): number | null {
   if (!values.length) return null
   const s = [...values].sort((a, b) => a - b)
   const m = Math.floor(s.length / 2)
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2
+  return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2
 }
 
 // ─── Tooltip tip text ─────────────────────────────────────────────────────────
@@ -294,6 +294,13 @@ interface StepperVal {
   dir: 'up' | 'down'
 }
 
+interface StepperState {
+  yrs: StepperVal
+  cl:  StepperVal
+  cv:  StepperVal
+  hcl: StepperVal
+}
+
 interface ShareRenewalModalProps {
   isOpen: boolean
   onClose: () => void
@@ -398,7 +405,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const [insType, setInsType]     = useState<'auto' | 'home'>('auto')
   const [provider, setProvider]   = useState('')
   const [provErr, setProvErr]     = useState(false)
-  const [steppers, setSteppers]   = useState<Record<string, StepperVal>>({
+  const [steppers, setSteppers]   = useState<StepperState>({
     yrs: { v: 0, k: 0, dir: 'up' }, cl:  { v: 0, k: 0, dir: 'up' },
     cv:  { v: 0, k: 0, dir: 'up' },
     hcl: { v: 0, k: 0, dir: 'up' },
@@ -618,10 +625,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
     if (e.shiftKey && document.activeElement === first) {
       e.preventDefault()
-      last.focus()
+      last?.focus()
     } else if (!e.shiftKey && document.activeElement === last) {
       e.preventDefault()
-      first.focus()
+      first?.focus()
     }
   }
 
@@ -706,9 +713,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     cv:  { min: 0, max: 3  },
     hcl: { min: 0, max: 5  },
   }
-  function adj(f: string, d: 1 | -1) {
+  function adj(f: keyof StepperState, d: 1 | -1) {
     setSteppers(prev => {
-      const cur = prev[f]; const { min, max } = cfg[f]
+      const cur = prev[f]; const cfgEntry = cfg[f]; if (!cfgEntry) return prev
+      const { min, max } = cfgEntry
       const newV = Math.max(min, Math.min(max, cur.v + d))
       if (newV === cur.v) return prev
       return { ...prev, [f]: { v: newV, k: cur.k + 1, dir: d > 0 ? 'up' : 'down' } }
@@ -1001,15 +1009,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       next = (current - 1 + pills.length) % pills.length
       e.preventDefault()
     } else if (e.key === 'Enter' || e.key === ' ') {
-      setProvider(pills[current].textContent?.trim() ?? '')
+      setProvider(pills[current]?.textContent?.trim() ?? '')
       setProvErr(false)
       e.preventDefault()
       return
     } else {
       return
     }
-    pills[next].focus()
-    setProvider(pills[next].textContent?.trim() ?? '')
+    pills[next]?.focus()
+    setProvider(pills[next]?.textContent?.trim() ?? '')
     setProvErr(false)
   }
 
@@ -1134,7 +1142,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   }, [])
 
   const playAnim = useCallback(() => {
-    const color = SC[sent]
+    const color = SC[sent]!
     const isPos = sent <= 2
     const isNeg = sent >= 4
     if (sealCircleRef.current) sealCircleRef.current.setAttribute('fill', color)

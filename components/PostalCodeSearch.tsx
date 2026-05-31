@@ -84,7 +84,7 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
       return
     }
 
-    if (!ONTARIO_PREFIXES.has(v[0])) {
+    if (!ONTARIO_PREFIXES.has(v[0]!)) {
       pendingFsaRef.current = ''
       setStatus('invalid')
       return

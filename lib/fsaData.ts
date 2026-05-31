@@ -541,13 +541,13 @@ export function getAreaLabel(fsa: string): string {
   if (v.length === 2) {
     const match = Object.keys(FSA).find(k => k.startsWith(v))
     if (match) return FSA[match] + '…'
-    if (ONTARIO.has(v[0])) return 'Ontario'
-    return PROV_FALLBACK[v[0]] ?? ''
+    if (ONTARIO.has(v.charAt(0))) return 'Ontario'
+    return PROV_FALLBACK[v.charAt(0)] ?? ''
   }
 
   // 3 chars — exact FSA lookup or province fallback
   const key = v.slice(0, 3)
   if (FSA[key]) return FSA[key]
-  if (ONTARIO.has(key[0])) return 'Ontario'
-  return PROV_FALLBACK[key[0]] ?? ''
+  if (ONTARIO.has(key.charAt(0))) return 'Ontario'
+  return PROV_FALLBACK[key.charAt(0)] ?? ''
 }

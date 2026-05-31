@@ -4,119 +4,454 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Share My Renewal — RateMap</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+/* ── DESIGN SYSTEM TOKENS v1.4 ── */
+:root{
+  --n-0:#FFFFFF; --n-25:#FAFAF8; --n-50:#F5F4F1; --n-100:#EEEDEA;
+  --n-150:var(--n-150); --n-200:#D4D3CE; --n-300:#B8B7B1;
+  --n-400:#767670; /* raised from #9A998F — WCAG AA 4.57:1 on white ✓ */
+  --n-500:#706F67; /* raised from #7C7B72 — WCAG AA 5.05:1 on white ✓ */
+  --n-600:#5E5D56; --n-700:#43423D; --n-800:#2C2B27; --n-900:#1A1917;
+  --p-50:#EEEFFA; --p-200:#B0B4E6; --p-400:#636AC5;
+  --p-500:#4A50B0; --p-600:#3A3F8F; --p-700:#2D3170;
+  --pos-50:#EDF7F0; --pos-200:#93D1A2; --pos-400:#3A9B55;
+  --pos-500:#2A7D41; --pos-600:#1F6132;
+  --cau-50:#FEF6E8; --cau-200:#FACA6B; --cau-400:#D49316;
+  --cau-500:#AD7710; --cau-600:#845A0C;
+  --neg-50:#FDF0EE; --neg-200:#F2A597; --neg-400:#D4503A;
+  --neg-500:#B33C28; --neg-600:#8C2E1E;
+  --font:'Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --r-full:9999px; --r-lg:14px; --r-md:10px; --r-sm:6px;
+  --sh-xs:0 1px 2px rgba(26,25,23,.04);
+  --sh-sm:0 1px 3px rgba(26,25,23,.06),0 1px 2px rgba(26,25,23,.04);
+  --sh-md:0 4px 12px rgba(26,25,23,.06),0 1px 3px rgba(26,25,23,.04);
+  --sh-lg:0 8px 28px rgba(26,25,23,.08),0 2px 6px rgba(26,25,23,.04);
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+  --sp-5:20px; --sp-6:24px; --sp-7:28px; --sp-8:32px;
+  --z-map:0; --z-markers:10; --z-controls:20; --z-nav:100;
+  --z-panel:200; --z-tooltip:300;
+  --z-overlay-bg:400; --z-overlay:450;
+  --z-backdrop:500; --z-modal:600; --z-alert:700;
+  /* Semantic aliases */
+  --text-primary:var(--n-900);
+  --text-secondary:var(--n-600);
+  --text-tertiary:var(--n-500);
+  --text-placeholder:var(--n-300);
+  --text-inverse:var(--n-0);
+  --surface-primary:var(--n-0);
+  --surface-secondary:var(--n-25);
+  --surface-tertiary:var(--n-50);
+  --surface-dark:var(--n-800);
+  --border-subtle:var(--n-100);
+  --border-default:var(--n-200);
+  --border-strong:var(--n-300);
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',system-ui,sans-serif;background:#EEECE7;min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased}
+/* letter-spacing per WCAG 1.4.12 */
+p{margin-bottom:1em}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--n-50);letter-spacing:0.012em;min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased}
 #app{width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;transition:background .38s ease}
 #app.open{background:rgba(26,25,23,.46)}
-#trg{display:flex;flex-direction:column;align-items:center;gap:14px;transition:opacity .22s,transform .22s}
+#trg{display:flex;flex-direction:column;align-items:center;gap:16px;transition:opacity .22s,transform .22s}
 #trg.gone{opacity:0;pointer-events:none;transform:scale(.96)}
-#cta{font-family:'Inter',system-ui,sans-serif;font-size:15px;font-weight:500;padding:13px 32px;border-radius:999px;background:#1A1917;color:#FFFFFF;border:none;cursor:pointer;letter-spacing:-.01em;transition:opacity .15s,transform .1s}
+#cta{font-family:'Inter',system-ui,sans-serif;font-size:16px;font-weight:500;padding:12px 32px;border-radius:9999px;background:#1A1917;color:#FFFFFF;border:none;cursor:pointer;letter-spacing:-.01em;transition:opacity .15s,transform .1s}
 #cta:hover{opacity:.82}#cta:active{transform:scale(.97)}
-#ctag{font-size:13px;color:#7C7B72;text-align:center;max-width:240px;line-height:1.55}
-#mod{position:fixed;top:50%;left:50%;transform:translate(-50%,-52%) scale(.94);opacity:0;pointer-events:none;width:calc(100vw - 48px);max-width:468px;background:#FFFFFF;border-radius:20px;border:1px solid #E2E1DD;box-shadow:0 8px 32px rgba(26,25,23,.12),0 2px 8px rgba(26,25,23,.06);transition:transform .44s cubic-bezier(.16,1,.3,1),opacity .34s cubic-bezier(.16,1,.3,1)}
+#ctag{font-size:13px;color:#706F67;text-align:center;max-width:240px;line-height:1.55}
+
+/* ── MODAL ── */
+#mod{position:fixed;top:50%;left:50%;transform:translate(-50%,-52%) scale(.94);opacity:0;pointer-events:none;width:calc(100vw - 48px);max-width:468px;background:#FFFFFF;border-radius:20px;border:1px solid var(--n-150);box-shadow:0 8px 32px rgba(26,25,23,.12),0 2px 8px rgba(26,25,23,.06);transition:transform .44s cubic-bezier(.16,1,.3,1),opacity .34s cubic-bezier(.16,1,.3,1)}
 #mod.vis{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:all}
-.mhd{display:flex;align-items:center;justify-content:space-between;padding:20px 22px 0}
-.mttl{font-size:15px;font-weight:500;color:#1A1917}
-.xcls{width:26px;height:26px;border-radius:50%;border:1px solid #EEEDEA;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0;padding:0}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0}
+.mttl{font-size:13px;font-weight:500;color:#1A1917;letter-spacing:-.01em;line-height:1.3;max-width:220px}
+.xcls{width:26px;height:26px;border-radius:50%;border:1px solid #EEEDEA;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0;padding:0;position:relative}
+.xcls::before{content:'';position:absolute;inset:-9px;border-radius:50%}
 .xcls:hover{background:#F5F4F1}
-.dotrow{display:flex;gap:5px;justify-content:center;padding:12px 0 0}
+.dotrow{display:flex;gap:4px;justify-content:center;padding:12px 0 0}
 .dot{width:5px;height:5px;border-radius:50%;background:#D4D3CE;transition:all .35s cubic-bezier(.16,1,.3,1)}
 .dot.on{width:18px;border-radius:3px;background:#1A1917}
-.mbdy{padding:16px 22px 0;max-height:420px;overflow-y:auto}
+
+/* ── FORM BODY ── */
+.mbdy{padding:12px 24px 0;max-height:420px;overflow-y:auto}
 .mbdy::-webkit-scrollbar{width:3px}
-.mbdy::-webkit-scrollbar-thumb{background:#E2E1DD;border-radius:2px}
+.mbdy::-webkit-scrollbar-thumb{background:var(--n-150);border-radius:2px}
 .ff{margin-bottom:16px}
-.fl{display:block;font-size:11px;font-weight:500;color:#9A998F;margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
-.fsai{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;width:100%;padding:11px 15px;border:1.5px solid #EEEDEA;border-radius:12px;background:#FFFFFF;color:#1A1917;outline:none;letter-spacing:.14em;text-transform:uppercase;transition:border-color .15s,box-shadow .15s;display:block}
+.fl{display:block;font-size:11px;font-weight:500;color:#767670;margin-bottom:4px;letter-spacing:.04em;text-transform:uppercase}
+
+/* FSA */
+.fsai{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;width:100%;padding:12px 16px;border:1.5px solid #EEEDEA;border-radius:var(--r-lg);background:#FFFFFF;color:#1A1917;outline:none;letter-spacing:.14em;text-transform:uppercase;transition:border-color .15s,box-shadow .15s;display:block}
 .fsai:focus{border-color:#4A50B0;box-shadow:0 0 0 3px rgba(74,80,176,.09)}
 .fsai::placeholder{color:#D4D3CE}
-.fhint{font-size:12px;color:#4A50B0;font-weight:500;margin-top:5px;min-height:16px}
-.ferr{font-size:12px;color:#D4503A;margin-top:4px;display:none}
+.fhint{font-size:12px;color:#4A50B0;font-weight:500;margin-top:5px;min-height:16px;overflow:hidden}
+@keyframes hintResolve{
+  0%  {opacity:0;filter:blur(3px)}
+  40% {opacity:.6;filter:blur(1px)}
+  100%{opacity:1;filter:blur(0px)}
+}
+.fhint.resolving{animation:hintResolve 200ms cubic-bezier(.16,1,.3,1) both}
+.ferr{font-size:12px;color:#B33C28;margin-top:4px;display:none}
 .ferr.on{display:block}
+
+/* FSA contextual submission count */
+.fsa-ctx{
+  display:flex;align-items:flex-start;gap:8px;
+  margin-top:8px;padding:8px 12px;
+  border-radius:var(--r-md);font-size:12px;line-height:1.5;
+  animation:ctxFade .25s ease both;
+}
+@keyframes ctxFade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+/* Pioneer — no data yet */
+.fsa-ctx.pioneer{
+  background:#EEEFFA;color:#3A3F8F;
+}
+/* Social proof — data exists */
+.fsa-ctx.social{
+  background:#F5F4F1;color:#5E5D56;
+}
+.fsa-ctx svg{flex-shrink:0;margin-top:1px}
+.priv-note{display:flex;align-items:flex-start;gap:8px;margin-top:8px;padding:8px 12px;background:#F5F4F1;border-radius:8px}
+.priv-note svg{flex-shrink:0;margin-top:1px}
+.priv-note span{font-size:11px;color:#767670;line-height:1.5}
+
+/* Insurance type toggle */
 .ttog{display:flex;gap:8px}
-.tbt{flex:1;padding:11px 8px;border-radius:10px;font-size:13px;font-weight:500;border:1.5px solid #EEEDEA;background:#FFFFFF;color:#7C7B72;cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;justify-content:center;gap:7px;font-family:'Inter',system-ui,sans-serif}
+/* Insurance type ff gets extra bottom margin
+   — signals: this choice controls what follows */
+.ff-type{margin-bottom:24px}
+.tbt{flex:1;padding:12px 8px;border-radius:10px;font-size:13px;font-weight:500;border:1.5px solid #EEEDEA;background:#FFFFFF;color:#706F67;cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Inter',system-ui,sans-serif}
 .tbt:active{transform:scale(.97)}
 .tbt.on{background:#1A1917;color:#FFFFFF;border-color:#1A1917}
-.prog{overflow:hidden;max-height:0;transition:max-height .5s cubic-bezier(.16,1,.3,1),opacity .35s;opacity:0}
-.prog.open{max-height:300px;opacity:1}
-.twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Progressive fields */
+.prog{overflow:hidden;max-height:0;transition:max-height .28s cubic-bezier(.16,1,.3,1),opacity .22s;opacity:0;pointer-events:none}
+.prog.open{max-height:600px;opacity:1;pointer-events:all}
+/* Fields section — breathing room + mode-switch divider */
+.prog-fields{
+  padding-top:16px;
+  border-top:1px solid var(--n-100);
+}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.twocol .fl{min-height:28px;display:flex;align-items:flex-end;padding-bottom:8px;margin-bottom:0}
+
+/* Steppers */
 .stpr{display:flex;align-items:center;border:1px solid #EEEDEA;border-radius:10px;overflow:hidden;width:fit-content}
-.sb{width:34px;height:34px;border:none;background:#FFFFFF;cursor:pointer;font-size:17px;color:#9A998F;display:flex;align-items:center;justify-content:center;transition:background .12s,transform .1s;font-family:'Inter',system-ui,sans-serif;flex-shrink:0;line-height:1}
+.sb{width:34px;height:34px;border:none;background:#FFFFFF;cursor:pointer;font-size:17px;color:#767670;display:flex;align-items:center;justify-content:center;transition:background .12s,transform .1s;font-family:'Inter',system-ui,sans-serif;flex-shrink:0;line-height:1;position:relative}
+.sb::before{content:'';position:absolute;inset:-5px}
 .sb:hover{background:#F5F4F1}
-.sb:active{transform:scale(.86)}
-.sn{min-width:40px;text-align:center;font-size:14px;font-weight:500;color:#1A1917;border-left:1px solid #EEEDEA;border-right:1px solid #EEEDEA;line-height:34px;background:#FFFFFF}
+.sb:active{transform:scale(.97)}
+/* Stepper number — overflow:hidden clips the tick animation */
+.sn-wrap{min-width:40px;height:34px;overflow:hidden;border-left:1px solid #EEEDEA;border-right:1px solid #EEEDEA;background:#FFFFFF;display:flex;align-items:center;justify-content:center}
+.sn{font-size:14px;font-weight:500;color:#1A1917;line-height:1;display:block}
+@keyframes snUp{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes snDown{from{transform:translateY(-8px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sn.tick-up{animation:snUp .18s cubic-bezier(.16,1,.3,1) both}
+.sn.tick-down{animation:snDown .18s cubic-bezier(.16,1,.3,1) both}
+
+/* ── PROVIDER SELECTOR ── */
+.prov-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:0}
+.prov-pill{font-family:'Inter',system-ui,sans-serif;font-size:12px;font-weight:500;padding:8px 12px;border-radius:9999px;border:1px solid #EEEDEA;background:#FFFFFF;color:#706F67;cursor:pointer;transition:all .18s cubic-bezier(.16,1,.3,1);white-space:nowrap;line-height:1}
+.prov-pill:hover{border-color:#D4D3CE;background:#FAFAF8}
+.prov-pill:active{transform:scale(.97)}
+/* Rule 2: snap starts .97, overshoots to 1.04, settles
+   Rule 5: transform-origin center — pill snaps symmetrically
+   Rule 6: 180ms — under 300ms */
+@keyframes pillSnap{
+  0%  {transform:scale(1)}
+  25% {transform:scale(.97)}
+  60% {transform:scale(1.04)}
+  80% {transform:scale(.99)}
+  100%{transform:scale(1)}
+}
+.prov-pill.snapping{animation:pillSnap 180ms cubic-bezier(.16,1,.3,1) both;transform-origin:center center}
+.prov-pill.on{background:#1A1917;color:#FFFFFF;border-color:#1A1917}
+.ferr-prov{font-size:12px;color:#B33C28;margin-top:4px;display:none}
+.ferr-prov.on{display:block}
+
+/* ── SLIDER ── */
 .slhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.slval{font-size:28px;font-weight:600;color:#1A1917;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.sltog{display:flex;background:#F5F4F1;border-radius:8px;padding:2px}
-.slm{padding:4px 14px;border-radius:6px;font-size:12px;font-weight:500;border:none;background:transparent;cursor:pointer;color:#9A998F;transition:all .15s;font-family:'Inter',system-ui,sans-serif}
-.slm.on{background:#FFFFFF;color:#1A1917;box-shadow:0 1px 2px rgba(0,0,0,.08)}
-input[type=range].rng{width:100%;height:4px;border-radius:2px;outline:none;-webkit-appearance:none;cursor:pointer;margin:6px 0;display:block}
+/* ── SIGN TOGGLE (increase / decrease) ── */
+.sign-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.sign-lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#767670;margin-right:2px}
+.sign-btn{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.04em;padding:12px 16px;border-radius:9999px;border:1.5px solid #EEEDEA;background:#FFFFFF;color:#767670;cursor:pointer;transition:all .15s}
+.sign-btn.on.inc{border-color:#845A0C;background:#FEF6E8;color:#845A0C}
+.sign-btn.on.dec{border-color:#1F6132;background:#EDF7F0;color:#1F6132}
+.sign-btn:active{transform:scale(.97)}
+/* ── TRIANGLE FIELDS (dollar inputs) ── */
+.tri-wrap{margin-top:16px;padding:12px 16px;background:#FAFAF8;border:1px solid #EEEDEA;border-radius:var(--r-lg)}
+.tri-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#767670;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.tri-lbl-opt{font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:10px;letter-spacing:0;text-transform:none;color:#706F67}
+.tri-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tri-field{}
+.tri-field-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#767670;margin-bottom:4px;display:block}
+.tri-inp-wrap{display:flex;align-items:center;background:#FFFFFF;border:1.5px solid #D4D3CE;border-radius:var(--r-md);padding:0 12px;height:44px;gap:4px;transition:border-color .15s,box-shadow .15s}
+.tri-inp-wrap:focus-within{border-color:#636AC5;box-shadow:0 0 0 3px rgba(99,106,197,.09)}
+.tri-pfx{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:#767670;flex-shrink:0;user-select:none}
+.tri-inp{flex:1;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;color:#1A1917;border:none;outline:none;background:transparent;width:100%;min-width:0}
+.tri-inp::placeholder{color:#D4D3CE}
+/* Calculated % preview */
+.tri-result{margin-top:12px;padding:8px 12px;background:#EEEFFA;border:1px solid var(--p-200);border-radius:var(--r-md);display:none;will-change:transform,opacity}
+/* Rule 2: starts scale(.97) translateY(6px) — never from 0
+   Rule 4: ease-out enter cubic-bezier(.16,1,.3,1)
+   Rule 5: transform-origin top center — grows down from label above
+   Rule 6: 220ms — under 300ms ceiling */
+@keyframes triResultIn{
+  from{opacity:0;transform:translateY(6px) scale(.97)}
+  to  {opacity:1;transform:translateY(0)   scale(1)}
+}
+.tri-result.show{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  animation:triResultIn 220ms cubic-bezier(.16,1,.3,1) both;
+  transform-origin:top center;
+}
+.tri-result-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#3A3F8F;letter-spacing:-.02em}
+.tri-result-lbl{font-family:'Inter',system-ui,sans-serif;font-size:11px;color:#4A50B0;line-height:1.45}
+/* Decrease variant colours */
+.tri-result.decrease{background:#EDF7F0;border-color:rgba(58,155,85,.25)}
+.tri-result.decrease .tri-result-val{color:#1F6132}
+.tri-result.decrease .tri-result-lbl{color:#2A7D41}
+/* Hero slider value — display scale per design-system v1.4 */
+.slhero{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:16px}
+.slval{
+  font-family:'IBM Plex Mono','SF Mono',monospace;
+  font-size:52px;
+  font-weight:700;
+  letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;
+  color:#1A1917;
+  line-height:1;
+  transition:color .18s ease;
+}
+@media(max-width:680px){.slval{font-size:40px}}
+/* Mode toggle — subordinate unit selector */
+.sltog{display:flex;background:#EEEDEA;border-radius:9999px;padding:2px;gap:0}
+.slm{padding:8px 16px;border-radius:9999px;font-family:'IBM Plex Mono','SF Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.02em;border:none;background:transparent;cursor:pointer;color:#767670;transition:background .15s,color .15s,box-shadow .15s}
+.slm.on{background:#FFFFFF;color:#1A1917;box-shadow:0 1px 2px rgba(26,25,23,.08)}
+.slm:active{transform:scale(.97)}
+.slm{position:relative}
+.slm::before{content:'';position:absolute;inset:-8px 0}
+/* Field label + tooltip icon row */
+.fl-row{display:flex;align-items:center;gap:4px;margin-bottom:4px}
+.fl-row .fl{margin-bottom:0}
+.tip-wrap{position:relative;display:inline-flex;align-items:center}
+.tip-btn{
+  /* 18px visible circle, 44px touch target via padding */
+  width:18px;height:18px;
+  border-radius:50%;
+  border:1.5px solid #767670;  /* n-400 — visible against white */
+  background:#FFFFFF;
+  color:#767670;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  flex-shrink:0;
+  /* Expand tap target without changing visual size */
+  position:relative;
+  transition:border-color .15s,background .15s,color .15s;
+  /* Invisible tap-target expander */
+  -webkit-tap-highlight-color:transparent;
+}
+.tip-btn::before{
+  content:'';
+  position:absolute;
+  inset:-13px; /* 18px + 26px padding = 44px tap target */
+  border-radius:50%;
+}
+.tip-btn:hover{
+  border-color:#3A3F8F;   /* p-600 */
+  background:#EEEFFA;     /* p-50 */
+  color:#3A3F8F;
+}
+.tip-btn.active{
+  border-color:#3A3F8F;
+  background:#EEEFFA;
+  color:#3A3F8F;
+}
+.tip-btn:focus-visible{outline:3px solid #636AC5;outline-offset:2px}
+.tip-btn svg{display:block;pointer-events:none}
+/* Tooltip portal — rendered on document.body, above all stacking contexts */
+.tip-portal{
+  position:fixed;
+  background:#1A1917;
+  color:#FFFFFF;
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:12px;
+  font-weight:400;
+  line-height:1.55;
+  padding:12px 12px;
+  border-radius:var(--r-md);
+  width:220px;
+  max-width:calc(100vw - 32px);
+  box-shadow:0 4px 12px rgba(26,25,23,.22),0 1px 3px rgba(26,25,23,.14);
+  z-index:700;
+  pointer-events:none;
+  /* Start hidden — JS controls visibility */
+  display:none;
+  opacity:0;
+  transform:translateY(4px) scale(0.97);
+  transition:opacity .18s cubic-bezier(.16,1,.3,1),
+             transform .2s cubic-bezier(.16,1,.3,1);
+}
+.tip-portal.measuring{
+  /* Visible for measurement but not seen */
+  display:block;
+  visibility:hidden;
+  opacity:0;
+}
+.tip-portal.visible{
+  display:block;
+  visibility:visible;
+  opacity:1;
+  transform:translateY(0) scale(1);
+}
+.tip-portal-caret{
+  position:absolute;
+  top:100%;
+  border:5px solid transparent;
+  border-top-color:#1A1917;
+}
+/* ══ FOCUS RINGS — design system spec ══
+   Inputs: 3px p-400 ring, 2px offset
+   Buttons: 2px white + 2px p-500 double ring
+   Pill/toggle: 3px p-400 ring
+*/
+.tbt:focus-visible,
+.nxbt:focus-visible,
+.bkbt:focus-visible,
+.prov-pill:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 2px #FFFFFF,0 0 0 4px #4A50B0;
+}
+.xcls:focus-visible,
+.sb:focus-visible,
+.so:focus-visible,
+.sign-btn:focus-visible,
+.slm:focus-visible,
+
+.tri-inp:focus-visible,
+.fsai:focus-visible,
+textarea.ta:focus-visible{
+  outline:none;
+  border-color:#636AC5;
+  box-shadow:0 0 0 3px rgba(99,106,197,.12);
+}
+/* Checkbox focus — targets visual box via sibling */
+input[type="checkbox"]:focus-visible~.consent-box,
+input[type="checkbox"]:focus-visible+.consent-box{
+  outline:3px solid #636AC5;
+  outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce){
+  /* Tooltip */
+  .tip-portal{transition:opacity .12s}
+  /* Stepper tick animations */
+  .sn.tick-up,.sn.tick-down{animation:none}
+  /* Section open/close */
+  .prog{transition:none}
+  /* Contextual label fade */
+  .fsa-ctx{animation:none;opacity:1}
+  /* Envelope and stamp animations */
+  .on-map-confirm,.amsg,
+  .cmp-cols{animation:none;opacity:1}
+  /* Scale presses still allowed — 
+     they are not vestibular triggers */
+  /* New delight animations — disable under reduced motion */
+  .so.selected{animation:none}
+  .prov-pill.snapping{animation:none}
+  .tri-result.show{animation:none;opacity:1;transform:none}
+  .consent-box.confirm{animation:none}
+  .consent-box.uncheck{animation:none}
+  .fhint.resolving{animation:none;opacity:1;filter:none}
+}
+input[type=range].rng{width:100%;height:4px;border-radius:2px;outline:none;-webkit-appearance:none;cursor:pointer;margin:4px 0;display:block}
 input[type=range].rng::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#FFFFFF;border:1.5px solid #D4D3CE;box-shadow:0 1px 3px rgba(0,0,0,.12);cursor:pointer;transition:border-color .15s,transform .1s}
-input[type=range].rng::-webkit-slider-thumb:hover{border-color:#9A998F}
+input[type=range].rng::-webkit-slider-thumb:hover{border-color:#767670}
 input[type=range].rng:active::-webkit-slider-thumb{transform:scale(1.18)}
 .rbds{display:flex;justify-content:space-between;margin-top:3px}
 .rbd{font-size:11px;color:#B8B7B1;font-family:'IBM Plex Mono',monospace}
-.sents{display:flex;gap:5px;margin-bottom:2px}
-.so{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 3px;border-radius:12px;border:1.5px solid #EEEDEA;cursor:pointer;transition:all .22s cubic-bezier(.16,1,.3,1);background:#FFFFFF;font-family:'Inter',system-ui,sans-serif}
-.so:active{transform:scale(.92)}
-.sl{font-size:10px;color:#9A998F;text-align:center;line-height:1.3}
-textarea.ta{width:100%;padding:11px 13px;font-family:'Inter',system-ui,sans-serif;font-size:14px;border:1.5px solid #EEEDEA;border-radius:12px;background:#FFFFFF;color:#1A1917;outline:none;resize:none;line-height:1.6;min-height:76px;transition:border-color .15s,box-shadow .15s;display:block}
+/* Contextual slider label */
+.sl-ctx{font-size:12px;font-weight:500;margin-top:8px;min-height:16px;transition:color .2s ease;line-height:1}
+
+/* Sentiment */
+.sents{display:flex;gap:8px;margin-bottom:4px}
+.so{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:var(--r-lg);border:1.5px solid #EEEDEA;cursor:pointer;transition:border-color .2s cubic-bezier(.16,1,.3,1),background .2s cubic-bezier(.16,1,.3,1),transform .1s;background:#FFFFFF;font-family:'Inter',system-ui,sans-serif;transform-origin:center center;will-change:transform}
+.so:active{transform:scale(.97)}
+/* Rule 1: scale(.97) on press ✓
+   Rule 2: pulse starts at scale(.97) not 0
+   Rule 5: transform-origin center center (face center)
+   Rule 6: 200ms total — under 300ms ceiling */
+@keyframes sentPulse{
+  0%  {transform:scale(1)}
+  30% {transform:scale(.97)}
+  65% {transform:scale(1.06)}
+  85% {transform:scale(.99)}
+  100%{transform:scale(1)}
+}
+.so.selected{animation:sentPulse 200ms cubic-bezier(.16,1,.3,1) both}
+.sl{font-size:10px;color:#767670;text-align:center;line-height:1.3}
+
+/* Textarea */
+textarea.ta{width:100%;padding:12px 12px;font-family:'Inter',system-ui,sans-serif;font-size:14px;border:1.5px solid #EEEDEA;border-radius:var(--r-lg);background:#FFFFFF;color:#1A1917;outline:none;resize:none;line-height:1.6;min-height:76px;transition:border-color .15s,box-shadow .15s;display:block}
 textarea.ta:focus{border-color:#4A50B0;box-shadow:0 0 0 3px rgba(74,80,176,.09)}
 textarea.ta::placeholder{color:#D4D3CE}
-.step{display:none}.step.on{display:block}
-.mft{padding:14px 22px 18px;display:flex;gap:10px;align-items:center}
-.bkbt{font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:500;padding:11px 18px;border-radius:999px;border:1px solid #D4D3CE;background:#FFFFFF;cursor:pointer;color:#7C7B72;transition:background .15s,transform .1s;white-space:nowrap}
-.bkbt:hover{background:#F5F4F1}
-.bkbt:active{transform:scale(.97)}
-.nxbt{font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:500;padding:11px 0;border-radius:999px;border:none;background:#1A1917;color:#FFFFFF;cursor:pointer;transition:opacity .15s,transform .1s;flex:1;text-align:center;display:block}
-.nxbt:hover{opacity:.83}
-.nxbt:active{transform:scale(.97)}
 
-/* ══════════════════════════════════
+/* ── CONSENT CHECKBOX ── */
+.consent-row{display:flex;align-items:flex-start;gap:8px;padding:12px;background:#F5F4F1;border-radius:10px;margin-top:4px;cursor:pointer}
+.consent-row input[type=checkbox]{display:none}
+.consent-box{width:18px;height:18px;border-radius:5px;border:1.5px solid #D4D3CE;background:#FFFFFF;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s;margin-top:1px;will-change:transform}
+@keyframes consentConfirm{
+  0%  {transform:scale(1);   border-color:#D4D3CE}
+  20% {transform:scale(.94); border-color:#3A9B55}
+  55% {transform:scale(1.06);border-color:#3A9B55}
+  80% {transform:scale(.99); border-color:#1A1917}
+  100%{transform:scale(1);   border-color:#1A1917}
+}
+@keyframes consentUncheck{
+  0%  {transform:scale(1)}
+  30% {transform:scale(.94)}
+  100%{transform:scale(1)}
+}
+.consent-box.confirm{animation:consentConfirm 260ms cubic-bezier(.16,1,.3,1) both;transform-origin:center center}
+.consent-box.uncheck{animation:consentUncheck 150ms cubic-bezier(.16,1,.3,1) both;transform-origin:center center}
+.consent-box.checked{background:#1A1917;border-color:#1A1917}
+.consent-text{font-size:12px;color:#706F67;line-height:1.55}
+
+/* ── FOOTER ── */
+.step{display:none}.step.on{display:block}
+.mft{padding:16px 24px 16px;display:flex;gap:8px;align-items:center}
+.bkbt{font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:500;padding:12px 16px;border-radius:9999px;border:1px solid #D4D3CE;background:#FFFFFF;cursor:pointer;color:#706F67;transition:background .15s,transform .1s;white-space:nowrap}
+.bkbt:hover{background:#F5F4F1}.bkbt:active{transform:scale(.97)}
+.nxbt{font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:500;padding:12px 0;border-radius:9999px;border:none;background:#1A1917;color:#FFFFFF;cursor:pointer;transition:opacity .15s,transform .1s;flex:1;text-align:center;display:block}
+.nxbt:hover{opacity:.83}.nxbt:active{transform:scale(.97)}
+.nxbt:disabled{opacity:.32;cursor:not-allowed;transform:none}
+
+/* ══════════════════════════════════════
    ANIMATION STAGE
-══════════════════════════════════ */
-.astg{display:none;flex-direction:column;align-items:center;padding:16px 22px 24px}
+══════════════════════════════════════ */
+.astg{display:none;flex-direction:column;align-items:center;padding:8px 24px 20px;min-height:280px}
 .astg.on{display:flex}
 
-/*
-  env-scene: the coordinate container.
-  overflow:visible so the open flap and rising letter
-  can extend above the envelope's top edge.
-  Height = envelope body height (118px).
-  Elements above it overflow freely.
-*/
 .env-scene{
-  position:relative;
-  width:180px;
-  height:118px;
-  margin:70px auto 16px;   /* 70px top margin = room for open flap + letter tip */
-  overflow:visible;
-  flex-shrink:0;
+  position:relative;width:180px;height:118px;
+  margin:52px auto 10px;
+  overflow:visible;flex-shrink:0;
+  transform-origin:top center;
+  transition:transform .6s cubic-bezier(.16,1,.3,1), margin .6s cubic-bezier(.16,1,.3,1);
+}
+.env-scene.stamp{
+  transform:scale(0.38);
+  margin-top:4px;
+  margin-bottom:-56px;
 }
 
-/* ── LAYER Z-INDEX STACK ──
-   1: envelope body (permanent)
-   2: letter (rises, eventually z=5 above flap)
-   3: rip elements
-   4: flap SVG (starts above letter, ends as open lid)
-*/
-
-/* Letter */
 #envLetter{
-  position:absolute;
-  left:14px; right:14px;
-  top:14px;
-  height:140px;                /* tall letter */
-  background:#FFFFFF;
-  border:1px solid #DDDBD6;
-  border-radius:4px;
-  box-shadow:0 2px 10px rgba(26,25,23,.1);
-  z-index:2;
-  opacity:0;
-  transform:translateY(0px);
-  /* JS drives the animation, no CSS transition here */
+  position:absolute;left:14px;right:14px;top:14px;height:140px;
+  background:#FFFFFF;border:1px solid var(--n-150);border-radius:4px;
+  box-shadow:0 2px 10px rgba(26,25,23,.1);z-index:2;opacity:0;transform:translateY(0px);
 }
 .letter-inner{padding:14px 13px 0}
 .ll{height:2px;background:#EEEDEA;border-radius:1px;margin-bottom:10px}
@@ -124,58 +459,98 @@ textarea.ta::placeholder{color:#D4D3CE}
 .letter-face{display:flex;align-items:center;justify-content:center;padding-top:10px;opacity:0;transition:opacity .4s ease}
 .letter-face.on{opacity:1}
 
-/* Rip halves */
-#ripL,#ripR{
-  position:absolute;left:14px;right:14px;top:14px;height:140px;
-  background:#FFFFFF;border:1px solid #DDDBD6;border-radius:4px;
-  z-index:6;opacity:0;
-}
+#ripL,#ripR{position:absolute;left:14px;right:14px;top:14px;height:140px;background:#FFFFFF;border:1px solid var(--n-150);border-radius:4px;z-index:6;opacity:0}
 #ripL{clip-path:inset(0 50% 0 0 round 4px 0 0 4px)}
 #ripR{clip-path:inset(0 0 0 50% round 0 4px 4px 0)}
-#ripCrack{
-  position:absolute;left:50%;width:2px;top:14px;height:140px;
-  margin-left:-1px;
-  background:linear-gradient(to bottom,transparent,#E87460 15%,#E87460 85%,transparent);
-  z-index:7;opacity:0;transform:scaleY(0);transform-origin:top;
-}
+#ripCrack{position:absolute;left:50%;width:2px;top:14px;height:140px;margin-left:-1px;background:linear-gradient(to bottom,transparent,var(--neg-400) 15%,var(--neg-400) 85%,transparent);z-index:7;opacity:0;transform:scaleY(0);transform-origin:top}
 
-/* Glow */
 @keyframes glowG{
   0%,100%{box-shadow:0 0 0 0 rgba(58,155,85,0),0 4px 14px rgba(58,155,85,.15)}
   50%{box-shadow:0 0 0 6px rgba(58,155,85,.06),0 4px 26px rgba(58,155,85,.36)}
 }
 #envLetter.glow{animation:glowG 2s ease-in-out infinite}
 
-/* Particles */
-@keyframes ptcUp{
-  0%{opacity:.9;transform:translateY(0) scale(1)}
-  100%{opacity:0;transform:translateY(-80px) scale(.1)}
-}
+@keyframes ptcUp{0%{opacity:.9;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(.1)}}
+@keyframes crackIn{0%{opacity:0;transform:scaleY(0)}40%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(1)}}
+@keyframes flyL{0%{opacity:1;transform:translateX(0) translateY(0) rotate(0)}100%{opacity:0;transform:translateX(-55px) translateY(-24px) rotate(-21deg)}}
+@keyframes flyR{0%{opacity:1;transform:translateX(0) translateY(0) rotate(0)}100%{opacity:0;transform:translateX(55px) translateY(-24px) rotate(21deg)}}
 
-/* Rip animations */
-@keyframes crackIn{
-  0%{opacity:0;transform:scaleY(0)}
-  40%{opacity:1;transform:scaleY(1)}
-  100%{opacity:0;transform:scaleY(1)}
-}
-@keyframes flyL{
-  0%{opacity:1;transform:translateX(0) translateY(0) rotate(0)}
-  100%{opacity:0;transform:translateX(-55px) translateY(-24px) rotate(-21deg)}
-}
-@keyframes flyR{
-  0%{opacity:1;transform:translateX(0) translateY(0) rotate(0)}
-  100%{opacity:0;transform:translateX(55px) translateY(-24px) rotate(21deg)}
-}
-
-/* Success */
 .ptc-wrap{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:0 0 20px 20px}
 .ptc{position:absolute;border-radius:50%}
-.amsg{text-align:center;margin-top:4px}
+
+/* ── ON-MAP CONFIRMATION ── */
+.on-map-confirm{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font-size:13px;font-weight:500;color:#2A7D41;
+  margin-bottom:12px;opacity:0;
+}
+.on-map-confirm.show{animation:confirmFade .5s cubic-bezier(.16,1,.3,1) both}
+@keyframes confirmFade{
+  from{opacity:0;transform:translateY(4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.on-map-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#3A9B55;flex-shrink:0;
+  box-shadow:0 0 0 3px rgba(58,155,85,.18);
+}
+
+/* ── PIONEER NEIGHBOUR STATE ── */
+.cmp-col.pioneer-col .cmp-val{
+  font-size:12px !important;font-weight:500 !important;
+  color:#B8B7B1 !important;letter-spacing:0 !important;
+}
+.cmp-col.pioneer-col .cmp-lbl{color:#D4D3CE}
+.cmp-col.pioneer-col .cmp-sub{color:#D4D3CE}
+
+/* ── URGENCY NOTE ── */
+
+
+
+
+/* ── COMPARISON CARD ── */
+.cmp-card{
+  width:100%;opacity:0;visibility:hidden;
+  transition:opacity .5s ease, transform .5s cubic-bezier(.16,1,.3,1);
+  transform:translateY(10px);
+}
+.cmp-card.show{opacity:1;visibility:visible;transform:translateY(0)}
+.cmp-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;background:#FFFFFF;border:1px solid #EEEDEA;border-radius:14px;box-shadow:0 1px 3px rgba(26,25,23,.06);overflow:hidden;margin-bottom:10px}
+.cmp-col{padding:12px 8px;text-align:center}
+.cmp-col:not(:last-child){border-right:1px solid #EEEDEA}
+.cmp-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.02em;text-transform:uppercase;color:#767670;margin-bottom:4px;white-space:nowrap}
+.cmp-val{font-size:20px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
+.cmp-sub{font-size:10px;color:#767670;margin-top:3px;line-height:1.4}
+.cmp-insight{
+  font-size:14px;
+  color:#1A1917;
+  line-height:1.65;
+  text-align:center;
+  padding:12px 16px;
+  margin-bottom:0;
+  border-top:1px solid var(--n-100);
+  background:var(--n-25);
+  border-radius:0 0 14px 14px;
+}
+.cmp-insight strong{color:#1A1917;font-weight:600}
+.cmp-insight strong{color:#1A1917;font-weight:500}
+
+/* ── VERIFY PROMPT ── */
+
+
+
+
+
+
+
+
+
+/* Success fallback text */
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.amsg{text-align:center;margin-top:4px}
 .amsg.show{animation:fadeUp .45s ease both}
 .amsgt{font-size:15px;font-weight:500;color:#1A1917;margin-bottom:6px}
-.amsgs{font-size:13px;color:#7C7B72;line-height:1.65;max-width:260px;margin:0 auto 16px}
-.ag{font-family:'Inter',system-ui,sans-serif;font-size:13px;padding:8px 20px;border-radius:999px;border:1px solid #D4D3CE;background:#FFFFFF;cursor:pointer;color:#7C7B72;transition:background .15s}
+.ag{font-family:'Inter',system-ui,sans-serif;font-size:13px;padding:8px 20px;border-radius:9999px;border:1px solid #D4D3CE;background:#FFFFFF;cursor:pointer;color:#706F67;transition:background .15s}
 .ag:hover{background:#F5F4F1}
 </style>
 </head>
@@ -184,191 +559,311 @@ textarea.ta::placeholder{color:#D4D3CE}
 
   <div id="trg">
     <button id="cta" onclick="rmOpen()">Share my renewal</button>
-    <p id="ctag">See how your increase compares to neighbours in your area</p>
+    <p id="ctag" style="display:none"></p>
   </div>
 
   <div id="mod">
     <div class="mhd">
-      <span class="mttl" id="mttl">Your policy</span>
-      <button class="xcls" onclick="rmClose()">
+      <span class="mttl" id="mttl">About your policy</span>
+      <button class="xcls" onclick="rmClose()" aria-label="Close modal">
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-          <path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke="#9A998F" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke="#767670" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </button>
     </div>
-    <div class="dotrow" id="dotrow">
+    <div class="dotrow" id="dotrow" role="status" aria-label="Step 1 of 2" aria-live="polite">
       <div class="dot on" id="d1"></div>
       <div class="dot" id="d2"></div>
     </div>
 
     <div class="mbdy">
-      <!-- STEP 1 -->
+
+      <!-- ══ STEP 1: YOUR POLICY ══ -->
       <div class="step on" id="st1">
+
         <div class="ff">
-          <label class="fl">FSA — First 3 characters of postal code</label>
-          <input class="fsai" id="fsai" type="text" maxlength="3" placeholder="M5V" autocomplete="off" oninput="onFsa(this)">
+          <label class="fl" for="fsai">FSA — First 3 characters of postal code</label>
+          <input class="fsai" id="fsai" type="text" maxlength="3" placeholder="M5V" autocomplete="off" aria-describedby="ferr" aria-invalid="false" oninput="onFsa(this)">
           <div class="fhint" id="fhint"></div>
-          <div class="ferr" id="ferr">Please enter your 3-character FSA to continue</div>
+          <div class="fsa-ctx" id="fsaCtx" style="display:none"></div>
+          <div class="ferr" id="ferr" role="alert" aria-live="assertive">Please enter your 3-character FSA to continue</div>
+          <!-- Privacy note -->
+          <div class="priv-note">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <circle cx="6.5" cy="6.5" r="6" stroke="#B8B7B1" stroke-width="1"/>
+              <line x1="6.5" y1="5.5" x2="6.5" y2="9.5" stroke="#B8B7B1" stroke-width="1.2" stroke-linecap="round"/>
+              <circle cx="6.5" cy="3.5" r=".7" fill="#B8B7B1"/>
+            </svg>
+            <span>Only your 3-character area code is stored. Your exact address is never collected.</span>
+          </div>
         </div>
-        <div class="ff">
+
+        <div class="ff ff-type">
           <label class="fl">Insurance type</label>
           <div class="ttog">
             <button class="tbt on" id="bauto" onclick="setType('auto')">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
-                <rect x="1" y="5" width="14" height="8" rx="2" stroke="currentColor" stroke-width="1.2"/>
-                <circle cx="4.5" cy="13" r="1.5" fill="currentColor"/>
-                <circle cx="11.5" cy="13" r="1.5" fill="currentColor"/>
-                <path d="M4 5l1.5-3h5L12 5" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
-              </svg>Auto
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><rect x="1" y="5" width="14" height="8" rx="2" stroke="currentColor" stroke-width="1.2"/><circle cx="4.5" cy="13" r="1.5" fill="currentColor"/><circle cx="11.5" cy="13" r="1.5" fill="currentColor"/><path d="M4 5l1.5-3h5L12 5" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+              Auto
             </button>
             <button class="tbt" id="bhome" onclick="setType('home')">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
-                <path d="M2 7l6-5 6 5v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="currentColor" stroke-width="1.2"/>
-                <path d="M6 14V9h4v5" stroke="currentColor" stroke-width="1.2"/>
-              </svg>Home
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M2 7l6-5 6 5v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="currentColor" stroke-width="1.2"/><path d="M6 14V9h4v5" stroke="currentColor" stroke-width="1.2"/></svg>
+              Home
             </button>
           </div>
         </div>
-        <div class="prog open" id="af">
-          <div class="twocol" style="margin-bottom:14px">
-            <div><label class="fl">Years licensed (G)</label><div class="stpr"><button class="sb" onclick="adj('yrs',-1)">−</button><span class="sn" id="yrsv">5</span><button class="sb" onclick="adj('yrs',1)">+</button></div></div>
-            <div><label class="fl">At-fault claims (6 yrs)</label><div class="stpr"><button class="sb" onclick="adj('cl',-1)">−</button><span class="sn" id="clv">0</span><button class="sb" onclick="adj('cl',1)">+</button></div></div>
-          </div>
-          <div class="ff" style="margin-bottom:4px">
-            <label class="fl">Convictions (last 3 years)</label>
-            <div class="stpr"><button class="sb" onclick="adj('cv',-1)">−</button><span class="sn" id="cvv">0</span><button class="sb" onclick="adj('cv',1)">+</button></div>
-          </div>
-        </div>
-        <div class="prog" id="hf">
-          <div class="twocol">
-            <div><label class="fl">Years continuously insured</label><div class="stpr"><button class="sb" onclick="adj('hyr',-1)">−</button><span class="sn" id="hyrv">3</span><button class="sb" onclick="adj('hyr',1)">+</button></div></div>
-            <div><label class="fl">Number of claims</label><div class="stpr"><button class="sb" onclick="adj('hcl',-1)">−</button><span class="sn" id="hclv">0</span><button class="sb" onclick="adj('hcl',1)">+</button></div></div>
-          </div>
-        </div>
-      </div>
 
-      <!-- STEP 2 -->
-      <div class="step" id="st2">
-        <div class="ff">
-          <label class="fl">Premium increase this renewal</label>
-          <div class="slhd">
-            <span class="slval" id="slval">12%</span>
-            <div class="sltog">
-              <button class="slm on" id="mpct" onclick="setMode('pct')">%</button>
-              <button class="slm" id="mdol" onclick="setMode('dol')">$</button>
+        <!-- Auto fields -->
+        <div class="prog open" id="af">
+          <div class="prog-fields">
+          <div class="twocol" style="margin-bottom:16px">
+            <div>
+              <div class="fl-row">
+                <label class="fl" for="yrsv">Years licensed</label>
+                <div class="tip-wrap">
+                  <button class="tip-btn" type="button" aria-label="More info about years licensed" data-tip="How many years you've held a full licence. In Ontario this is your G licence. In other provinces, use the date of your equivalent full licence (e.g. Class 5 in BC or Alberta)." data-tip-id="tip-yrs" onclick="showTip(this)" onmouseenter="showTip(this)" onmouseleave="hideTipDelayed()">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="currentColor" opacity="0.15"/><path d="M5 4.5v3M5 3v.01" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="stpr"><button class="sb" onclick="adj('yrs',-1)">−</button><div class="sn-wrap"><span class="sn" id="yrsv">5</span></div><button class="sb" onclick="adj('yrs',1)">+</button></div>
+            </div>
+            <div>
+              <div class="fl-row">
+                <label class="fl" for="clv">At-fault claims</label>
+                <div class="tip-wrap">
+                  <button class="tip-btn" type="button" aria-label="More info about at-fault claims" data-tip="Accidents where your insurer paid out on your behalf in the past 6 years. Includes incidents even if you weren't charged. Does not include claims made against you by others." data-tip-id="tip-cl" onclick="showTip(this)" onmouseenter="showTip(this)" onmouseleave="hideTipDelayed()">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="currentColor" opacity="0.15"/><path d="M5 4.5v3M5 3v.01" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="stpr"><button class="sb" onclick="adj('cl',-1)">−</button><div class="sn-wrap"><span class="sn" id="clv">0</span></div><button class="sb" onclick="adj('cl',1)">+</button></div>
             </div>
           </div>
-          <input type="range" class="rng" id="rng" min="0" max="50" step="1" value="12" oninput="onRange()">
-          <div class="rbds"><span class="rbd" id="rlo">0%</span><span class="rbd" id="rhi">50%+</span></div>
+          <div class="ff" style="margin-bottom:8px">
+            <div class="fl-row">
+              <label class="fl" for="cvv">Convictions</label>
+              <div class="tip-wrap">
+                <button class="tip-btn" type="button" aria-label="More info about convictions" data-tip="Traffic violations resulting in a conviction in the past 3 years. Includes speeding tickets, distracted driving, and similar offences. Minor parking tickets do not count." data-tip-id="tip-cv" onclick="showTip(this)" onmouseenter="showTip(this)" onmouseleave="hideTipDelayed()">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="currentColor" opacity="0.15"/><path d="M5 4.5v3M5 3v.01" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="stpr"><button class="sb" onclick="adj('cv',-1)">−</button><div class="sn-wrap"><span class="sn" id="cvv">0</span></div><button class="sb" onclick="adj('cv',1)">+</button></div>
+          </div>
+          </div><!-- /prog-fields -->
         </div>
+
+        <!-- Home fields -->
+        <div class="prog" id="hf">
+          <div class="prog-fields">
+          <div class="ff" style="margin-bottom:8px">
+            <label class="fl">Number of claims</label>
+            <div class="stpr"><button class="sb" onclick="adj('hcl',-1)">−</button><div class="sn-wrap"><span class="sn" id="hclv">0</span></div><button class="sb" onclick="adj('hcl',1)">+</button></div>
+          </div>
+          </div><!-- /prog-fields -->
+        </div>
+
+        <!-- Provider selector -->
+        <div class="ff" style="margin-bottom:0;margin-top:6px">
+          <label class="fl">Your insurance provider</label>
+          <div class="prov-grid" id="provGrid" aria-describedby="ferrProv">
+            <button class="prov-pill" onclick="setProv('Intact')">Intact</button>
+            <button class="prov-pill" onclick="setProv('Aviva')">Aviva</button>
+            <button class="prov-pill" onclick="setProv('TD Insurance')">TD Insurance</button>
+            <button class="prov-pill" onclick="setProv('Desjardins')">Desjardins</button>
+            <button class="prov-pill" onclick="setProv('Belairdirect')">Belairdirect</button>
+            <button class="prov-pill" onclick="setProv('CAA Insurance')">CAA Insurance</button>
+            <button class="prov-pill" onclick="setProv('Economical')">Economical</button>
+            <button class="prov-pill" onclick="setProv('Wawanesa')">Wawanesa</button>
+            <button class="prov-pill" onclick="setProv('Travelers')">Travelers</button>
+            <button class="prov-pill" onclick="setProv('Co-operators')">Co-operators</button>
+            <button class="prov-pill" onclick="setProv('Gore Mutual')">Gore Mutual</button>
+            <button class="prov-pill" onclick="setProv('Sonnet')">Sonnet</button>
+            <button class="prov-pill" onclick="setProv('Allstate')">Allstate</button>
+            <button class="prov-pill" onclick="setProv('Other')">Other</button>
+          </div>
+          <div class="ferr-prov" id="ferrProv" role="alert" aria-live="assertive">Please select your insurance provider</div>
+        </div>
+
+      </div><!-- /st1 -->
+
+      <!-- ══ STEP 2: YOUR RENEWAL ══ -->
+      <div class="step" id="st2">
+
+        <div class="ff">
+          <label class="fl" id="slFieldLbl">Premium change this renewal</label>
+
+          <!-- Sign toggle: increase / decrease -->
+          <div class="sign-row" role="group" aria-label="Increase or decrease">
+            <span class="sign-lbl">This was a</span>
+            <button class="sign-btn inc on" id="sInc" onclick="setSign('inc')" aria-pressed="true">Increase</button>
+            <button class="sign-btn dec" id="sDec" onclick="setSign('dec')" aria-pressed="false">Decrease</button>
+          </div>
+
+          <!-- Hero value display -->
+          <div class="slhero">
+            <span class="slval" id="slval" aria-live="polite" aria-atomic="true">+18%</span>
+            <div class="sltog" role="group" aria-label="Input format">
+              <button class="slm on" id="mpct" onclick="setMode('pct')" aria-pressed="true">%</button>
+              <button class="slm" id="mdol" onclick="setMode('dol')" aria-pressed="false">$</button>
+            </div>
+          </div>
+
+          <!-- % slider (pct mode) -->
+          <div id="pctSliderWrap">
+            <input type="range" class="rng" id="rng" min="0" max="50" step="1" value="18" aria-labelledby="slFieldLbl" aria-valuetext="18 percent increase" oninput="onRange()">
+            <div class="rbds"><span class="rbd" id="rlo">0%</span><span class="rbd" id="rhi">50%+</span></div>
+          </div>
+
+          <!-- Triangle dollar inputs (dol mode) -->
+          <div id="dolWrap" style="display:none">
+            <div class="tri-wrap">
+              <div class="tri-lbl">
+                Dollar amounts
+                <span class="tri-lbl-opt">— fill any two to calculate the third</span>
+              </div>
+              <div class="tri-cols">
+                <div class="tri-field">
+                  <label class="tri-field-lbl" for="triDollar">Amount changed</label>
+                  <div class="tri-inp-wrap">
+                    <span class="tri-pfx" id="triDolPfx">+$</span>
+                    <input class="tri-inp" id="triDollar" type="number" inputmode="numeric"
+                      placeholder="360" min="0" max="9999" step="1"
+                      aria-describedby="triResult"
+                      oninput="onTriangle('dollar')">
+                  </div>
+                </div>
+                <div class="tri-field">
+                  <label class="tri-field-lbl" for="triPrev">Previous premium</label>
+                  <div class="tri-inp-wrap">
+                    <span class="tri-pfx">$</span>
+                    <input class="tri-inp" id="triPrev" type="number" inputmode="numeric"
+                      placeholder="1,800" min="100" max="99999" step="1"
+                      aria-describedby="triResult"
+                      oninput="onTriangle('prev')">
+                  </div>
+                </div>
+              </div>
+              <!-- Calculated result -->
+              <div class="tri-result" id="triResult">
+                <span class="tri-result-val" id="triResultVal"></span>
+                <span class="tri-result-lbl" id="triResultLbl"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contextual label (both modes) -->
+          <div class="sl-ctx" id="slCtx"></div>
+        </div>
+
         <div class="ff">
           <label class="fl">How do you feel about your renewal?</label>
-          <div class="sents">
+          <div class="sents" aria-describedby="serr">
             <button class="so" id="so1" onclick="setSent(1)"><svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#3A9B55"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M10 21Q17 27 24 21" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg><span class="sl">Very<br>fair</span></button>
             <button class="so" id="so2" onclick="setSent(2)"><svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#93D1A2"/><circle cx="12" cy="14" r="2" fill="#1F6132"/><circle cx="22" cy="14" r="2" fill="#1F6132"/><path d="M12 21Q17 24.5 22 21" stroke="#1F6132" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg><span class="sl">Fair</span></button>
             <button class="so" id="so3" onclick="setSent(3)"><svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#D49316"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 22L22 22" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg><span class="sl">Neutral</span></button>
             <button class="so" id="so4" onclick="setSent(4)"><svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#E87460"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 24Q17 20 22 24" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg><span class="sl">Unfair</span></button>
             <button class="so" id="so5" onclick="setSent(5)"><svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#D4503A"/><circle cx="12" cy="13" r="2" fill="white"/><circle cx="22" cy="13" r="2" fill="white"/><path d="M10 24Q17 19 24 24" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg><span class="sl">Very<br>unfair</span></button>
           </div>
-          <div class="ferr" id="serr">Please select how you feel about your renewal</div>
+          <div class="ferr" id="serr" role="alert" aria-live="assertive">Please select how you feel about your renewal</div>
         </div>
+
+        <div class="ff">
+          <label class="fl" for="note">Anything useful for neighbours?</label>
+          <textarea class="ta" id="note" placeholder="e.g. &#8220;Intact raised mine 22% after 8 clean years &#8212; no claims, always on time&#8221;" maxlength="500" oninput="updateCharCount(this.value.length)"></textarea>
+          <div style="text-align:right;font-size:11px;color:#706F67;margin-top:4px;display:none;transition:color .2s" id="cc"></div>
+        </div>
+
+        <!-- Consent checkbox -->
         <div class="ff" style="margin-bottom:0">
-          <label class="fl">Additional comments <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
-          <textarea class="ta" id="note" placeholder="Anything your neighbours should know..." maxlength="500" oninput="document.getElementById('cc').textContent=this.value.length+' / 500'"></textarea>
-          <div style="text-align:right;font-size:11px;color:#B8B7B1;margin-top:4px" id="cc">0 / 500</div>
+          <div class="consent-row" id="consentRow" onclick="toggleConsent()">
+            <div class="consent-box" id="consentBox"></div>
+            <p class="consent-text" style="margin:0">I confirm this information is accurate to the best of my knowledge. I understand my submission will be published anonymously and will never be sold or used for commercial purposes.</p>
+          </div>
         </div>
-      </div>
-    </div>
+
+      </div><!-- /st2 -->
+
+    </div><!-- /mbdy -->
 
     <!-- ══ ANIMATION STAGE ══ -->
     <div class="astg" id="astg">
       <div class="ptc-wrap" id="ptcWrap"></div>
 
-      <!--
-        env-scene: 180×118px envelope body.
-        overflow:visible — letter and open flap extend above freely.
-        margin-top:70px gives visual breathing room for what rises above.
-      -->
+      <!-- Envelope — becomes a small stamp after animation -->
       <div class="env-scene" id="envScene">
-
-        <!-- Z=1 BODY — permanent, static, never changes -->
-        <svg id="envBody" width="180" height="118" viewBox="0 0 180 118"
-             style="position:absolute;top:0;left:0;z-index:1;display:block;overflow:visible">
+        <svg id="envBody" width="180" height="118" viewBox="0 0 180 118" style="position:absolute;top:0;left:0;z-index:1;display:block;overflow:visible">
           <rect x="0" y="0" width="180" height="118" rx="7" fill="#F0EDE8"/>
-          <!-- back-side fold triangles -->
           <polygon points="0,0 0,118 90,68" fill="#E8E4DD"/>
           <polygon points="180,0 180,118 90,68" fill="#E8E4DD"/>
           <polygon points="0,118 180,118 90,68" fill="#DED9D3"/>
-          <!-- crease lines -->
-          <line x1="0"   y1="0"   x2="90" y2="68" stroke="#CBC8C1" stroke-width="0.8"/>
-          <line x1="180" y1="0"   x2="90" y2="68" stroke="#CBC8C1" stroke-width="0.8"/>
-          <line x1="0"   y1="118" x2="90" y2="68" stroke="#CBC8C1" stroke-width="0.8"/>
+          <line x1="0" y1="0" x2="90" y2="68" stroke="#CBC8C1" stroke-width="0.8"/>
+          <line x1="180" y1="0" x2="90" y2="68" stroke="#CBC8C1" stroke-width="0.8"/>
+          <line x1="0" y1="118" x2="90" y2="68" stroke="#CBC8C1" stroke-width="0.8"/>
           <line x1="180" y1="118" x2="90" y2="68" stroke="#CBC8C1" stroke-width="0.8"/>
-          <!-- border -->
           <rect x=".5" y=".5" width="179" height="117" rx="6.5" fill="none" stroke="#D4D3CE" stroke-width="1"/>
         </svg>
 
-        <!-- Z=2 LETTER (rises upward) -->
         <div id="envLetter">
           <div class="letter-inner">
-            <div class="ll"></div>
-            <div class="ll s"></div>
-            <div class="ll xs"></div>
-            <div class="ll"></div>
-            <div class="ll s"></div>
+            <div class="ll"></div><div class="ll s"></div><div class="ll xs"></div>
+            <div class="ll"></div><div class="ll s"></div>
           </div>
           <div class="letter-face" id="letterFace"></div>
         </div>
 
-        <!-- Z=3 RIP ELEMENTS (negative sentiment only) -->
         <div id="ripL"></div>
         <div id="ripR"></div>
         <div id="ripCrack"></div>
 
-        <!--
-          Z=4 FLAP SVG
-          overflow:visible — polygon can draw above y=0.
-          JS animates flapPoly points in two phases:
-            Phase A: peak Y goes  68 → 0  (flap unfolds flat, like hinge opening)
-            Phase B: peak Y goes   0 → -48 (flap folds back behind, showing inside)
-          Fill changes from front-face to inside-face colour at the hinge point.
-          Opacity stays 1 throughout — flap remains visible as an open lid.
-        -->
-        <svg id="envFlap" width="180" height="118" viewBox="0 0 180 118"
-             style="position:absolute;top:0;left:0;z-index:4;display:block;overflow:visible">
+        <svg id="envFlap" width="180" height="118" viewBox="0 0 180 118" style="position:absolute;top:0;left:0;z-index:4;display:block;overflow:visible">
           <defs>
             <filter id="flapShadow" x="-20%" y="-40%" width="140%" height="180%">
               <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="rgba(26,25,23,0.12)"/>
             </filter>
           </defs>
-          <!--
-            flapPoly: starts at 0,0 → 180,0 → 90,68 (closed)
-            flapEdge: the two diagonal fold-crease lines from corners to peak
-            flapTop:  the straight top edge
-          -->
-          <polygon id="flapPoly"
-            points="0,0 180,0 90,68"
-            fill="#ECE9E3"/>
-          <polyline id="flapEdge"
-            points="0,0 90,68 180,0"
-            fill="none" stroke="#C8C5BE" stroke-width="0.9" stroke-linejoin="round"/>
+          <polygon id="flapPoly" points="0,0 180,0 90,68" fill="#ECE9E3"/>
+          <polyline id="flapEdge" points="0,0 90,68 180,0" fill="none" stroke="#C8C5BE" stroke-width="0.9" stroke-linejoin="round"/>
           <line id="flapTop" x1="0" y1="0" x2="180" y2="0" stroke="#D4D3CE" stroke-width="1"/>
-
-          <!-- Wax seal — centroid of closed triangle: x=90, y≈23 -->
           <g id="sealGroup">
             <circle id="sealCircle" cx="90" cy="26" r="18" fill="#D4D3CE"/>
             <circle cx="90" cy="26" r="12" fill="none" stroke="white" stroke-width="0.7" opacity="0.35"/>
             <circle cx="84" cy="20" r="3" fill="white" opacity="0.28"/>
           </g>
         </svg>
-
       </div><!-- /env-scene -->
 
-      <!-- Success message -->
-      <div class="amsg" id="amsg" style="visibility:hidden">
-        <div class="amsgt" id="amsgt">Renewal posted</div>
-        <div class="amsgs" id="amsgs"></div>
-        <button class="ag" onclick="rmReset()">Share another renewal</button>
+      <!-- Comparison card — fades in after envelope shrinks to stamp -->
+      <div class="cmp-card" id="cmpCard">
+
+        <!-- 1. On-map confirmation — emotional arc completion -->
+        <div class="on-map-confirm" id="onMapConfirm">
+          <div class="on-map-dot"></div>
+          <span id="onMapText">Your renewal is on the map.</span>
+        </div>
+
+
+
+        <div class="cmp-cols">
+          <div class="cmp-col">
+            <div class="cmp-lbl">You paid</div>
+            <div class="cmp-val" id="cmpYours" style="color:#D4503A;font-variation-settings:'opsz' 32">—</div>
+            <div class="cmp-sub" id="cmpYoursSub">your renewal</div>
+          </div>
+          <!-- 3. Neighbour column — adapts to data density -->
+          <div class="cmp-col" id="cmpAreaCol">
+            <div class="cmp-lbl" id="cmpAreaLbl">Your neighbours</div>
+            <div class="cmp-val" id="cmpArea" style="color:#AD7710;font-variation-settings:'opsz' 32">—</div>
+            <div class="cmp-sub" id="cmpAreaSub">average increase</div>
+          </div>
+          <div class="cmp-col">
+            <div class="cmp-lbl">Ontario</div>
+            <div class="cmp-val" id="cmpOnt" style="color:#2A7D41;font-variation-settings:'opsz' 32">—</div>
+            <div class="cmp-sub">province-wide</div>
+          </div>
+        </div>
+        <p class="cmp-insight" id="cmpInsight"></p>
+
       </div>
 
     </div><!-- /astg -->
@@ -378,129 +873,699 @@ textarea.ta::placeholder{color:#D4D3CE}
       <button class="nxbt" id="nxbt" onclick="nxt()">Continue</button>
     </div>
   </div>
+
 </div>
 
 <script>
-var S={step:1,type:'auto',mode:'pct',rval:12,sent:0,yrs:5,cl:0,cv:0,hyr:3,hcl:0};
+var S={step:1,type:'auto',mode:'pct',sign:'inc',rval:18,prevPrem:null,dollar:null,lastEdited:'pct',sent:0,yrs:5,cl:0,cv:0,hcl:0,provider:'',consent:false};
 var SC=['','#3A9B55','#93D1A2','#D49316','#E87460','#D4503A'];
-var PROV={A:'Newfoundland & Labrador',B:'Nova Scotia',C:'Prince Edward Island',E:'New Brunswick',G:'Quebec',H:'Quebec',J:'Quebec',K:'Ontario',L:'Ontario',M:'Ontario',N:'Ontario',P:'Ontario',R:'Manitoba',S:'Saskatchewan',T:'Alberta',V:'British Columbia',X:'NWT / Nunavut',Y:'Yukon'};
 
-function $id(id){return document.getElementById(id);}
+/* ── FSA TABLE (Ontario neighbourhoods) ── */
+var FSA={
+  M1B:'Scarborough (Malvern · Rouge)',M1C:'Scarborough (Highland Creek · Rouge Hill)',M1E:'Scarborough (Guildwood · Morningside)',M1G:'Scarborough (Woburn)',M1H:'Scarborough (Cedarbrae)',M1J:'Scarborough Village',M1K:'Scarborough (Kennedy Park · Ionview)',M1L:'Scarborough (Golden Mile · Clairlea)',M1M:'Scarborough (Cliffside · Scarborough Village West)',M1N:'Scarborough (Birch Cliff)',M1P:'Scarborough (Dorset Park · Wexford)',M1R:'Scarborough (Wexford · Maryvale)',M1S:'Scarborough (Agincourt)',M1T:'Scarborough (Clarks Corners · Sullivan)',M1V:'Scarborough (Milliken · Agincourt North)',M1W:"Scarborough (Steeles · L'Amoreaux)",M1X:'Scarborough (Upper Rouge)',M2H:'North York (Hillcrest Village)',M2J:'North York (Fairview · Henry Farm)',M2K:'North York (Bayview Village)',M2L:'North York (York Mills · Silver Hills)',M2M:'North York (Willowdale · Newtonbrook)',M2N:'North York (Willowdale)',M2P:'North York (York Mills West)',M2R:'North York (Willowdale West)',M3A:'North York (Parkwoods)',M3B:'North York (Don Mills North)',M3C:'North York (Don Mills South)',M3H:'North York (Bathurst Manor · Wilson Heights)',M3J:'North York (Northwood Park · York University)',M3K:'North York (Downsview · CFB Toronto)',M3L:'North York (Downsview)',M3M:'North York (Downsview)',M3N:'North York (Downsview · Jane & Finch)',M4A:'East York (Victoria Village)',M4B:'East York (Parkview Hill · Woodbine Gardens)',M4C:'East York (Woodbine Heights)',M4E:'East Toronto (The Beach)',M4G:'East York (Leaside)',M4H:'East York (Thorncliffe Park)',M4J:'East York',M4K:'East Toronto (The Danforth)',M4L:'East Toronto (India Bazaar · The Beaches West)',M4M:'East Toronto (Studio District)',M4N:'Central Toronto (Lawrence Park)',M4P:'Central Toronto (Davisville Village)',M4R:'Central Toronto (North Toronto)',M4S:'Central Toronto (Davisville)',M4T:'Central Toronto (Moore Park · Summerhill East)',M4V:'Central Toronto (Summerhill West · Rathnelly)',M4W:'Downtown Toronto (Rosedale)',M4X:'Downtown Toronto (St. James Town · Cabbagetown)',M4Y:'Downtown Toronto (Church-Yonge Corridor)',M5A:'Downtown Toronto (Regent Park · Harbourfront)',M5B:'Downtown Toronto (Garden District · Ryerson)',M5C:'Downtown Toronto (St. James Town)',M5E:'Downtown Toronto (Berczy Park)',M5G:'Downtown Toronto (Central Bay Street)',M5H:'Downtown Toronto (Adelaide · King)',M5J:'Downtown Toronto (Harbourfront East · Union Station)',M5K:'Downtown Toronto (Toronto Dominion Centre)',M5L:'Downtown Toronto (Commerce Court)',M5M:'North Toronto (Bedford Park · Lawrence Manor East)',M5N:'Central Toronto (Roselawn)',M5P:'Central Toronto (Forest Hill)',M5R:'Central Toronto (The Annex · North Midtown)',M5S:'Downtown Toronto (University of Toronto · Harbord)',M5T:'Downtown Toronto (Kensington Market · Chinatown)',M5V:'Downtown Toronto (Entertainment District · King West)',M5X:'Downtown Toronto (First Canadian Place)',M6A:'North York (Lawrence Heights · Lawrence Manor)',M6B:'North York (Glencairn)',M6C:'York (Humewood-Cedarvale)',M6E:'York (Caledonia-Fairbank)',M6G:'Downtown Toronto (Christie)',M6H:'West Toronto (Dufferin · Dovercourt Village)',M6J:'West Toronto (Little Portugal · Trinity)',M6K:'West Toronto (Brockton · Parkdale Village)',M6L:'North York (Maple Leaf Park)',M6M:'York (Del Ray · Mount Dennis)',M6N:'York (The Junction North · Runnymede)',M6P:'West Toronto (High Park · The Junction South)',M6R:'West Toronto (Parkdale · Roncesvalles)',M6S:'West Toronto (Runnymede · Swansea)',M7A:"Queen's Park",M8V:'Etobicoke (New Toronto · Mimico South)',M8W:'Etobicoke (Alderwood · Long Branch)',M8X:'Etobicoke (The Kingsway)',M8Y:'Etobicoke (Old Mill · Sunnylea)',M8Z:'Etobicoke (Mimico NW · Queensway West)',M9A:'Etobicoke (Humber Valley Village)',M9B:'Etobicoke (Cloverdale · Islington)',M9C:'Etobicoke (Eringate · Bloordale Gardens)',M9L:'North York (Humber Summit)',M9M:'North York (Humberlea · Emery)',M9N:'York (Weston)',M9P:'Etobicoke (Westmount)',M9R:'Etobicoke (Kingsview Village)',M9V:'Etobicoke (Albion Gardens · Beaumond Heights)',M9W:'Etobicoke (Clairville)',
+  L1B:'Pickering (Bay Ridges)',L1C:'Bowmanville',L1G:'Oshawa (North)',L1H:'Oshawa (South)',L1J:'Oshawa (West)',L1K:'Oshawa (East)',L1L:'Whitby',L1M:'Stouffville',L1N:'Whitby (North)',L1P:'Whitby (West)',L1R:'Whitby (North)',L1S:'Ajax (South)',L1T:'Ajax (North)',L1V:'Pickering (East)',L1W:'Pickering (West)',L1X:'Whitby (Rural)',L1Z:'Ajax (East)',L3P:'Markham (East)',L3R:'Markham (Central)',L3S:'Markham (South)',L3T:'Thornhill (East)',L3Y:'Newmarket',L4B:'Richmond Hill (East)',L4C:'Richmond Hill (Central)',L4E:'Richmond Hill (Oak Ridges)',L4G:'Aurora',L4H:'Woodbridge',L4J:'Thornhill (West)',L4K:'Vaughan (Concord)',L4L:'Woodbridge (North)',L4S:'Richmond Hill (South)',L4T:'Mississauga (Malton)',L4W:'Mississauga (Rathwood)',L4X:'Mississauga (Applewood)',L4Y:'Mississauga (Clarkson East)',L4Z:'Mississauga (Hurontario)',L5A:'Mississauga (Cooksville)',L5B:'Mississauga (Cooksville East)',L5C:'Mississauga (Erindale)',L5E:'Mississauga (Lakeview)',L5G:'Mississauga (Port Credit)',L5H:'Mississauga (Mineola)',L5J:'Mississauga (Clarkson)',L5K:'Mississauga (Sheridan)',L5L:'Mississauga (Erin Mills)',L5M:'Mississauga (Churchill Meadows)',L5N:'Mississauga (Lisgar · Meadowvale)',L5R:'Mississauga (Heartland)',L5V:'Mississauga (Meadowvale)',L6A:'Brampton (Snelgrove)',L6B:'Brampton (Bram East)',L6C:'Markham (Cornell)',L6E:'Markham (Greensborough)',L6G:'Markham (Unionville)',L6H:'Oakville (Glen Abbey)',L6J:'Oakville (Central)',L6K:'Oakville (West)',L6L:'Oakville (Bronte)',L6P:'Brampton (Castlemore)',L6R:'Brampton (Sandringham)',L6S:'Brampton (Airport Road)',L6T:'Brampton (Queen Street East)',L6V:'Brampton (Downtown)',L6W:'Brampton (Bramalea)',L6X:'Brampton (Dale)',L6Y:'Brampton (Springdale)',L6Z:'Brampton (Heart Lake)',L7A:'Brampton (Mount Pleasant)',L7B:'King City',L7E:'Bolton',L7G:'Georgetown',L7L:'Burlington (East)',L7M:'Burlington (North)',L7N:'Burlington (Central)',L7P:'Burlington (West)',L7R:'Burlington (Downtown)',L7S:'Burlington (Aldershot)',L8H:'Hamilton (East)',L8J:'Hamilton (East Mountain)',L8L:'Hamilton (Downtown East)',L8M:'Hamilton (Central)',L8N:'Hamilton (Mountain)',L8P:'Hamilton (Downtown West)',L8R:'Hamilton (North End)',L8S:'Hamilton (Westdale)',L8T:'Hamilton (West Mountain)',L8V:'Hamilton (South Mountain)',L8W:'Hamilton (South Mountain)',L9G:'Ancaster',L9H:'Dundas',L9T:'Milton',L9W:'Orangeville',L9Y:'Collingwood',L9Z:'Wasaga Beach',
+  K1A:'Ottawa (Government)',K1B:'Ottawa (East)',K1C:'Ottawa (Blackburn Hamlet)',K1E:'Ottawa (Orléans East)',K1G:'Ottawa (East)',K1H:'Ottawa (Alta Vista)',K1J:'Ottawa (Rockcliffe Park)',K1K:'Ottawa (Vanier)',K1L:'Ottawa (Vanier East)',K1M:'Ottawa (Manor Park)',K1N:'Ottawa (Sandy Hill)',K1P:'Ottawa (Downtown)',K1R:'Ottawa (Centretown)',K1S:'Ottawa (Glebe)',K1T:'Ottawa (South)',K1V:'Ottawa (South)',K1W:'Ottawa (Orléans)',K1X:'Ottawa (Gloucester)',K1Y:'Ottawa (Westboro)',K1Z:'Ottawa (Hintonburg)',K2A:'Ottawa (Carlington)',K2C:'Ottawa (Merivale)',K2E:'Ottawa (Nepean)',K2G:'Ottawa (Barrhaven North)',K2H:'Ottawa (Bells Corners)',K2J:'Ottawa (Barrhaven)',K2K:'Ottawa (Kanata North)',K2L:'Ottawa (Kanata)',K2M:'Ottawa (Bridlewood)',K2P:'Ottawa (Centretown West)',K2R:'Ottawa (Manotick)',K2S:'Ottawa (Stittsville)',K2T:'Ottawa (Kanata South)',K2V:'Ottawa (Kanata West)',K4A:'Orléans',K6H:'Cornwall (West)',K6J:'Cornwall (East)',K7K:'Kingston (North)',K7L:'Kingston (Downtown)',K7M:'Kingston (West)',K9J:'Peterborough (South)',K9K:'Peterborough (West)',K9L:'Peterborough (Central)',
+  N1E:'Guelph (East)',N1G:'Guelph (South)',N1H:'Guelph (Central)',N1K:'Guelph (West)',N1R:'Cambridge (Galt)',N1S:'Cambridge (Galt West)',N1T:'Cambridge (Galt East)',N2A:'Kitchener (East)',N2B:'Kitchener (East)',N2C:'Kitchener (South)',N2E:'Kitchener (West)',N2G:'Kitchener (Central)',N2H:'Kitchener (North)',N2J:'Waterloo (South)',N2K:'Waterloo (North)',N2L:'Waterloo (Central)',N2M:'Kitchener (West)',N2N:'Kitchener (Northwest)',N3P:'Brantford (North)',N3R:'Brantford (Northwest)',N3S:'Brantford (South)',N3T:'Brantford (West)',N4S:'Woodstock (South)',N4T:'Woodstock (North)',N5V:'London (East)',N5W:'London (East)',N5X:'London (North)',N5Y:'London (Central)',N5Z:'London (South)',N6A:'London (Downtown)',N6B:'London (Downtown South)',N6C:'London (Old South)',N6E:'London (South)',N6G:'London (Northwest)',N6H:'London (West)',N6J:'London (Southwest)',N7S:'Sarnia (South)',N7T:'Sarnia (Central)',N7V:'Sarnia (North)',N8R:'Windsor (South)',N8S:'Windsor (East)',N8T:'Windsor (East)',N8V:'Windsor (Southwest)',N8W:'Windsor (Central)',N9A:'Windsor (Downtown)',N9B:'Windsor (West)',N9C:'Windsor (South)',
+  P1A:'North Bay (East)',P1B:'North Bay (West)',P3A:'Sudbury (New Sudbury)',P3B:'Sudbury (Northeast)',P3C:'Sudbury (East)',P3E:'Sudbury (South)',P6A:'Sault Ste. Marie (East)',P6B:'Sault Ste. Marie (Central)',P7A:'Thunder Bay (North)',P7B:'Thunder Bay (Central)',P7C:'Thunder Bay (East)'
+};
+var PROV_FALLBACK={A:'Newfoundland & Labrador',B:'Nova Scotia',C:'Prince Edward Island',E:'New Brunswick',G:'Quebec',H:'Quebec',J:'Quebec',R:'Manitoba',S:'Saskatchewan',T:'Alberta',V:'British Columbia',X:'NWT / Nunavut',Y:'Yukon'};
 
-/* Easing functions */
+function $id(i){return document.getElementById(i);}
 function easeInOut(t){return t<.5?2*t*t:-1+(4-2*t)*t;}
 function easeOutCubic(t){return 1-Math.pow(1-t,3);}
 function lerp(a,b,t){return a+(b-a)*t;}
 
-function rmOpen(){
-  $id('trg').classList.add('gone');
-  $id('app').classList.add('open');
-  setTimeout(function(){$id('mod').classList.add('vis');},50);
+/* ── OPEN / CLOSE ── */
+function rmOpen(){$id('trg').classList.add('gone');$id('app').classList.add('open');setTimeout(function(){$id('mod').classList.add('vis');},50);}
+/* ══════════════════════════════════════
+   TOOLTIP PORTAL SYSTEM
+   Renders above all stacking contexts by
+   appending to document.body and positioning
+   via getBoundingClientRect.
+══════════════════════════════════════ */
+var _tipEl = null;        // the portal div
+var _tipBtn = null;       // currently open button
+var _tipHideTimer = null; // debounce timer
+
+function _createPortal(){
+  if(_tipEl) return;
+  _tipEl = document.createElement('div');
+  _tipEl.className = 'tip-portal';
+  _tipEl.setAttribute('role','tooltip');
+  // Caret element
+  var caret = document.createElement('div');
+  caret.className = 'tip-portal-caret';
+  caret.id = 'tipCaret';
+  _tipEl.appendChild(caret);
+  document.body.appendChild(_tipEl);
 }
-function rmClose(){
-  $id('mod').classList.remove('vis');
+
+function _positionPortal(btn){
+  var rect = btn.getBoundingClientRect();
+  var tipW = 220;
+  var margin = 8; // gap above button
+
+  // Horizontal: centre over button, 
+  // clamp within viewport with 16px edge margin
+  var idealLeft = rect.left + rect.width/2 - tipW/2;
+  var clampedLeft = Math.max(16,
+    Math.min(idealLeft, window.innerWidth - tipW - 16)
+  );
+
+  // Vertical: above the button
+  var tipH = _tipEl.offsetHeight || 80;
+  var top = rect.top - tipH - margin;
+
+  // If tooltip would go off top of screen,
+  // flip to below the button
+  var flipped = false;
+  if(top < 8){
+    top = rect.bottom + margin;
+    flipped = true;
+  }
+
+  _tipEl.style.left = clampedLeft + 'px';
+  _tipEl.style.top  = top + 'px';
+  _tipEl.style.width = tipW + 'px';
+
+  // Position caret: points toward the button
+  var caret = document.getElementById('tipCaret');
+  if(caret){
+    // Horizontal caret offset — 
+    // align with button centre
+    var caretIdeal = (rect.left + rect.width/2) - clampedLeft;
+    var caretLeft  = Math.max(12, Math.min(caretIdeal, tipW - 12));
+    caret.style.left = caretLeft + 'px';
+    caret.style.transform = 'translateX(-50%)';
+
+    if(flipped){
+      // Caret points up (above tooltip, toward button above)
+      caret.style.top = '-10px';
+      caret.style.bottom = 'auto';
+      caret.style.borderTopColor = 'transparent';
+      caret.style.borderBottomColor = '#1A1917';
+    } else {
+      // Caret points down (below tooltip, toward button below)
+      caret.style.top = 'auto';
+      caret.style.bottom = '-10px';
+      caret.style.borderBottomColor = 'transparent';
+      caret.style.borderTopColor = '#1A1917';
+    }
+  }
+}
+
+function showTip(btn){
+  clearTimeout(_tipHideTimer);
+  _createPortal();
+
+  // If same button tapped again — toggle off
+  if(_tipBtn === btn && _tipEl.classList.contains('visible')){
+    hideTip();
+    return;
+  }
+  // Mark previous btn inactive
+  if(_tipBtn && _tipBtn !== btn){
+    _tipBtn.classList.remove('active');
+  }
+  _tipBtn = btn;
+  btn.classList.add('active');
+
+  // Update text content (preserve caret child)
+  var text = btn.getAttribute('data-tip') || '';
+  var caret = document.getElementById('tipCaret');
+  // Set text node only
+  Array.from(_tipEl.childNodes).forEach(function(n){
+    if(n !== caret) _tipEl.removeChild(n);
+  });
+  var textNode = document.createTextNode(text);
+  _tipEl.insertBefore(textNode, caret);
+
+  // Step 1: add .measuring — display:block, visibility:hidden
+  // Lets browser calculate real offsetHeight before positioning
+  _tipEl.classList.remove('visible');
+  _tipEl.classList.add('measuring');
+
+  // Step 2: setTimeout(0) guarantees layout has occurred
   setTimeout(function(){
-    $id('app').classList.remove('open');
-    setTimeout(function(){$id('trg').classList.remove('gone');},180);
-    rmReset();
-  },420);
+    _positionPortal(btn);
+    // Step 3: swap to .visible — triggers CSS opacity+transform transition
+    _tipEl.classList.remove('measuring');
+    _tipEl.classList.add('visible');
+  }, 0);
 }
+
+function hideTip(){
+  if(!_tipEl) return;
+  _tipEl.classList.remove('visible');
+  _tipEl.classList.remove('measuring');
+  // Mark active btn as inactive
+  if(_tipBtn) _tipBtn.classList.remove('active');
+  _tipBtn = null;
+}
+
+function hideTipDelayed(){
+  // 200ms grace period — 
+  // prevents flicker when cursor moves 
+  // from button to tooltip portal
+  clearTimeout(_tipHideTimer);
+  _tipHideTimer = setTimeout(hideTip, 200);
+}
+
+/* Close on outside click */
+document.addEventListener('click', function(e){
+  if(_tipBtn && !_tipBtn.contains(e.target)){
+    hideTip();
+  }
+});
+
+/* Touch: show on tap */
+document.addEventListener('touchend', function(e){
+  var btn = e.target.closest('.tip-btn');
+  if(btn){
+    e.preventDefault();
+    showTip(btn);
+  } else if(_tipBtn && !_tipBtn.contains(e.target)){
+    hideTip();
+  }
+},{passive:false});
+
+/* Reposition on scroll/resize */
+window.addEventListener('scroll', function(){
+  if(_tipBtn && _tipEl && 
+     _tipEl.classList.contains('visible')){
+    _positionPortal(_tipBtn);
+  }
+},{passive:true});
+window.addEventListener('resize', function(){
+  if(_tipBtn && _tipEl && 
+     _tipEl.classList.contains('visible')){
+    _positionPortal(_tipBtn);
+  }
+},{passive:true});
+
+/* ── CHARACTER COUNTER: appears only when relevant ── */
+function updateCharCount(len){
+  var el=$id('cc');
+  var remaining=500-len;
+  if(remaining>100){
+    // No constraint — hide the counter entirely
+    el.style.display='none';
+    el.textContent='';
+    return;
+  }
+  el.style.display='block';
+  if(remaining<=20){
+    el.style.color='#845A0C'; // cau-600 — urgent
+    el.textContent=remaining+' characters left';
+  } else {
+    el.style.color='#706F67'; // n-500
+    el.textContent=remaining
+      +' characters left — keep it brief for neighbours';
+  }
+}
+
+/* ── TRIGGER TAGLINE: social proof count ──
+   In production (Next.js): replace setCtagCount(n)
+   call below with the real Supabase count query.
+   This reference file uses a static demo value. ── */
+function setCtagCount(n){
+  if(!n||n<1) return;
+  var el=$id('ctag');
+  if(!el) return;
+  el.textContent='Join '+n
+    +' Ontario driver'+(n===1?'':'s')
+    +' who have shared their renewal';
+  el.style.display='';
+}
+/* Demo: call with real count from Supabase in production */
+/* setCtagCount(247); */
+
+function rmClose(){$id('mod').classList.remove('vis');setTimeout(function(){$id('app').classList.remove('open');setTimeout(function(){$id('trg').classList.remove('gone');},180);rmReset();},420);}
+
+/* ── RESET ── */
 function rmReset(){
-  S={step:1,type:'auto',mode:'pct',rval:12,sent:0,yrs:5,cl:0,cv:0,hyr:3,hcl:0};
+  S={step:1,type:'auto',mode:'dol',rval:480,sent:0,yrs:5,cl:0,cv:0,hcl:0,provider:'',consent:false};
   $id('fsai').value='';$id('fhint').textContent='';
-  $id('note').value='';$id('cc').textContent='0 / 500';
-  $id('ferr').classList.remove('on');$id('serr').classList.remove('on');
-  [['yrsv',5],['clv',0],['cvv',0],['hyrv',3],['hclv',0]].forEach(function(a){$id(a[0]).textContent=a[1];});
+  var ctx=$id('fsaCtx');ctx.style.display='none';ctx.className='fsa-ctx';
+  $id('note').value='';$id('cc').style.display='none';$id('cc').textContent='';
+  $id('ferr').classList.remove('on');$id('fsai').setAttribute('aria-invalid','false');$id('serr').classList.remove('on');$id('ferrProv').classList.remove('on');
+  ['yrsv','clv','cvv','hclv'].forEach(function(id){var el=$id(id);if(el)el.textContent=({yrsv:5,clv:0,cvv:0,hclv:0})[id];});
   for(var i=1;i<=5;i++){$id('so'+i).style.borderColor='#EEEDEA';$id('so'+i).style.background='#FFFFFF';}
-  $id('rng').value=12;onRange();
+  /* Reset provider pills */
+  var pills=document.querySelectorAll('.prov-pill');
+  for(var j=0;j<pills.length;j++)pills[j].classList.remove('on');
+  /* Reset consent */
+  S.consent=false;$id('consentBox').classList.remove('checked');
+  updatePostBtn();
+  // Reset sign toggle
+  S.sign='inc';S.prevPrem=null;S.dollar=null;S.lastEdited='pct';
+  $id('sInc').classList.add('on');$id('sDec').classList.remove('on');
+  $id('sInc').setAttribute('aria-pressed','true');
+  $id('sDec').setAttribute('aria-pressed','false');
+  // Reset mode to pct + slider
+  $id('mpct').classList.add('on');$id('mdol').classList.remove('on');
+  $id('mpct').setAttribute('aria-pressed','true');
+  $id('mdol').setAttribute('aria-pressed','false');
+  $id('pctSliderWrap').style.display='';
+  $id('dolWrap').style.display='none';
+  $id('rng').min=0;$id('rng').max=50;$id('rng').step=1;
+  $id('rng').value=18;
+  $id('rlo').textContent='0%';$id('rhi').textContent='50%+';
+  // Clear triangle inputs
+  $id('triDollar').value='';$id('triPrev').value='';
+  $id('triResult').className='tri-result';
+  onRange();
   $id('st1').classList.add('on');$id('st2').classList.remove('on');
+  // Initialise in pct mode — fastest path for most users
+  setMode('pct');
+  onRange();
   $id('astg').classList.remove('on');
   $id('mft').style.display='';$id('dotrow').style.display='';
-  $id('mttl').textContent='Your policy';
+  $id('mttl').textContent='About your policy';
   $id('nxbt').textContent='Continue';$id('bkbt').style.display='none';
   $id('d1').classList.add('on');$id('d2').classList.remove('on');
-
+  $id('dotrow').setAttribute('aria-label','Step 1 of 2');
   /* Reset envelope */
-  var el=$id('envLetter');
-  el.className='';
-  el.style.cssText='position:absolute;left:14px;right:14px;top:14px;height:140px;background:#FFFFFF;border:1px solid #DDDBD6;border-radius:4px;box-shadow:0 2px 10px rgba(26,25,23,.1);z-index:2;opacity:0;transform:translateY(0px)';
-  $id('letterFace').className='letter-face';
-  $id('letterFace').innerHTML='';
-
-  /* Reset flap to closed position */
-  $id('flapPoly').setAttribute('points','0,0 180,0 90,68');
-  $id('flapPoly').setAttribute('fill','#ECE9E3');
+  var el=$id('envLetter');el.className='';
+  el.style.cssText='position:absolute;left:14px;right:14px;top:14px;height:140px;background:#FFFFFF;border:1px solid #E2E1DD;border-radius:4px;box-shadow:0 2px 10px rgba(26,25,23,.1);z-index:2;opacity:0;transform:translateY(0px)';
+  $id('letterFace').className='letter-face';$id('letterFace').innerHTML='';
+  $id('flapPoly').setAttribute('points','0,0 180,0 90,68');$id('flapPoly').setAttribute('fill','#ECE9E3');
   $id('flapEdge').setAttribute('points','0,0 90,68 180,0');
-  $id('envFlap').style.filter='none';
-  $id('envFlap').style.zIndex='4';
-  $id('sealGroup').style.opacity='1';
-  $id('sealCircle').setAttribute('fill','#D4D3CE');
-
-  /* Reset rip */
-  ['ripL','ripR','ripCrack'].forEach(function(id){
-    var e=$id(id);e.style.cssText='';e.style.opacity='0';e.style.animation='none';
-  });
-  $id('amsg').style.visibility='hidden';
-  $id('amsg').classList.remove('show');
+  $id('envFlap').style.filter='none';$id('envFlap').style.zIndex='4';
+  $id('sealGroup').style.opacity='1';$id('sealCircle').setAttribute('fill','#D4D3CE');
+  ['ripL','ripR','ripCrack'].forEach(function(id){var e=$id(id);e.style.cssText='';e.style.opacity='0';e.style.animation='none';});
+  $id('envScene').classList.remove('stamp');
+  $id('cmpCard').classList.remove('show');
+  /* Reset new elements */
+  var onMap=$id('onMapConfirm');onMap.classList.remove('show');
+  $id('cmpAreaCol').classList.remove('pioneer-col');
+  $id('cmpAreaLbl').textContent='Your neighbours';
+  $id('cmpAreaSub').textContent='average increase';
+  $id('cmpArea').style.color='#AD7710';
   $id('ptcWrap').innerHTML='';
   setType('auto');setMode('pct');
 }
 
+/* ── SIMULATED FSA SUBMISSION COUNTS ──
+   In production this becomes a Supabase query:
+   SELECT count(*) FROM submissions WHERE fsa = $1
+   Seeded with a mix of zero, low, and established counts
+   to demonstrate all three message states during development.
+*/
+var FSA_COUNTS = {
+  /* Established — 10+ reports */
+  M5V:24, M5T:18, M5A:31, M6H:14, M9B:12,
+  L6T:19, L5N:22, L4J:16, L8N:11, L5L:27,
+  K1S:13, K2J:15,
+  /* Early — 1–9 reports */
+  M4K:6,  M2N:4,  M6P:3,  M4G:7,  M9W:2,
+  L6V:5,  L7R:4,  L4C:8,  L8S:3,  L3Y:1,
+  K1Y:4,  K2A:7,
+  /* Pioneer — 0 reports (anything not in this table returns 0) */
+};
+
+function getFsaCount(fsa){
+  return FSA_COUNTS[fsa] || 0;
+}
+
+/* ── FSA LOOKUP + CONTEXTUAL MESSAGE ── */
 function onFsa(el){
   var v=el.value.toUpperCase().replace(/[^A-Z0-9]/g,'');el.value=v;
   $id('ferr').classList.remove('on');
-  $id('fhint').textContent=(v.length>=1&&PROV[v[0]])?PROV[v[0]]:'';
+  var hint='',OP='KLMNP';
+
+  /* Neighbourhood hint — progressive (1, 2, 3 chars) */
+  if(v.length===3){
+    hint=FSA[v]||(OP.indexOf(v[0])!==-1?'Ontario':PROV_FALLBACK[v[0]]||'');
+  } else if(v.length===2){
+    var m=Object.keys(FSA).filter(function(k){return k.indexOf(v)===0;});
+    hint=m.length>0?FSA[m[0]].replace(/\s*\(.*\)/,'')+'…':(OP.indexOf(v[0])!==-1?'Ontario':PROV_FALLBACK[v[0]]||'');
+  } else if(v.length===1){
+    hint=OP.indexOf(v)!==-1?'Ontario':PROV_FALLBACK[v]||'';
+  }
+  // Rule 7: blur(3px→0) bridges old neighbourhood → new
+  // Rule 6: 200ms — under 300ms ceiling
+  var fhintEl=$id('fhint');
+  fhintEl.classList.remove('resolving');
+  fhintEl.textContent=hint;
+  if(hint){
+    requestAnimationFrame(function(){
+      fhintEl.classList.add('resolving');
+      setTimeout(function(){fhintEl.classList.remove('resolving');},220);
+    });
+  }
+
+  /* Contextual message — only on full 3-char FSA */
+  var ctx=$id('fsaCtx');
+  if(v.length===3 && (OP.indexOf(v[0])!==-1 || FSA[v])){
+    var count=getFsaCount(v);
+    ctx.style.display='';
+    /* Force re-trigger of fade animation */
+    ctx.style.animation='none';
+    ctx.offsetHeight; /* reflow */
+    ctx.style.animation='';
+
+    if(count===0){
+      /* Pioneer state */
+      ctx.className='fsa-ctx pioneer';
+      ctx.innerHTML=
+        '<svg width="13" height="13" viewBox="0 0 13 13" fill="none">'
+        +'<circle cx="6.5" cy="6.5" r="6" stroke="#4A50B0" stroke-width="1"/>'
+        +'<path d="M6.5 3.5v3.5l2 1.5" stroke="#4A50B0" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'</svg>'
+        +'<span>You\'re one of the first to report in this area. Your post will help establish the baseline.</span>';
+    } else if(count<10){
+      /* Early adopter — social nudge */
+      ctx.className='fsa-ctx social';
+      ctx.innerHTML=
+        '<svg width="13" height="13" viewBox="0 0 13 13" fill="none">'
+        +'<circle cx="4.5" cy="4.5" r="2.5" stroke="#706F67" stroke-width="1"/>'
+        +'<circle cx="8.5" cy="4.5" r="2.5" stroke="#706F67" stroke-width="1"/>'
+        +'<path d="M1 11c0-2 1.6-3.5 3.5-3.5S8 9 8 11" stroke="#706F67" stroke-width="1" stroke-linecap="round"/>'
+        +'<path d="M8 7.5c1.9 0 3.5 1.5 3.5 3.5" stroke="#706F67" stroke-width="1" stroke-linecap="round"/>'
+        +'</svg>'
+        +'<span><strong style="color:#43423D">'+count+'</strong> '+(count===1?'neighbour has':'neighbours have')+' already reported here. Add yours.</span>';
+    } else {
+      /* Established — comparison framing */
+      ctx.className='fsa-ctx social';
+      ctx.innerHTML=
+        '<svg width="13" height="13" viewBox="0 0 13 13" fill="none">'
+        +'<circle cx="4.5" cy="4.5" r="2.5" stroke="#706F67" stroke-width="1"/>'
+        +'<circle cx="8.5" cy="4.5" r="2.5" stroke="#706F67" stroke-width="1"/>'
+        +'<path d="M1 11c0-2 1.6-3.5 3.5-3.5S8 9 8 11" stroke="#706F67" stroke-width="1" stroke-linecap="round"/>'
+        +'<path d="M8 7.5c1.9 0 3.5 1.5 3.5 3.5" stroke="#706F67" stroke-width="1" stroke-linecap="round"/>'
+        +'</svg>'
+        +'<span><strong style="color:#43423D">'+count+' reports</strong> in this area. See how yours compares.</span>';
+    }
+  } else {
+    /* Hide for partial input or non-Ontario */
+    ctx.style.display='none';
+  }
 }
+
+/* ── TYPE TOGGLE ── */
 function setType(t){
   S.type=t;
-  $id('bauto').classList.toggle('on',t==='auto');
-  $id('bhome').classList.toggle('on',t==='home');
-  $id('af').classList.toggle('open',t==='auto');
-  $id('hf').classList.toggle('open',t==='home');
+  $id('bauto').classList.toggle('on',t==='auto');$id('bhome').classList.toggle('on',t==='home');
+  $id('af').classList.toggle('open',t==='auto');$id('hf').classList.toggle('open',t==='home');
 }
+
+/* ── SIGN TOGGLE (increase / decrease) ── */
+function setSign(s){
+  S.sign=s;
+  var isInc=s==='inc';
+  $id('sInc').classList.toggle('on',isInc);
+  $id('sDec').classList.toggle('on',!isInc);
+  $id('sInc').setAttribute('aria-pressed',isInc?'true':'false');
+  $id('sDec').setAttribute('aria-pressed',isInc?'false':'true');
+  // Update dollar prefix to show + or −
+  var pfx=$id('triDolPfx');
+  if(pfx) pfx.textContent=isInc?'+$':'−$';
+  // Update slider range for decrease (cap at 30%)
+  if(S.mode==='pct'){
+    var r=$id('rng');
+    r.max=isInc?50:30;
+    $id('rhi').textContent=isInc?'50%+':'30%';
+    if(parseInt(r.value)>parseInt(r.max)) r.value=r.max;
+  }
+  // Recalculate everything with new sign
+  if(S.mode==='pct') onRange();
+  else onTriangle(S.lastEdited==='pct'?'dollar':S.lastEdited);
+}
+
+/* ── MODE TOGGLE ── */
 function setMode(m){
   S.mode=m;
   $id('mpct').classList.toggle('on',m==='pct');
   $id('mdol').classList.toggle('on',m==='dol');
-  var r=$id('rng');
-  if(m==='pct'){r.min=0;r.max=50;r.step=1;$id('rlo').textContent='0%';$id('rhi').textContent='50%+';}
-  else{r.min=0;r.max=2000;r.step=25;$id('rlo').textContent='$0';$id('rhi').textContent='$2,000+';}
-  r.value=m==='pct'?Math.min(S.rval,50):480;onRange();
+  $id('mpct').setAttribute('aria-pressed',m==='pct'?'true':'false');
+  $id('mdol').setAttribute('aria-pressed',m==='dol'?'true':'false');
+  // Show/hide correct input
+  $id('pctSliderWrap').style.display=m==='pct'?'':'none';
+  $id('dolWrap').style.display=m==='dol'?'':'none';
+  if(m==='pct'){
+    var r=$id('rng');
+    var maxV=S.sign==='inc'?50:30;
+    r.min=0;r.max=maxV;r.step=1;
+    $id('rlo').textContent='0%';
+    $id('rhi').textContent=S.sign==='inc'?'50%+':'30%';
+    r.value=Math.abs(S.rval)||18;
+    onRange();
+  } else {
+    // Switching to dollar mode — restore any previous inputs
+    onTriangle(null);
+  }
 }
+
+/* ── HERO VALUE DISPLAY ── */
+function updateHero(pctVal){
+  // pctVal is always the signed percentage
+  var absVal=Math.abs(pctVal);
+  var sign=pctVal<0?'−':'+';
+  var el=$id('slval');
+  el.textContent=sign+(absVal>=50&&pctVal>0?'50%+':absVal+'%');
+  // Sync aria-valuetext on the range input for screen readers
+  var rEl=$id('rng');
+  if(rEl){
+    var signWord=pctVal<0?'decrease':'increase';
+    rEl.setAttribute('aria-valuenow', absVal);
+    rEl.setAttribute('aria-valuetext',
+      absVal+(absVal>=50&&pctVal>0?' percent or more ':' percent ')+signWord
+    );
+  }
+  // Colour by tier — decrease=green, increase=amber/red
+  if(pctVal<0){
+    el.style.color='#1F6132'; // pos-600 — decrease is good news
+  } else {
+    el.style.color=absVal<=7?'#5E5D56':absVal<=14?'#1A1917':absVal<=24?'#845A0C':'#B33C28';
+  }
+}
+
+/* ── CONTEXTUAL LABEL ── */
+function updateCtx(pctVal){
+  var ctx=$id('slCtx');
+  var abs=Math.abs(pctVal);
+  if(pctVal<0){
+    if(abs<=3){ctx.textContent='Slight decrease — modest improvement';ctx.style.color='#2A7D41';}
+    else if(abs<=8){ctx.textContent='Solid decrease · Better than most this year';ctx.style.color='#2A7D41';}
+    else{ctx.textContent='Significant decrease · Excellent result';ctx.style.color='#1F6132';}
+  } else {
+    if(abs<=4){ctx.textContent='Below average · Most Ontario renewals are higher';ctx.style.color='#767670';}
+    else if(abs<=9){ctx.textContent='Around the Ontario average';ctx.style.color='#767670';}
+    else if(abs<=16){ctx.textContent='Above the Ontario average';ctx.style.color='#845A0C';}
+    else if(abs<=24){ctx.textContent='Significantly above average';ctx.style.color='#AD7710';}
+    else if(abs<=34){ctx.textContent='Well above average · Worth verifying this';ctx.style.color='#B33C28';}
+    else{ctx.textContent='Exceptionally high — this should definitely be verified';ctx.style.color='#B33C28';}
+  }
+}
+
+/* ── SLIDER (% mode) ── */
 function onRange(){
-  var r=$id('rng'),v=parseInt(r.value);S.rval=v;
-  var p=Math.round((v-parseInt(r.min))/(parseInt(r.max)-parseInt(r.min))*100);
+  var r=$id('rng'),v=parseInt(r.value);
+  var maxV=parseInt(r.max);
+  var p=Math.round((v-0)/(maxV-0)*100);
   r.style.background='linear-gradient(to right,#1A1917 '+p+'%,#D4D3CE '+p+'%)';
-  $id('slval').textContent=S.mode==='pct'?(v>=50?'50%+':v+'%'):(v>=2000?'$2,000+':'$'+v.toLocaleString());
+  // Apply sign
+  var signed=S.sign==='dec'?-v:v;
+  S.rval=signed;
+  S.lastEdited='pct';
+  updateHero(signed);
+  updateCtx(signed);
+  // If previous premium exists, auto-update dollar field
+  if(S.prevPrem&&S.prevPrem>0){
+    var dolAmt=Math.round(S.prevPrem*(Math.abs(signed)/100));
+    S.dollar=dolAmt;
+    var di=$id('triDollar');
+    if(di) di.value=dolAmt;
+    showTriResult(signed,dolAmt,S.prevPrem);
+  }
 }
+
+/* ── TRIANGLE CALCULATOR ($ mode) ── */
+function onTriangle(edited){
+  if(edited) S.lastEdited=edited;
+  var dolEl=$id('triDollar'),prevEl=$id('triPrev');
+  var dol=dolEl&&dolEl.value!==''?parseFloat(dolEl.value):null;
+  var prev=prevEl&&prevEl.value!==''?parseFloat(prevEl.value):null;
+  S.dollar=dol;S.prevPrem=prev;
+
+  var pct=null;
+
+  if(dol!==null&&prev!==null&&prev>0){
+    // Both filled — calculate %
+    pct=Math.round((dol/prev)*100*10)/10;
+    if(S.sign==='dec') pct=-pct;
+    S.rval=Math.round(pct);
+    showTriResult(pct,dol,prev);
+  } else if(dol!==null&&S.rval){
+    // Dollar + % known — back-calculate prev premium
+    var absPct=Math.abs(S.rval)/100;
+    if(absPct>0){
+      var calcPrev=Math.round(dol/absPct);
+      if(!prev&&calcPrev>0){
+        pct=S.rval;
+        showTriResult(pct,dol,calcPrev);
+      }
+    }
+  } else {
+    // Not enough to calculate — clear result
+    $id('triResult').className='tri-result';
+  }
+
+  if(pct!==null){
+    updateHero(pct);
+    updateCtx(pct);
+  } else {
+    // Show placeholder in hero
+    var el=$id('slval');
+    el.textContent=S.sign==='dec'?'−?%':'+?%';
+    el.style.color='#B8B7B1';
+    $id('slCtx').textContent='';
+  }
+}
+
+function showTriResult(pct,dol,prev){
+  var el=$id('triResult');
+  var valEl=$id('triResultVal');
+  var lblEl=$id('triResultLbl');
+  var isDec=pct<0;
+  var absPct=Math.abs(pct);
+  var sign=isDec?'−':'+';
+  var signWord=isDec?'decrease':'increase';
+  // Format
+  var pctStr=sign+(absPct>=50&&!isDec?'50%+':absPct.toFixed(1)+'%');
+  var prevFmt='$'+Math.round(prev).toLocaleString();
+  var newPrem=isDec
+    ?Math.round(prev-dol)
+    :Math.round(prev+dol);
+  var newFmt='$'+newPrem.toLocaleString();
+  valEl.textContent=pctStr+' '+signWord;
+  lblEl.textContent=prevFmt+' → '+newFmt+' · your post will be fully comparable';
+  // Remove .show first so entrance animation re-fires
+  // each time the calculation updates (Rule 3 equivalent)
+  el.classList.remove('show');
+  requestAnimationFrame(function(){
+    el.className='tri-result show'+(isDec?' decrease':'');
+  });
+}
+
+/* ── SENTIMENT ── */
 function setSent(n){
   S.sent=n;$id('serr').classList.remove('on');
   for(var i=1;i<=5;i++){
-    $id('so'+i).style.borderColor=i===n?SC[n]:'#EEEDEA';
-    $id('so'+i).style.background=i===n?SC[n]+'28':'#FFFFFF';
+    var btn=$id('so'+i);
+    // Remove .selected first so animation re-fires on same face
+    btn.classList.remove('selected');
+    btn.style.borderColor=i===n?SC[n]:'#EEEDEA';
+    btn.style.background=i===n?SC[n]+'28':'#FFFFFF';
+  }
+  // Trigger pulse on selected face — rAF ensures class removal
+  // has painted before re-adding (Rule 2: starts at .97 not 0)
+  requestAnimationFrame(function(){
+    $id('so'+n).classList.add('selected');
+    setTimeout(function(){$id('so'+n).classList.remove('selected');},220);
+  });
+}
+
+/* ── STEPPER with tick animation ── */
+function adj(f,d){
+  var cfg={yrs:{id:'yrsv',min:0,max:30,k:'yrs'},cl:{id:'clv',min:0,max:5,k:'cl'},cv:{id:'cvv',min:0,max:3,k:'cv'},hcl:{id:'hclv',min:0,max:5,k:'hcl'}};
+  var c=cfg[f];if(!c)return;
+  var span=$id(c.id);
+  var v=parseInt(span.textContent.replace('+',''));
+  var nv=Math.max(c.min,Math.min(c.max,v+d));
+  if(nv===v)return; /* no change — don't animate */
+  S[c.k]=nv;
+  /* Tick animation */
+  span.className='sn '+(d>0?'tick-up':'tick-down');
+  span.textContent=nv+(nv===c.max?'+':'');
+  /* Remove class after animation so it can fire again */
+  setTimeout(function(){span.className='sn';},200);
+}
+
+/* ── PROVIDER ── */
+function setProv(p){
+  S.provider=p;
+  $id('ferrProv').classList.remove('on');
+  var pills=document.querySelectorAll('.prov-pill');
+  for(var i=0;i<pills.length;i++){
+    var pill=pills[i];
+    var isSelected=pill.textContent===p;
+    pill.classList.toggle('on',isSelected);
+    if(isSelected){
+      // Remove first so animation re-fires if same pill tapped
+      // Rule 2: starts at .97, overshoots to 1.04, settles
+      pill.classList.remove('snapping');
+      requestAnimationFrame(function(el){return function(){
+        el.classList.add('snapping');
+        setTimeout(function(){el.classList.remove('snapping');},200);
+      };}(pill));
+    }
   }
 }
-function adj(f,d){
-  var cfg={yrs:{id:'yrsv',min:0,max:30,k:'yrs'},cl:{id:'clv',min:0,max:5,k:'cl'},cv:{id:'cvv',min:0,max:3,k:'cv'},hyr:{id:'hyrv',min:0,max:30,k:'hyr'},hcl:{id:'hclv',min:0,max:5,k:'hcl'}};
-  var c=cfg[f];if(!c)return;
-  var v=parseInt($id(c.id).textContent.replace('+',''));
-  v=Math.max(c.min,Math.min(c.max,v+d));S[c.k]=v;
-  $id(c.id).textContent=v+(v===c.max?'+':'');
+
+/* ── CONSENT ── */
+function toggleConsent(){
+  S.consent=!S.consent;
+  var box=$id('consentBox');
+  box.classList.toggle('checked',S.consent);
+  // Remove animation class first so it re-fires on toggle
+  box.classList.remove('confirm','uncheck');
+  requestAnimationFrame(function(){
+    // confirm = checking; uncheck = unchecking
+    // Rule 4: cubic-bezier(.16,1,.3,1) ease-out in CSS
+    // Rule 6: confirm 260ms, uncheck 150ms — both under 300ms
+    box.classList.add(S.consent?'confirm':'uncheck');
+    setTimeout(function(){
+      box.classList.remove('confirm','uncheck');
+    }, S.consent?280:170);
+  });
+  updatePostBtn();
 }
+function updatePostBtn(){
+  var btn=$id('nxbt');
+  if(S.step===2){btn.disabled=!S.consent;}
+}
+
+/* ── NAVIGATION ── */
 function goto(n){
   S.step=n;
   $id('st1').classList.toggle('on',n===1);$id('st2').classList.toggle('on',n===2);
   $id('d1').classList.toggle('on',n===1);$id('d2').classList.toggle('on',n===2);
-  $id('mttl').textContent=n===1?'Your policy':'Your renewal';
+  // Scroll modal body to top on every step transition
+  // so Step 2 always opens at the top regardless of
+  // how far the user scrolled in Step 1
+  var mbdy=$id('mbdy');
+  if(mbdy) mbdy.scrollTop=0;
+  $id('dotrow').setAttribute('aria-label','Step '+n+' of 2');
+  $id('mttl').textContent=n===1?'About your policy':'What did they charge you?';
   $id('bkbt').style.display=n>1?'':'none';
   $id('nxbt').textContent=n===2?'Post renewal':'Continue';
+  if(n===2)updatePostBtn();else $id('nxbt').disabled=false;
 }
 function nxt(){
   if(S.step===1){
-    if($id('fsai').value.length<3){$id('ferr').classList.add('on');$id('fsai').focus();return;}
+    var fsa=$id('fsai').value;
+    if(fsa.length<3){$id('ferr').classList.add('on');$id('fsai').setAttribute('aria-invalid','true');$id('fsai').focus();return;}
+    if(!S.provider){$id('ferrProv').classList.add('on');$id('provGrid').scrollIntoView({behavior:'smooth',block:'nearest'});return;}
     goto(2);
   } else {
     if(S.sent===0){$id('serr').classList.add('on');return;}
+    /* Rate check — must have a valid pct value */
+    var hasPct = S.rval !== null && S.rval !== 0;
+    var canCalc = S.dollar && S.prevPrem && S.prevPrem > 0;
+    if(!hasPct && !canCalc){
+      var ctx=$id('slCtx');
+      ctx.textContent='Please set your premium change above to continue';
+      ctx.style.color='#D4503A';
+      ctx.style.fontWeight='500';
+      return;
+    }
+    // If in dollar mode with both fields, ensure pct is calculated
+    if(S.mode==='dol'&&canCalc&&(!S.rval||S.rval===0)){
+      onTriangle('dollar');
+    }
+    if(!S.consent){return;} /* button should be disabled but guard anyway */
     $id('st2').classList.remove('on');
     $id('mft').style.display='none';$id('dotrow').style.display='none';
     $id('mttl').textContent='';
@@ -510,202 +1575,182 @@ function nxt(){
 }
 function prev(){if(S.step>1)goto(S.step-1);}
 
+/* ── FACE SVG ── */
 function faceSvg(s){
   var c=['','#3A9B55','#2A7D41','#92600A','#B33C28','#8C2E1E'][s];
   var m=['','M9 19Q17 26 25 19','M11 20Q17 24 23 20','M11 22L23 22','M11 24Q17 20 23 24','M9 25Q17 19 25 25'][s];
-  return '<svg width="52" height="52" viewBox="0 0 34 34">'
-    +'<circle cx="12" cy="13" r="2.1" fill="'+c+'"/>'
-    +'<circle cx="22" cy="13" r="2.1" fill="'+c+'"/>'
-    +'<path d="'+m+'" stroke="'+c+'" stroke-width="2.2" stroke-linecap="round" fill="none"/>'
-    +'</svg>';
+  return '<svg width="52" height="52" viewBox="0 0 34 34"><circle cx="12" cy="13" r="2.1" fill="'+c+'"/><circle cx="22" cy="13" r="2.1" fill="'+c+'"/><path d="'+m+'" stroke="'+c+'" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>';
 }
 
-/* ══════════════════════════════════
-   MAIN ANIMATION ORCHESTRATOR
-══════════════════════════════════ */
+/* ════════════════════════════════════
+   ANIMATION ORCHESTRATOR
+════════════════════════════════════ */
 function playAnim(){
-  var sent=S.sent, color=SC[sent], isPos=sent<=2, isNeg=sent>=4;
+  var sent=S.sent,color=SC[sent],isPos=sent<=2,isNeg=sent>=4;
   $id('sealCircle').setAttribute('fill',color);
-
-  /*
-    Timeline:
-    500ms  → Start flap opening (1100ms duration, stays open)
-    1700ms → Letter starts rising (950ms duration)
-    2700ms → Face appears on letter
-    3100ms → Sentiment effect (glow or rip)
-    3600ms → Success message
-  */
-
-  setTimeout(function(){ animateFlap(); }, 500);
-  setTimeout(function(){ raiseLetter(); }, 1700);
+  setTimeout(function(){animateFlap();},500);
+  setTimeout(function(){raiseLetter();},1700);
+  setTimeout(function(){$id('letterFace').innerHTML=faceSvg(sent);$id('letterFace').classList.add('on');},2700);
   setTimeout(function(){
-    $id('letterFace').innerHTML=faceSvg(sent);
-    $id('letterFace').classList.add('on');
-  }, 2700);
-  setTimeout(function(){
-    if(isPos){ $id('envLetter').classList.add('glow'); spawnParticles(color); }
-    else if(isNeg){ doRip(sent); }
-  }, 3100);
-  setTimeout(function(){ showSuccess(isPos,isNeg); }, isNeg?4200:3700);
+    if(isPos){$id('envLetter').classList.add('glow');spawnParticles(color);}
+    else if(isNeg){doRip(sent);}
+  },3100);
+  /* After effect: shrink envelope to stamp, then show comparison card */
+  setTimeout(function(){stampAndReveal(isPos,isNeg);},isNeg?4000:3500);
 }
 
-/* ══════════════════════════════════
-   FLAP ANIMATION
-   Two-phase rAF loop:
-   Phase A (0→50%): peak moves 68→0  (unfolding to hinge)
-   Phase B (50→100%): peak moves 0→-44 (folding back open)
-
-   Crucially: opacity stays at 1 the whole time.
-   The flap becomes the "open lid" resting above the envelope.
-   Fill changes to inside-face colour at the hinge to show back of paper.
-   A drop shadow is added in Phase B for depth.
-══════════════════════════════════ */
+/* ── FLAP ANIMATION ── */
 function animateFlap(){
-  var TOTAL_DUR = 1100;
-  var PEAK_CLOSED = 68;   /* y coordinate of closed flap peak */
-  var PEAK_OPEN   = -44;  /* y coordinate of open flap peak (above envelope top) */
-  var FRONT_FILL  = '#ECE9E3';
-  var BACK_FILL   = '#E2DDD7'; /* slightly darker = inside of paper */
-  var passedHinge = false;
-  var startT      = null;
-  var poly        = $id('flapPoly');
-  var edge        = $id('flapEdge');
-  var sealGrp     = $id('sealGroup');
-  var flapSvg     = $id('envFlap');
-
+  var DUR=1100,CLOSED=68,OPEN=-44,FRONT='#ECE9E3',BACK='#E2DDD7';
+  var hinged=false,startT=null;
+  var poly=$id('flapPoly'),edge=$id('flapEdge'),seal=$id('sealGroup'),flap=$id('envFlap');
   function step(ts){
-    if(!startT) startT=ts;
-    var raw=Math.min((ts-startT)/TOTAL_DUR, 1);
-    var t=easeInOut(raw);
-
-    /* Peak Y interpolates closed → open */
-    var peakY = lerp(PEAK_CLOSED, PEAK_OPEN, t);
-
-    /* Update polygon and fold-edge polyline */
-    poly.setAttribute('points', '0,0 180,0 90,'+peakY.toFixed(2));
-    edge.setAttribute('points', '0,0 90,'+peakY.toFixed(2)+' 180,0');
-
-    /* At hinge point: switch to inside-face colour, add shadow, hide seal */
-    if(!passedHinge && peakY<=0){
-      passedHinge=true;
-      poly.setAttribute('fill', BACK_FILL);
-      sealGrp.style.opacity='0';          /* seal disappears as flap inverts */
-      flapSvg.style.filter='url(#flapShadow)'; /* shadow makes it feel 3D */
-    }
-
-    /* Seal fades out in first quarter of animation */
-    if(!passedHinge){
-      var sealAlpha=Math.max(0, 1-t*4);
-      sealGrp.style.opacity=sealAlpha.toFixed(3);
-    }
-
-    if(raw<1){
-      requestAnimationFrame(step);
-    } else {
-      /* Animation done. Flap stays visible as open lid at z=3
-         (below letter which is about to rise to z=5) */
-      flapSvg.style.zIndex='3';
-    }
+    if(!startT)startT=ts;
+    var raw=Math.min((ts-startT)/DUR,1),t=easeInOut(raw),py=lerp(CLOSED,OPEN,t);
+    poly.setAttribute('points','0,0 180,0 90,'+py.toFixed(2));
+    edge.setAttribute('points','0,0 90,'+py.toFixed(2)+' 180,0');
+    if(!hinged&&py<=0){hinged=true;poly.setAttribute('fill',BACK);seal.style.opacity='0';flap.style.filter='url(#flapShadow)';}
+    if(!hinged)seal.style.opacity=Math.max(0,1-t*4).toFixed(3);
+    if(raw<1)requestAnimationFrame(step);else flap.style.zIndex='3';
   }
   requestAnimationFrame(step);
 }
 
-/* ══════════════════════════════════
-   LETTER RISE
-   rAF loop: translateY 0 → -108px over 950ms, ease-out cubic.
-   Letter z-index bumps to 5 so it rises above open flap.
-══════════════════════════════════ */
+/* ── LETTER RISE ── */
 function raiseLetter(){
-  var el=$id('envLetter');
-  var DUR=950;
-  var RISE=108; /* px to rise above rest position */
-  var startT=null;
-
-  el.style.opacity='1';
-  el.style.zIndex='5';  /* above flap */
-
+  var el=$id('envLetter'),DUR=950,RISE=108,startT=null;
+  el.style.opacity='1';el.style.zIndex='5';
   function step(ts){
-    if(!startT) startT=ts;
-    var raw=Math.min((ts-startT)/DUR, 1);
-    var t=easeOutCubic(raw);
+    if(!startT)startT=ts;
+    var raw=Math.min((ts-startT)/DUR,1),t=easeOutCubic(raw);
     el.style.transform='translateY(-'+Math.round(t*RISE)+'px)';
-    if(raw<1) requestAnimationFrame(step);
+    if(raw<1)requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
 }
 
-/* ══════════════════════════════════
-   PARTICLES (positive sentiment)
-══════════════════════════════════ */
+/* ── PARTICLES ── */
 function spawnParticles(color){
-  var wrap=$id('ptcWrap');
-  var sizes=[4,6,5,7,4,5,6,4,7,5];
-  for(var i=0;i<10;i++){
-    (function(idx){
-      setTimeout(function(){
-        var p=document.createElement('div');
-        p.className='ptc';
-        var sz=sizes[idx];
-        var dur=(0.7+Math.random()*0.65).toFixed(2);
-        var lx=(18+Math.random()*64).toFixed(1);
-        p.style.cssText='width:'+sz+'px;height:'+sz+'px;background:'+color
-          +';left:'+lx+'%;top:46%;animation:ptcUp '+dur+'s ease-out forwards';
-        wrap.appendChild(p);
-        setTimeout(function(){if(p.parentNode)p.parentNode.removeChild(p);},1800);
-      },idx*95);
-    })(i);
-  }
+  var w=$id('ptcWrap'),sz=[4,6,5,7,4,5,6,4,7,5];
+  for(var i=0;i<10;i++){(function(idx){setTimeout(function(){var p=document.createElement('div');p.className='ptc';var d=(0.7+Math.random()*.65).toFixed(2),lx=(18+Math.random()*64).toFixed(1);p.style.cssText='width:'+sz[idx]+'px;height:'+sz[idx]+'px;background:'+color+';left:'+lx+'%;top:46%;animation:ptcUp '+d+'s ease-out forwards';w.appendChild(p);setTimeout(function(){if(p.parentNode)p.parentNode.removeChild(p);},1800);},idx*95);})(i);}
 }
 
-/* ══════════════════════════════════
-   RIP (negative sentiment)
-   Positions the rip halves at the risen letter's location.
-══════════════════════════════════ */
+/* ── RIP ── */
 function doRip(sent){
-  var RISE_PX=108;
-  var inner='<div class="letter-inner">'
-    +'<div class="ll"></div><div class="ll s"></div><div class="ll xs"></div>'
-    +'<div class="ll"></div><div class="ll s"></div></div>'
-    +'<div style="display:flex;align-items:center;justify-content:center;padding-top:10px">'
-    +faceSvg(sent)+'</div>';
-
-  var shared='position:absolute;left:14px;right:14px;height:140px;background:#FFFFFF;'
-    +'border:1px solid #DDDBD6;border-radius:4px;z-index:6;'
-    +'top:calc(14px - '+RISE_PX+'px);';
-
-  $id('ripL').innerHTML=inner;
-  $id('ripR').innerHTML=inner;
-  $id('ripL').style.cssText=shared+'clip-path:inset(0 50% 0 0 round 4px 0 0 4px);opacity:1';
-  $id('ripR').style.cssText=shared+'clip-path:inset(0 0 0 50% round 0 4px 4px 0);opacity:1';
-
-  $id('ripCrack').style.cssText='position:absolute;left:50%;width:2px;'
-    +'top:calc(14px - '+RISE_PX+'px);height:140px;margin-left:-1px;'
-    +'background:linear-gradient(to bottom,transparent,#E87460 15%,#E87460 85%,transparent);'
-    +'z-index:7;opacity:1;animation:crackIn .65s ease forwards;transform-origin:top';
-
+  var RISE=108;
+  var inner='<div class="letter-inner"><div class="ll"></div><div class="ll s"></div><div class="ll xs"></div><div class="ll"></div><div class="ll s"></div></div><div style="display:flex;align-items:center;justify-content:center;padding-top:10px">'+faceSvg(sent)+'</div>';
+  var sh='position:absolute;left:14px;right:14px;height:140px;background:#FFFFFF;border:1px solid #E2E1DD;border-radius:4px;z-index:6;top:calc(14px - 108px);';
+  $id('ripL').innerHTML=inner;$id('ripR').innerHTML=inner;
+  $id('ripL').style.cssText=sh+'clip-path:inset(0 50% 0 0 round 4px 0 0 4px);opacity:1';
+  $id('ripR').style.cssText=sh+'clip-path:inset(0 0 0 50% round 0 4px 4px 0);opacity:1';
+  $id('ripCrack').style.cssText='position:absolute;left:50%;width:2px;top:calc(14px - 108px);height:140px;margin-left:-1px;background:linear-gradient(to bottom,transparent,#E87460 15%,#E87460 85%,transparent);z-index:7;opacity:1;animation:crackIn .65s ease forwards;transform-origin:top';
   $id('envLetter').style.opacity='0';
+  setTimeout(function(){$id('ripL').style.animation='flyL .85s cubic-bezier(.4,0,1,1) forwards';$id('ripR').style.animation='flyR .85s cubic-bezier(.4,0,1,1) forwards';},540);
+}
+
+/* ════════════════════════════════════
+   STAMP + COMPARISON CARD REVEAL
+   Option A: envelope scales to stamp at top,
+   comparison card with count-up fades in below.
+   Then verify prompt fades in beneath.
+════════════════════════════════════ */
+function stampAndReveal(isPos,isNeg){
+  /* Shrink envelope to stamp */
+  $id('envScene').classList.add('stamp');
+
+  /* Data density check — pioneer vs established */
+  var fsa      = $id('fsai').value;
+  var fsaCount = getFsaCount(fsa);
+  var isPioneer = fsaCount < 5;
+
+  var userVal    = S.rval;
+  var userPct    = S.mode === 'pct';
+  var userPctVal = userPct ? userVal : Math.round(userVal/28);
+  var areaPctVal = Math.round(userPctVal * 0.78);
+
+  function fmt(v){ return userPct ? (v+'%') : ('$'+Math.round(v*28)); }
+
+  /* Insight line */
+  var percentileHigh = userPctVal > areaPctVal;
+  var insight = percentileHigh
+    ? '<strong>'+S.provider+' customers in your area</strong> are typically seeing lower increases. Yours is on the higher end — that\'s worth a closer look.'
+    : 'You\'re below the average for your neighbourhood with <strong>'+S.provider+'</strong>. You\'re in a better position than most.';
+
+
 
   setTimeout(function(){
-    $id('ripL').style.animation='flyL .85s cubic-bezier(.4,0,1,1) forwards';
-    $id('ripR').style.animation='flyR .85s cubic-bezier(.4,0,1,1) forwards';
-  },540);
+
+    /* 1. On-map confirmation */
+    // Personalise confirmation with user's neighbourhood
+    var fsaVal=$id('fsai').value.toUpperCase();
+    var hood=FSA[fsaVal]
+      ? FSA[fsaVal].replace(/\s*\(.*\)/,'').trim()
+      : fsaVal;
+    $id('onMapText').textContent=hood+' is on the map.';
+    $id('onMapConfirm').classList.add('show');
+
+
+
+    /* 3. Pioneer neighbour column */
+    var areaCol = $id('cmpAreaCol');
+    if(isPioneer){
+      areaCol.classList.add('pioneer-col');
+      $id('cmpAreaLbl').textContent = 'Your neighbours';
+      $id('cmpArea').textContent    = 'No data yet';
+      $id('cmpAreaSub').textContent = 'be the first in your area';
+      $id('cmpArea').style.color    = '#D4D3CE';
+      $id('cmpInsight').innerHTML   =
+        'You\'re one of the first to report in <strong>'+(FSA[fsa]||fsa)+'</strong>. Your post sets the baseline for everyone who follows.';
+    } else {
+      areaCol.classList.remove('pioneer-col');
+      $id('cmpAreaLbl').textContent = 'Your neighbours';
+      $id('cmpAreaSub').textContent = 'average increase';
+      $id('cmpArea').style.color    = '#AD7710';
+      $id('cmpInsight').innerHTML   = insight;
+    }
+
+    /* Reset and show card */
+    $id('cmpYours').textContent = '—';
+    $id('cmpOnt').textContent   = '—';
+    if(!isPioneer) $id('cmpArea').textContent = '—';
+    $id('cmpYoursSub').textContent = 'your renewal';
+    $id('cmpCard').classList.add('show');
+
+    /* Count-up animations */
+    countUp($id('cmpYours'), 0, userPctVal, 900, function(v){
+      return userPct ? (v>=50?'50%+':Math.round(v)+'%') : ('$'+Math.round(v*28));
+    }, '#D4503A');
+
+    if(!isPioneer){
+      setTimeout(function(){
+        countUp($id('cmpArea'), 0, areaPctVal, 700, function(v){
+          return Math.round(v)+(userPct?'%':'');
+        }, '#AD7710');
+      }, 200);
+    }
+
+    setTimeout(function(){
+      countUp($id('cmpOnt'), 0, 9.4, 600, function(v){
+        return v.toFixed(1)+'%';
+      }, '#2A7D41');
+    }, 380);
+
+
+  }, 650);
+}
+function countUp(el,from,to,dur,fmt,color){
+  var start=null;
+  el.style.color=color;
+  function step(ts){
+    if(!start)start=ts;
+    var raw=Math.min((ts-start)/dur,1),t=easeOutCubic(raw);
+    el.textContent=fmt(lerp(from,to,t));
+    if(raw<1)requestAnimationFrame(step);else el.textContent=fmt(to);
+  }
+  requestAnimationFrame(step);
 }
 
-/* ══════════════════════════════════
-   SUCCESS MESSAGE
-══════════════════════════════════ */
-function showSuccess(isPos,isNeg){
-  $id('amsgs').textContent=isPos
-    ?'Your fair renewal is on the map. You\'re helping set the standard for what a fair increase looks like.'
-    :isNeg
-    ?'Your experience is on the map. Your data helps neighbours know what to watch out for.'
-    :'Your renewal is on the map, adding to the picture for your area.';
-  var m=$id('amsg');
-  m.style.visibility='visible';
-  m.classList.add('show');
-}
-
-/* ══ INIT ══ */
+/* ── INIT ── */
 onRange();
 </script>
 </body>

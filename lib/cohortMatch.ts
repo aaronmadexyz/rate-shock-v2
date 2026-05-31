@@ -26,8 +26,8 @@ function convictionBracket(n: number | null | undefined): 0 | 1 {
 function medianOf(sorted: number[]): number {
   const mid = Math.floor(sorted.length / 2)
   return sorted.length % 2 === 0
-    ? Math.round((sorted[mid - 1] + sorted[mid]) / 2)
-    : sorted[mid]
+    ? Math.round(((sorted[mid - 1] ?? 0) + (sorted[mid] ?? 0)) / 2)
+    : sorted[mid] ?? 0
 }
 
 function buildResult(tier: CohortResult['tier'], subset: Submission[]): CohortResult {
@@ -36,8 +36,8 @@ function buildResult(tier: CohortResult['tier'], subset: Submission[]): CohortRe
     tier,
     count:  subset.length,
     median: medianOf(vals),
-    min:    vals[0],
-    max:    vals[vals.length - 1],
+    min:    vals[0] ?? 0,
+    max:    vals.at(-1) ?? 0,
     ids:    new Set(subset.map(s => s.id)),
   }
 }

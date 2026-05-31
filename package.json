@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
-    "@vercel/speed-insights": "^2.0.0",
     "framer-motion": "^11",
     "leaflet": "^1",
     "next": "^16.2.6",
