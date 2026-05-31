@@ -256,7 +256,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  line-height: 1.1;
+  line-height: 1.1; /* WCAG 1.4.12 exempt — single-line numeric display value. Cannot reflow. Not flowing text. */
 }
 
 .reportMeta {

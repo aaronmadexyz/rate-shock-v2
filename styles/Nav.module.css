@@ -482,7 +482,7 @@
   padding: 4px 8px; /* sp-1 sp-2 ✓ */
   border-radius: 999px;
   white-space: nowrap;
-  line-height: 1.4;
+  line-height: 1.5; /* WCAG 1.4.12: ≥1.5× font-size required for all rendered text */
   flex-shrink: 0;
 }
 

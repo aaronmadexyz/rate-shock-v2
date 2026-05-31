@@ -2003,7 +2003,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         aria-describedby={sentErr ? 'serr' : undefined}
                       >
                         <legend className="fl">How do you feel about your renewal?</legend>
-                        <div style={{ display: 'flex', gap: 'var(--sp-1)', marginBottom: 2 }}>
+                        <div style={{ display: 'flex', gap: 'var(--sp-1)', marginBottom: 0 }}>
                           {[1, 2, 3, 4, 5].map(n => (
                             <button
                               key={n}
@@ -2471,7 +2471,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               {patchError && (
                                 <p role="alert" aria-live="assertive" style={{
                                   fontSize: 11, color: 'var(--neg-500)',
-                                  marginTop: 6, lineHeight: 1.4,
+                                  marginTop: 8, lineHeight: 1.4,
                                   fontFamily: "'Inter', system-ui, sans-serif",
                                 }}>
                                   {patchError}
@@ -2520,7 +2520,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           fontWeight: 500,
                           color: TOKENS.colors.p600,
                           textDecoration: 'none',
-                          marginTop: 6,
+                          marginTop: 8,
                           fontFamily: "'Inter', system-ui, sans-serif",
                         }}
                         onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
