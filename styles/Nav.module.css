@@ -368,6 +368,7 @@
 ══════════════════════════════════════════ */
 
 .iconBtn {
+  position: relative; /* required for ::before tap-target expander */
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -379,6 +380,14 @@
   justify-content: center;
   flex-shrink: 0;
   transition: background .15s, border-color .15s;
+}
+
+/* Tap target expander: 32px + 12px = 44px ✓ minimum touch target */
+.iconBtn::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
 }
 
 .iconBtn:hover {
@@ -444,7 +453,7 @@
 .ctaInner {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px; /* sp-2 — raised from 7px (off 4px grid) */
 }
 
 /* Pulsing amber dot — unverified state */
@@ -508,6 +517,7 @@
 ══════════════════════════════════════════ */
 
 .burger {
+  position: relative; /* required for ::before tap-target expander */
   display: none;
   width: 36px;
   height: 36px;
@@ -523,6 +533,14 @@
   box-shadow: 0 1px 2px rgba(26, 25, 23, .04);
   padding: 0;
   transition: background .15s;
+}
+
+/* Tap target expander: 36px + 8px = 44px ✓ minimum touch target */
+.burger::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: var(--r-sm);
 }
 
 .burger:hover {

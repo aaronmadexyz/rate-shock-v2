@@ -49,6 +49,11 @@
 .nudgeRing {
   display: inline-flex;
   border-radius: 9999px;
+  /* INTENTIONAL EXCEPTION to Rule 6 (under 300ms):
+     900ms one-shot mount animation — not a UI state transition.
+     Plays once on first visit only (sessionStorage guard). Does not repeat.
+     Exempt per design system §05: "Remove animations seen hundreds of times
+     a day." This animation is seen at most once per session. */
   animation: filterNudgePulse 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
