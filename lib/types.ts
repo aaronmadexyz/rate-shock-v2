@@ -56,3 +56,24 @@ export interface UserProfile {
 }
 
 export type NavState = 'new' | 'unverified' | 'verified'
+
+export interface RecentReport {
+  id:                 string
+  insurance_type:     'auto' | 'home'
+  provider:           string
+  rate_change_pct:    number | null
+  rate_change_dollar: number | null
+  sentiment:          number
+}
+
+export interface NeighbourhoodStats {
+  fsa:            string
+  neighbourhood:  string
+  totalCount:     number
+  autoCount:      number
+  homeCount:      number
+  autoAvgPct:     number | null
+  homeAvgPct:     number | null
+  providers:      string[]     // sorted by count desc, top 3
+  recentReports:  RecentReport[]
+}

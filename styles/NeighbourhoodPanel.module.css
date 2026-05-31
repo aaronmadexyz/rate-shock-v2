@@ -1,0 +1,365 @@
+/* ─── Backdrop ──────────────────────────────────────────────────────────────── */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-panel-backdrop); /* 199 */
+  background: rgba(26, 25, 23, 0.28);
+  cursor: pointer;
+}
+
+/* ─── Panel (fixed bottom sheet) ────────────────────────────────────────────── */
+
+.panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-panel); /* 200 */
+  background: var(--n-0);
+  border-radius: 20px 20px 0 0;
+  box-shadow:
+    0 -4px 32px rgba(26, 25, 23, 0.10),
+    0 -1px 4px rgba(26, 25, 23, 0.05);
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  transform-origin: bottom center;
+  will-change: transform;
+  overflow: hidden;
+}
+
+/* ─── Drag handle ────────────────────────────────────────────────────────────── */
+
+.dragHandle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--n-300);
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────────── */
+
+.header {
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--n-100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--n-900);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* ─── Close button ───────────────────────────────────────────────────────────── */
+
+.closeBtn {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--n-150);
+  background: var(--n-0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 150ms ease;
+}
+
+.closeBtn::before {
+  content: '';
+  position: absolute;
+  inset: -9px; /* 26px + 18px = 44px tap target */
+  border-radius: 50%;
+}
+
+.closeBtn:hover  { background: var(--n-50); }
+.closeBtn:active { transform: scale(0.97); }
+.closeBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-500);
+}
+
+/* ─── Scrollable body ────────────────────────────────────────────────────────── */
+
+.body {
+  overflow-y: auto;
+  padding: 0 20px 32px;
+  flex: 1;
+}
+
+.body::-webkit-scrollbar { width: 3px; }
+.body::-webkit-scrollbar-thumb {
+  background: var(--n-200);
+  border-radius: 2px;
+}
+
+/* ─── Section labels ─────────────────────────────────────────────────────────── */
+
+.sectionLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--n-400);
+  margin: 16px 0 8px;
+}
+
+/* Used on subsequent section labels to add top spacing */
+.sectionLabelSpaced {
+  margin-top: 20px;
+}
+
+/* ─── Type breakdown grid (aggregate mode) ───────────────────────────────────── */
+
+.typeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.typeCard {
+  background: var(--n-25);
+  border: 1px solid var(--n-100);
+  border-radius: var(--r-md); /* 10px */
+  padding: 12px;
+}
+
+.typeIconRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.typeLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--n-500);
+}
+
+.typeAvg {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+  line-height: 1.1;
+}
+
+.typeCount {
+  font-size: 11px;
+  color: var(--n-400);
+  margin-top: 2px;
+}
+
+/* ─── Provider pills ─────────────────────────────────────────────────────────── */
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pill {
+  font-size: 12px;
+  color: var(--n-700);
+  background: var(--n-0);
+  border: 1px solid var(--n-200);
+  border-radius: var(--r-full);
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+/* ─── Recent reports list ────────────────────────────────────────────────────── */
+
+.recentList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recentRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--n-100);
+}
+
+.recentRowLast {
+  border-bottom: none;
+}
+
+.recentRate {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.recentMeta {
+  font-size: 12px;
+  color: var(--n-400);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Sparse mode ────────────────────────────────────────────────────────────── */
+
+.sparseLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--n-400);
+  margin: 16px 0 12px;
+}
+
+.sparseRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--n-100);
+  border-bottom: 1px solid var(--n-100);
+}
+
+.rateValue {
+  font-family: var(--mono);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.reportMeta {
+  font-size: 12px;
+  color: var(--n-400);
+  margin-top: 2px;
+}
+
+.pioneerText {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--n-500);
+  line-height: 1.5;
+}
+
+.inlineLink {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--p-600);
+  font-weight: 500;
+  line-height: inherit;
+}
+
+.inlineLink:hover { color: var(--p-700); }
+.inlineLink:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-500);
+  border-radius: 2px;
+}
+
+/* ─── Skeleton loading ───────────────────────────────────────────────────────── */
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeletonContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.skeleton {
+  border-radius: var(--r-sm);
+  background: linear-gradient(
+    90deg,
+    var(--n-100) 0%,
+    var(--n-50)  50%,
+    var(--n-100) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.skRow1 { width: 60%; height: 24px; }
+.skRow2 { width: 80%; height: 16px; }
+.skRow3 { width: 40%; height: 16px; }
+
+/* ─── CTA bar ────────────────────────────────────────────────────────────────── */
+
+.ctaBar {
+  padding: 12px 20px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--n-100);
+  background: var(--n-0);
+  flex-shrink: 0;
+}
+
+.ctaBtn {
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 500;
+  background: var(--p-600);
+  color: var(--n-0);
+  border-radius: var(--r-full);
+  padding: 14px 0;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  display: block;
+  text-align: center;
+  transition: background 150ms ease;
+}
+
+.ctaBtn:hover  { background: var(--p-700); }
+.ctaBtn:active { transform: scale(0.97); }
+.ctaBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-500);
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    /* Framer Motion handles this via prefersReduced, but belt-and-suspenders */
+    transform: none !important;
+    transition: opacity 0.15s ease;
+  }
+  .backdrop {
+    transition: background 0.15s ease;
+  }
+  .skeleton {
+    animation: none;
+    background: var(--n-100);
+  }
+}

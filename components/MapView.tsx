@@ -12,8 +12,10 @@ import { getAreaLabel } from '@/lib/fsaData'
 import { useReducedMotion } from '@/lib/motionSafety'
 import { safeGetItem } from '@/lib/storage'
 import { playChime } from '@/lib/sounds'
-import type { FilterState } from '@/lib/types'
+import type { FilterState, NeighbourhoodStats } from '@/lib/types'
 import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
+import { fetchNeighbourhood } from '@/lib/fetchNeighbourhood'
+import NeighbourhoodPanel from '@/components/NeighbourhoodPanel'
 import { matchCohort } from '@/lib/cohortMatch'
 import type { CohortResult } from '@/lib/cohortMatch'
 import styles from '@/styles/MarkerTooltip.module.css'
@@ -674,6 +676,12 @@ export default function MapView({
   const [viewerFsa,   setViewerFsa]   = useState<string | null>(null)
   const [isMobile,    setIsMobile]    = useState(false)
 
+  // NeighbourhoodPanel state
+  const [panelFsa,     setPanelFsa]     = useState<string | null>(null)
+  const [panelStats,   setPanelStats]   = useState<NeighbourhoodStats | null>(null)
+  const [panelLoading, setPanelLoading] = useState(false)
+  const fetchIdRef = useRef(0)
+
   // Single state drives all tooltip rendering
   const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip | null>(null)
   const tooltipRef = useRef<ActiveTooltip | null>(null)
@@ -735,6 +743,27 @@ export default function MapView({
     hideTimerRef.current = setTimeout(() => setActiveTooltip(null), 150)
   }, [])
 
+  const closePanel = useCallback(() => {
+    setPanelFsa(null)
+    setPanelStats(null)
+  }, [])
+
+  const handleEnvelopeClick = useCallback(async (fsa: string) => {
+    if (panelFsa === fsa) {
+      setPanelFsa(null)
+      setPanelStats(null)
+      return
+    }
+    const fetchId = ++fetchIdRef.current
+    setPanelFsa(fsa)
+    setPanelStats(null)
+    setPanelLoading(true)
+    const stats = await fetchNeighbourhood(fsa)
+    if (fetchId !== fetchIdRef.current) return // stale — another FSA was clicked
+    setPanelStats(stats)
+    setPanelLoading(false)
+  }, [panelFsa])
+
   // Mouse enters a marker
   const onMarkerEnter = useCallback((sub: Submission, x: number, y: number) => {
     cancelHideTimer()
@@ -754,11 +783,12 @@ export default function MapView({
     startHideTimer()
   }, [startHideTimer])
 
-  // Click / tap on a marker — always locks the panel
-  const onMarkerClick = useCallback((sub: Submission, x: number, y: number) => {
+  // Click / tap on a marker — opens neighbourhood panel for that FSA
+  const onMarkerClick = useCallback((sub: Submission, _x: number, _y: number) => {
     cancelHideTimer()
-    setActiveTooltip({ sub, x, y, mode: 'locked' })
-  }, [cancelHideTimer])
+    setActiveTooltip(null) // dismiss hover preview
+    handleEnvelopeClick(sub.fsa)
+  }, [cancelHideTimer, handleEnvelopeClick])
 
   const prependSubmission = useCallback((sub: Submission) => {
     if (!isInitialLoad.current && !prefersReducedRef.current) playChime()
@@ -942,20 +972,19 @@ export default function MapView({
         )}
       </AnimatePresence>
 
-      {/* Mode 2 — locked detail panel (desktop positioned + mobile sheet) */}
+      {/* NeighbourhoodPanel — neighbourhood-aggregated bottom sheet */}
       <AnimatePresence>
-        {at?.mode === 'locked' && (
-          <LockedPanel
-            key="locked-panel"
-            sub={at.sub}
-            x={at.x}
-            y={at.y}
-            fsaMedians={fsaMedians}
-            viewerFsa={viewerFsa}
-            prefersReduced={prefersReduced}
-            isMobile={isMobile}
-            onClose={dismissAll}
-            onCtaClick={() => { dismissAll(); onCtaClick?.() }}
+        {panelFsa && (
+          <NeighbourhoodPanel
+            key="neighbourhood-panel"
+            stats={panelStats}
+            loading={panelLoading}
+            fsa={panelFsa}
+            onClose={closePanel}
+            onCtaClick={() => {
+              closePanel()
+              onCtaClick?.()
+            }}
           />
         )}
       </AnimatePresence>
