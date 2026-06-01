@@ -21,6 +21,8 @@ import type { Submission, MapViewHandle, UserProfile } from '@/lib/types'
 import type { CohortResult } from '@/lib/cohortMatch'
 import { safeGetItem, safeSetItem } from '@/lib/storage'
 import { TOKENS } from '@/lib/tokens'
+// OnboardingOverlay is static — must be available immediately on first mount
+import OnboardingOverlay from '@/components/OnboardingOverlay'
 
 // Leaflet requires browser APIs — skip SSR entirely
 const MapView = lazyLoad(() => import('@/components/MapView'), {
@@ -33,12 +35,6 @@ const MapView = lazyLoad(() => import('@/components/MapView'), {
 // Modal is client-only (animations, localStorage, Supabase) — only shown on CTA tap
 const ShareRenewalModal = lazyLoad(
   () => import('@/components/ShareRenewalModal'),
-  { ssr: false, loading: () => null }
-)
-
-// Overlay shown once on first visit — zero cost when sessionStorage flag is set
-const OnboardingOverlay = lazyLoad(
-  () => import('@/components/OnboardingOverlay'),
   { ssr: false, loading: () => null }
 )
 

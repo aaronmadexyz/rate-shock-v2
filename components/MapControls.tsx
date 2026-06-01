@@ -17,6 +17,9 @@ const FilterSheet = dynamic(
   { ssr: false, loading: () => null }
 )
 
+// Preload the filter chunk on hover/focus so it's ready before the user taps
+const preloadFilter = () => { void import('@/components/FilterSheet') }
+
 const SH_SM = TOKENS.shadows.shadowSm
 
 const TAP_SNAPPY = { type: 'spring' as const, ...springs.snappy }
@@ -339,6 +342,8 @@ function MapControls({
         <motion.button
           type="button"
           onClick={handleFilterClick}
+          onMouseEnter={preloadFilter}
+          onFocus={preloadFilter}
           aria-expanded={isFilterOpen}
           aria-haspopup="true"
           aria-controls="filter-panel"

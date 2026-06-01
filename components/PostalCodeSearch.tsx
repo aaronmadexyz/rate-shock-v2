@@ -30,14 +30,6 @@ function SearchSvg({ active }: { active?: boolean }) {
   )
 }
 
-function ClockIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <circle cx="6.5" cy="6.5" r="5.5" stroke="#D49316" strokeWidth="1.1"/>
-      <path d="M6.5 4v2.5l1.5 1.5" stroke="#D49316" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
 
 function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
   const [isExpanded,   setIsExpanded]   = useState(false)
@@ -118,7 +110,7 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
   }
 
   const neighbourhood = value.length === 3 ? getAreaLabel(value) : ''
-  const showStatus    = isExpanded && (status === 'pioneer' || status === 'invalid')
+  const showStatus    = isExpanded && status === 'invalid'
   const expandedWidth = isMobile ? windowWidth - 120 : 220
 
   // Content crossfade (Correction 3)
@@ -139,78 +131,112 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
 
   return (
     <div style={{ position: 'relative' }}>
-      <style>{`.pcs-inp::placeholder { color: var(--n-300); }`}</style>
+      <style>{`
+        .pcs-inp::placeholder { color: var(--n-300); }
+        .pioneer-cta:hover { background: var(--p-700) !important; }
+        .pioneer-cta:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-500); }
+      `}</style>
 
-      {/* Status messages — above the pill */}
+      {/* Invalid FSA message — above the pill */}
       <AnimatePresence>
         {showStatus && (
           <motion.div
-            key={status}
+            key="invalid"
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={prefersReduced ? { duration: 0 } : { duration: 0.12 }}
             style={{
-              position:  'absolute',
-              bottom:    'calc(100% + 8px)',
-              left:      0,
-              zIndex:    10, // z-markers
+              position:   'absolute',
+              bottom:     'calc(100% + 8px)',
+              left:       0,
+              zIndex:     10,
               whiteSpace: 'nowrap',
             }}
           >
-            {status === 'pioneer' && (
-              <div style={{
-                background:   'var(--p-50)',
-                border:       '1px solid var(--p-200)',
-                borderRadius: 'var(--r-md)',
-                padding:      '8px 12px',
-                display:      'flex',
-                alignItems:   'flex-start',
-                gap:          8,
-              }}>
-                <ClockIcon />
-                <span style={{
-                  fontFamily: "'Inter', system-ui, sans-serif",
-                  fontSize:   12,
-                  color:      'var(--p-600)',
-                  lineHeight: 1.5,
-                }}>
-                  No reports in {neighbourhood} yet.{' '}
-                  <button
-                    type="button"
-                    onClick={onCtaClick}
-                    style={{
-                      fontFamily:     'inherit',
-                      fontSize:       12,
-                      fontWeight:     600,
-                      color:          'var(--p-600)',
-                      background:     'none',
-                      border:         'none',
-                      padding:        0,
-                      cursor:         'pointer',
-                      textDecoration: 'underline',
-                      lineHeight:     'inherit',
-                    }}
-                  >
-                    Be the first.
-                  </button>
-                </span>
-              </div>
-            )}
-            {status === 'invalid' && (
-              <span style={{
-                display:    'block',
-                fontFamily: "'Inter', system-ui, sans-serif",
-                fontSize:   12,
-                color:      'var(--neg-500)',
-                background: 'var(--n-0)',
-                border:     '1px solid var(--neg-200)',
-                borderRadius: 'var(--r-md)',
-                padding:    '8px 12px',
-              }}>
-                Try a valid Ontario postal code — like M5V or L6T
-              </span>
-            )}
+            <span style={{
+              display:      'block',
+              fontFamily:   "'Inter', system-ui, sans-serif",
+              fontSize:     12,
+              color:        'var(--neg-500)',
+              background:   'var(--n-0)',
+              border:       '1px solid var(--neg-200)',
+              borderRadius: 'var(--r-md)',
+              padding:      '8px 12px',
+            }}>
+              Try a valid Ontario postal code — like M5V or L6T
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Pioneer CTA card — above the pill when FSA has zero submissions */}
+      <AnimatePresence>
+        {isExpanded && status === 'pioneer' && (
+          <motion.div
+            key="pioneer-card"
+            role="status"
+            aria-live="polite"
+            aria-label={`No renewals found for ${value}. Be the first to share.`}
+            initial={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={prefersReduced ? { opacity: 0 } : { opacity: 0, transition: { duration: 0.12 } }}
+            transition={prefersReduced ? { duration: 0 } : { duration: 0.2, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+            style={{
+              position:        'absolute',
+              bottom:          'calc(100% + 8px)',
+              left:            0,
+              zIndex:          10,
+              width:           260,
+              transformOrigin: 'top center',
+              background:      'var(--p-50)',
+              border:          '1px solid var(--p-200)',
+              borderRadius:    'var(--r-md)',
+              padding:         '12px 16px',
+              display:         'flex',
+              flexDirection:   'column',
+              gap:             8,
+            }}
+          >
+            <span style={{
+              fontFamily:    'var(--mono)',
+              fontSize:      11,
+              fontWeight:    500,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase' as const,
+              color:         'var(--p-600)',
+            }}>
+              {value} · No renewals yet
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--n-900)', lineHeight: 1.5 }}>
+              {neighbourhood
+                ? `Be the first in ${neighbourhood} to share your renewal`
+                : 'Be the first in this area to share your renewal'}
+            </span>
+            <span style={{ fontSize: 12, color: 'var(--n-500)', lineHeight: 1.5 }}>
+              It takes 2 minutes and helps everyone nearby compare.
+            </span>
+            <motion.button
+              type="button"
+              className="pioneer-cta"
+              onClick={onCtaClick}
+              whileTap={prefersReduced ? undefined : { scale: 0.97 }}
+              aria-label={`Share my renewal for ${neighbourhood || value}`}
+              style={{
+                width:        '100%',
+                background:   'var(--p-600)',
+                color:        'var(--n-0)',
+                fontSize:     14,
+                fontWeight:   500,
+                borderRadius: 'var(--r-full)',
+                padding:      '10px 0',
+                border:       'none',
+                cursor:       'pointer',
+                transition:   'background .15s',
+              }}
+            >
+              Share my renewal →
+            </motion.button>
           </motion.div>
         )}
       </AnimatePresence>

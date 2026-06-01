@@ -87,7 +87,7 @@ export default function OnboardingOverlay({ isVisible, onDismiss, onSubmit }: Pr
                 Is your renewal fair?
               </h2>
               <p className={styles.subhead}>
-                See what drivers near you are actually paying — then share your own renewal to add to the map.
+                See what your neighbours are actually paying — then share your own renewal to add to the map.
               </p>
             </div>
 

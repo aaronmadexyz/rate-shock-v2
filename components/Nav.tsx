@@ -26,6 +26,9 @@ const NAV_EVENT  = 'ratemap:nav-state'
 
 const ONTARIO_PREFIXES = new Set(['K', 'L', 'M', 'N', 'P'])
 
+// Preload the modal chunk on hover/focus so it's ready before the user taps
+const preloadModal = () => { void import('@/components/ShareRenewalModal') }
+
 const VALID_STATES: SubmissionState[] = ['new', 'unverified', 'verified']
 
 function parseSubmissionState(raw: string | null): SubmissionState {
@@ -402,7 +405,7 @@ export default function Nav({
               {displayedCount}
             </span>
             <span className={styles.stripText}>
-              {' '}renewal{stripStats.count === 1 ? '' : 's'}{' '}shared
+              {' '}renewal{stripStats.count === 1 ? '' : 's'}{' '}shared
             </span>
 
             {stripStats.autoAvg !== null && (
@@ -556,6 +559,8 @@ export default function Nav({
                   data-state={state}
                   className={styles.cta}
                   onClick={handleCtaClick}
+                  onMouseEnter={preloadModal}
+                  onFocus={preloadModal}
                   whileTap={tapTransition}
                 >
                   {/* Rule 7: blur crossfade on state change */}
@@ -671,6 +676,8 @@ export default function Nav({
                 data-state={state}
                 className={styles.drawerCta}
                 onClick={() => { handleCtaClick(); setDrawerOpen(false) }}
+                onMouseEnter={preloadModal}
+                onFocus={preloadModal}
                 whileTap={tapTransition}
               >
                 <AnimatePresence mode="wait" initial={false}>
