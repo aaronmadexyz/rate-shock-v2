@@ -1,4 +1,19 @@
-// FSA → [lat, lng] approximate centroids for Ontario postal codes.
+/**
+ * FSA Centroids — Ontario postal codes
+ *
+ * Each entry is the approximate geographic centre of the FSA's delivery area.
+ *
+ * Format: 'FSA': [lat, lng]
+ * Valid lat range:  43.0 – 46.0  (southern Ontario; P-prefix extends to ~48.4)
+ * Valid lng range: -76.0 – -84.0 (southern Ontario; P-prefix extends to ~-89.3)
+ *
+ * To verify a centroid:
+ * 1. Look up the FSA on canadapost.ca or statcan.gc.ca
+ * 2. Find the geographic centre of the delivery boundary
+ * 3. Confirm the city matches the neighbourhood name in fsaData.ts
+ *
+ * Last validated: 2026-06-01
+ */
 // Used to position map markers and fly-to on search.
 
 export const FSA_CENTROIDS: Record<string, [number, number]> = {
@@ -176,7 +191,7 @@ export const FSA_CENTROIDS: Record<string, [number, number]> = {
 
   // Brampton / Mississauga / Oakville — L6
   L6A: [43.855, -79.759],
-  L6B: [43.861, -79.676],
+  L6B: [43.8734, -79.2577], // Markham Cornell — corrected v1.1 (was -79.676, ~40km west in Brampton)
   L6C: [43.898, -79.281],
   L6E: [43.884, -79.296],
   L6G: [43.849, -79.308],
@@ -184,7 +199,7 @@ export const FSA_CENTROIDS: Record<string, [number, number]> = {
   L6J: [43.448, -79.689],
   L6K: [43.438, -79.716],
   L6L: [43.394, -79.710],
-  L6P: [43.878, -79.714],
+  L6P: [43.752, -79.719], // Brampton Gore — corrected v1.1 (was 43.878, ~14km north in Caledon)
   L6R: [43.731, -79.803],
   L6S: [43.719, -79.759],
   L6T: [43.693, -79.730],
