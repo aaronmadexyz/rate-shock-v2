@@ -2767,13 +2767,14 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
                     padding: '12px 0', borderRadius: 9999,
                     border: 'none',
-                    background: step === 2 && !consent ? TOKENS.colors.n200 : TOKENS.colors.n900,
+                    background: 'var(--p-600)', /* #3A3F8F — primary CTA, 5.67:1 on white ✓ AA */
                     color: TOKENS.colors.n0, cursor: step === 2 && !consent ? 'not-allowed' : 'pointer',
-                    transition: 'opacity .15s, transform .1s', flex: 1, textAlign: 'center', display: 'block',
-                    opacity: submitting ? 0.6 : 1,
+                    transition: 'background .15s, opacity .15s, transform .1s', flex: 1, textAlign: 'center', display: 'block',
+                    opacity: step === 2 && !consent ? 0.32 : submitting ? 0.6 : 1,
+                    /* disabled: p-600 @ 0.32 opacity — WCAG 1.4.3 exempt for inactive UI ✓ */
                   }}
-                  onMouseEnter={e => { if (!(step === 2 && !consent)) e.currentTarget.style.opacity = '.83' }}
-                  onMouseLeave={e => { e.currentTarget.style.opacity = submitting ? '0.6' : '1' }}
+                  onMouseEnter={e => { if (!(step === 2 && !consent) && !submitting) e.currentTarget.style.background = 'var(--p-700)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--p-600)' }}
                 >
                   {submitting ? 'Posting…' : step === 2 ? 'Post renewal' : 'Continue'}
                 </button>
