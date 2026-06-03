@@ -15,7 +15,11 @@ export async function fetchNeighbourhood(
       rate_change_pct,
       rate_change_dollar,
       sentiment,
-      created_at
+      created_at,
+      years_licensed,
+      at_fault_claims,
+      convictions,
+      comment_raw
     `)
     .eq('fsa', fsa.toUpperCase())
     .order('created_at', { ascending: false })
@@ -54,6 +58,11 @@ export async function fetchNeighbourhood(
     rate_change_pct:    r.rate_change_pct,
     rate_change_dollar: r.rate_change_dollar,
     sentiment:          r.sentiment,
+    years_licensed:     r.years_licensed   ?? null,
+    at_fault_claims:    r.at_fault_claims  ?? 0,
+    convictions:        r.convictions      ?? 0,
+    comment_raw:        r.comment_raw      ?? null,
+    created_at:         r.created_at,
   }))
 
   return {

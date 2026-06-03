@@ -57,6 +57,11 @@ export interface RecentReport {
   rate_change_pct:    number | null
   rate_change_dollar: number | null
   sentiment:          number
+  years_licensed:     number | null
+  at_fault_claims:    number
+  convictions:        number
+  comment_raw:        string | null
+  created_at:         string
 }
 
 export interface NeighbourhoodStats {

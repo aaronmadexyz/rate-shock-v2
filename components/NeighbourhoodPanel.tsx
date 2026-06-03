@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type React from 'react'
 import { motion } from 'framer-motion'
 import type { NeighbourhoodStats, RecentReport } from '@/lib/types'
 import { useReducedMotion } from '@/lib/motionSafety'
@@ -93,12 +94,13 @@ function SkeletonBody() {
 // ─── Sparse body (totalCount < 3) ─────────────────────────────────────────────
 
 interface SparseBodyProps {
-  stats:        NeighbourhoodStats | null
-  fsa:          string
-  globalCount?: number
+  stats:          NeighbourhoodStats | null
+  fsa:            string
+  globalCount?:   number
+  onReportClick:  (report: RecentReport, e: React.MouseEvent | React.KeyboardEvent) => void
 }
 
-function SparseBody({ stats, fsa, globalCount }: SparseBodyProps) {
+function SparseBody({ stats, fsa, globalCount, onReportClick }: SparseBodyProps) {
   const fsaUpper      = (stats?.fsa ?? fsa).toUpperCase()
   const neighbourhood = stats?.neighbourhood ?? fsaUpper
   const totalCount    = stats?.totalCount ?? 0
@@ -141,7 +143,14 @@ function SparseBody({ stats, fsa, globalCount }: SparseBodyProps) {
         <>
           <div className={styles.sparseDivider} aria-hidden="true" />
           <ul className={styles.sparsePreviewList} role="list">
-            <li className={styles.sparsePreviewRow} role="listitem">
+            <li
+              className={`${styles.sparsePreviewRow} ${styles.reportRow}`}
+              role="listitem"
+              tabIndex={0}
+              aria-label={`View details for this ${report.insurance_type} renewal — ${fmtRate(report.rate_change_pct)}`}
+              onClick={e => onReportClick(report, e)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onReportClick(report, e) } }}
+            >
               <SentimentFace sentiment={report.sentiment} size={24} />
               <span
                 className={styles.recentRate}
@@ -153,6 +162,9 @@ function SparseBody({ stats, fsa, globalCount }: SparseBodyProps) {
               <span className={styles.recentMeta}>
                 {report.provider} · {report.insurance_type === 'auto' ? 'Auto' : 'Home'}
               </span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={styles.rowChevron}>
+                <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </li>
           </ul>
         </>
@@ -173,10 +185,11 @@ function SparseBody({ stats, fsa, globalCount }: SparseBodyProps) {
 // ─── Aggregate body (totalCount >= 3) ────────────────────────────────────────
 
 interface AggregateBodyProps {
-  stats: NeighbourhoodStats
+  stats:         NeighbourhoodStats
+  onReportClick: (report: RecentReport, e: React.MouseEvent | React.KeyboardEvent) => void
 }
 
-function AggregateBody({ stats }: AggregateBodyProps) {
+function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
   return (
     <>
       {/* Section 1 — Type breakdown */}
@@ -257,8 +270,16 @@ function AggregateBody({ stats }: AggregateBodyProps) {
         {stats.recentReports.map((r: RecentReport, i: number) => (
           <li
             key={r.id}
-            className={`${styles.recentRow}${i === stats.recentReports.length - 1 ? ` ${styles.recentRowLast}` : ''}`}
+            className={[
+              styles.recentRow,
+              styles.reportRow,
+              i === stats.recentReports.length - 1 ? styles.recentRowLast : '',
+            ].filter(Boolean).join(' ')}
             role="listitem"
+            tabIndex={0}
+            aria-label={`View details for this ${r.insurance_type} renewal — ${fmtRate(r.rate_change_pct)}`}
+            onClick={e => onReportClick(r, e)}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onReportClick(r, e) } }}
           >
             <SentimentFace sentiment={r.sentiment} size={24} />
             <span
@@ -271,6 +292,9 @@ function AggregateBody({ stats }: AggregateBodyProps) {
             <span className={styles.recentMeta}>
               {r.provider} · {r.insurance_type === 'auto' ? 'Auto' : 'Home'}
             </span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={styles.rowChevron}>
+              <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </li>
         ))}
       </ul>
@@ -292,6 +316,8 @@ interface NeighbourhoodPanelProps {
      slide-in from right instead of slide-up from bottom */
 }
 
+const DETAIL_EXIT_MS = 180
+
 export default function NeighbourhoodPanel({
   stats,
   loading,
@@ -302,8 +328,29 @@ export default function NeighbourhoodPanel({
   isDesktop = false,
 }: NeighbourhoodPanelProps) {
   const { prefersReduced } = useReducedMotion()
-  const closeBtnRef = useRef<HTMLButtonElement>(null)
-  const openerRef   = useRef<HTMLElement | null>(null)
+  const closeBtnRef  = useRef<HTMLButtonElement>(null)
+  const backBtnRef   = useRef<HTMLButtonElement>(null)
+  const openerRef    = useRef<HTMLElement | null>(null)
+  const openedFromRef = useRef<HTMLElement | null>(null)
+
+  // ── Detail layer state ────────────────────────────────────────────────────────
+  const [detailReport,    setDetailReport]    = useState<RecentReport | null>(null)
+  const [isDetailExiting, setIsDetailExiting] = useState(false)
+
+  function openDetail(report: RecentReport, e: React.MouseEvent | React.KeyboardEvent) {
+    openedFromRef.current = e.currentTarget as HTMLElement
+    setDetailReport(report)
+    setTimeout(() => backBtnRef.current?.focus(), 50)
+  }
+
+  function closeDetail() {
+    setIsDetailExiting(true)
+    setTimeout(() => {
+      setIsDetailExiting(false)
+      setDetailReport(null)
+      openedFromRef.current?.focus()
+    }, DETAIL_EXIT_MS)
+  }
 
   // Capture opener, focus close button on mount; restore focus on unmount
   useEffect(() => {
@@ -314,14 +361,17 @@ export default function NeighbourhoodPanel({
     }
   }, [])
 
-  // Escape key closes panel
+  // Escape: close detail layer first, then panel
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key !== 'Escape') return
+      if (detailReport) closeDetail()
+      else onClose()
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [onClose])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onClose, detailReport])
 
   const isSparse    = !stats || stats.totalCount < 3
   const title       = stats?.neighbourhood ?? fsa.toUpperCase()
@@ -430,9 +480,9 @@ export default function NeighbourhoodPanel({
           {loading ? (
             <SkeletonBody />
           ) : stats && !isSparse ? (
-            <AggregateBody stats={stats} />
+            <AggregateBody stats={stats} onReportClick={openDetail} />
           ) : (
-            <SparseBody stats={stats} fsa={fsa} globalCount={globalCount} />
+            <SparseBody stats={stats} fsa={fsa} globalCount={globalCount} onReportClick={openDetail} />
           )}
         </div>
 
@@ -446,6 +496,101 @@ export default function NeighbourhoodPanel({
             {isSparse ? 'Share my renewal →' : 'See how yours compares →'}
           </button>
         </div>
+
+        {/* ── Detail layer — slides over summary within panel bounds ── */}
+        {detailReport && (
+          <div
+            className={[
+              styles.detailLayer,
+              isDetailExiting ? styles.detailLayerExit : '',
+            ].filter(Boolean).join(' ')}
+            role="region"
+            aria-label="Renewal detail"
+          >
+            {/* Detail header — back button */}
+            <div className={styles.detailHeader}>
+              <button
+                ref={backBtnRef}
+                className={styles.backBtn}
+                onClick={closeDetail}
+                aria-label="Back to neighbourhood summary"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span>Back</span>
+              </button>
+            </div>
+
+            {/* Detail body */}
+            <div className={styles.detailBody}>
+
+              {/* Rate block */}
+              <div className={styles.detailRate}>
+                <SentimentFace sentiment={detailReport.sentiment} size={32} />
+                <span
+                  className={styles.detailRateVal}
+                  style={{ color: tierColor(detailReport.rate_change_pct) }}
+                >
+                  {fmtRate(detailReport.rate_change_pct)}
+                </span>
+              </div>
+
+              {/* Provider · Type */}
+              <p className={styles.detailMeta}>
+                {detailReport.provider}{' · '}{detailReport.insurance_type === 'auto' ? 'Auto' : 'Home'}
+              </p>
+
+              {/* Driver profile — auto only */}
+              {detailReport.insurance_type === 'auto' && (
+                <div className={styles.detailProfile}>
+                  <p className={styles.detailSectionLabel}>DRIVER PROFILE</p>
+                  <div className={styles.profileGrid}>
+                    <div className={styles.profileStat}>
+                      <span className={styles.profileVal}>
+                        {detailReport.years_licensed ?? '—'}
+                      </span>
+                      <span className={styles.profileLbl}>
+                        {detailReport.years_licensed === 1 ? 'yr licensed' : 'yrs licensed'}
+                      </span>
+                    </div>
+                    <div className={styles.profileStat}>
+                      <span className={styles.profileVal}>{detailReport.at_fault_claims}</span>
+                      <span className={styles.profileLbl}>
+                        {detailReport.at_fault_claims === 1 ? 'at-fault claim' : 'at-fault claims'}
+                      </span>
+                    </div>
+                    <div className={styles.profileStat}>
+                      <span className={styles.profileVal}>{detailReport.convictions}</span>
+                      <span className={styles.profileLbl}>
+                        {detailReport.convictions === 1 ? 'conviction' : 'convictions'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Comment — only when present */}
+              {detailReport.comment_raw && (
+                <div className={styles.detailComment}>
+                  <p className={styles.detailSectionLabel}>NEIGHBOUR SAID</p>
+                  <blockquote className={styles.commentText}>
+                    {detailReport.comment_raw}
+                  </blockquote>
+                </div>
+              )}
+
+              {/* Date */}
+              <p className={styles.detailDate}>
+                {new Date(detailReport.created_at).toLocaleDateString('en-CA', {
+                  month: 'long',
+                  year:  'numeric',
+                })}
+              </p>
+
+            </div>
+          </div>
+        )}
       </motion.div>
     </>
   )
