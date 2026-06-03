@@ -2,7 +2,8 @@
 
 .preview {
   pointer-events: all;
-  will-change: transform;
+  cursor: pointer;           /* whole card is a click target */
+  will-change: transform, opacity;
   white-space: nowrap;
   background: #FFFFFF;
   border: 1px solid var(--n-150);
@@ -10,9 +11,31 @@
   padding: var(--sp-2) var(--sp-3);
   box-shadow: 0 1px 2px rgba(26,25,23,.04);
   display: flex;
-  align-items: center;
+  flex-direction: column;    /* two rows: main content + View details */
   font-family: 'Inter', system-ui, sans-serif;
   position: relative;
+}
+
+/* "View details →" footer row — right-aligned, n-400 on n-0 = 4.57:1 ✓ AA */
+.viewDetails {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;           /* sp-1 */
+  margin-top: 8px;    /* sp-2 */
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--n-400); /* #767670 — 4.57:1 on white ✓ AA */
+  letter-spacing: 0.04em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview {
+    /* Framer Motion handles duration:0 on exit but belt-and-suspenders */
+    transition: opacity 0.12s ease;
+    transform: none !important;
+  }
 }
 
 @media (max-width: 680px) {

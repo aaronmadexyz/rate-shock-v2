@@ -100,13 +100,12 @@ interface SparseBodyProps {
   onReportClick:  (report: RecentReport, e: React.MouseEvent | React.KeyboardEvent) => void
 }
 
-function SparseBody({ stats, fsa, globalCount, onReportClick }: SparseBodyProps) {
+function SparseBody({ stats, fsa, onReportClick }: SparseBodyProps) {
   const fsaUpper      = (stats?.fsa ?? fsa).toUpperCase()
   const neighbourhood = stats?.neighbourhood ?? fsaUpper
   const totalCount    = stats?.totalCount ?? 0
-  const report        = stats?.recentReports[0] ?? null
+  const reports       = stats?.recentReports ?? []
 
-  // Section A badge text varies by how many reports exist
   const badgeText =
     totalCount === 0
       ? `${fsaUpper} · First to report`
@@ -114,7 +113,6 @@ function SparseBody({ stats, fsa, globalCount, onReportClick }: SparseBodyProps)
         ? `${fsaUpper} · 1 of the first to report`
         : `${fsaUpper} · ${totalCount} reports so far`
 
-  // Section B headline
   const headline =
     totalCount === 0
       ? `No renewals shared in ${neighbourhood} yet.`
@@ -122,28 +120,28 @@ function SparseBody({ stats, fsa, globalCount, onReportClick }: SparseBodyProps)
         ? `1 renewal shared in ${neighbourhood} so far.`
         : `${totalCount} renewals shared in ${neighbourhood} so far.`
 
+  // Tighter copy — one focused sentence per count state
+  const bodyCopy =
+    totalCount === 0
+      ? `Be one of the first to share yours and help neighbours understand what's being charged.`
+      : totalCount === 1
+        ? `Add yours — one more report makes this area's data useful for comparison.`
+        : `One more report makes this area comparable. Share yours.`
+
   return (
     <>
-      {/* Section A — Pioneer status badge */}
+      {/* A — Pioneer badge */}
       <div className={styles.pioneerBadge} role="status" aria-live="polite">
         <span aria-hidden="true">★</span>
         {badgeText}
       </div>
 
-      {/* Section B — Headline */}
-      <p className={styles.sparseHeadline}>{headline}</p>
-
-      {/* Section C — Body copy */}
-      <p className={styles.sparseCopy}>
-        Be one of the first to share yours. Your renewal helps neighbours in this area understand what insurers are actually charging.
-      </p>
-
-      {/* Section D — Existing report preview (only when totalCount >= 1) */}
-      {totalCount >= 1 && report && (
-        <>
-          <div className={styles.sparseDivider} aria-hidden="true" />
-          <ul className={styles.sparsePreviewList} role="list">
+      {/* B — Report rows FIRST (data before recruitment copy) */}
+      {reports.length > 0 && (
+        <ul className={styles.sparsePreviewList} role="list">
+          {reports.map(report => (
             <li
+              key={report.id}
               className={`${styles.sparsePreviewRow} ${styles.reportRow}`}
               role="listitem"
               tabIndex={0}
@@ -166,18 +164,20 @@ function SparseBody({ stats, fsa, globalCount, onReportClick }: SparseBodyProps)
                 <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </li>
-          </ul>
-        </>
+          ))}
+        </ul>
       )}
 
-      {/* Section E — Social proof micro-copy (only when totalCount === 0) */}
-      {totalCount === 0 && (
-        <p className={styles.sparseSocialProof}>
-          {(globalCount ?? 0) > 0
-            ? `Join ${globalCount} Ontario policyholders who've shared`
-            : 'Be among the first in Ontario'}
-        </p>
+      {/* C — Divider: data → recruitment copy transition (only when reports exist) */}
+      {reports.length > 0 && (
+        <div className={styles.sparseDivider} aria-hidden="true" />
       )}
+
+      {/* D — Headline */}
+      <p className={styles.sparseHeadline}>{headline}</p>
+
+      {/* E — Shortened body copy (no social proof — moved to footer) */}
+      <p className={styles.sparseCopy}>{bodyCopy}</p>
     </>
   )
 }
@@ -377,9 +377,21 @@ export default function NeighbourhoodPanel({
   const title       = stats?.neighbourhood ?? fsa.toUpperCase()
   const resolvedFsa = (stats?.fsa ?? fsa).toUpperCase()
 
-  const ctaLabel = isSparse
-    ? `Share my renewal for ${title}`
-    : `See how your renewal compares in ${title}`
+  const neighbourhood = stats?.neighbourhood ?? fsa.toUpperCase()
+
+  const ctaLabel =
+    stats && stats.totalCount === 0
+      ? `Be the first in ${neighbourhood} →`
+      : stats && stats.totalCount >= 3
+        ? 'See how yours compares →'
+        : 'Share my renewal →'
+
+  const ctaAriaLabel =
+    stats && stats.totalCount === 0
+      ? `Be the first in ${neighbourhood} to share your renewal`
+      : stats && stats.totalCount >= 3
+        ? `See how your renewal compares in ${neighbourhood}`
+        : `Share your renewal for ${neighbourhood}`
 
   return (
     <>
@@ -406,6 +418,7 @@ export default function NeighbourhoodPanel({
       */}
       <motion.div
         className={styles.panel}
+        data-mode={stats && stats.totalCount >= 3 ? 'aggregate' : 'sparse'}
         style={{ transformOrigin: isDesktop ? 'right center' : 'bottom center' }}
         initial={
           prefersReduced
@@ -486,14 +499,22 @@ export default function NeighbourhoodPanel({
           )}
         </div>
 
-        {/* CTA bar */}
-        <div className={styles.ctaBar}>
+        {/* Footer: social proof + CTA */}
+        <div className={styles.footer}>
+          {/* Social proof — above button */}
+          {(globalCount ?? 0) > 0 && (
+            <p className={styles.socialProof}>
+              Join {globalCount} Ontario{' '}policyholders who've shared
+            </p>
+          )}
+
+          {/* CTA button */}
           <button
             className={styles.ctaBtn}
             onClick={() => onCtaClick(resolvedFsa)}
-            aria-label={ctaLabel}
+            aria-label={ctaAriaLabel}
           >
-            {isSparse ? 'Share my renewal →' : 'See how yours compares →'}
+            {ctaLabel}
           </button>
         </div>
 

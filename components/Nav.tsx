@@ -411,7 +411,7 @@ export default function Nav({
             {stripStats.autoAvg !== null && (
               <>
                 <span className={styles.stripDot}>·</span>
-                <span className={styles.stripText}>Auto{' '}</span>
+                {'Auto '}
                 <AnimatedStat value={stripStats.autoAvg} loading={false} />
               </>
             )}
@@ -419,7 +419,7 @@ export default function Nav({
             {stripStats.homeAvg !== null && (
               <>
                 <span className={styles.stripDot}>·</span>
-                <span className={styles.stripText}>Home{' '}</span>
+                {'Home '}
                 <AnimatedStat value={stripStats.homeAvg} loading={false} />
               </>
             )}
