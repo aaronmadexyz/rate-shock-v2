@@ -678,6 +678,71 @@
   box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-500);
 }
 
+/* ─── Mobile snap points (<768px) ───────────────────────────────────────────── */
+
+/*
+  Two snap points on mobile:
+    peek (65vh) — default open: envelope + surrounding map visible above panel
+    full (92vh) — expanded: triggered by scroll, report-row tap, or content overflow
+  Rule 4: ease-out cubic ✓   Rule 6: 280ms < 300ms ✓
+*/
+
+@media (max-width: 767px) {
+  .panel {
+    transition: height .28s cubic-bezier(.16,1,.3,1);
+  }
+
+  .panel[data-snap="peek"] {
+    height: 65vh;
+    max-height: 65vh;
+  }
+
+  .panel[data-snap="full"] {
+    height: 92vh;
+    max-height: 92vh;
+  }
+
+  /* Backdrop covers only the panel area in peek — top 35% of map stays bright */
+  .backdrop {
+    inset: auto 0 0 0; /* bottom-anchored; overrides base inset:0 */
+    height: 65vh;
+    transition: height .28s cubic-bezier(.16,1,.3,1);
+  }
+
+  /* Backdrop expands to full viewport when panel is fully expanded */
+  .backdrop[data-snap="full"] {
+    top: 0;
+    height: 92vh;
+  }
+}
+
+/* ─── Map hit area ───────────────────────────────────────────────────────────── */
+
+/*
+  Transparent overlay that fills the visible map above the panel in peek state.
+  Tapping it calls onClose — lets users return to map browsing without reaching
+  for the close button. Hidden on desktop (no peek state).
+  z-index: --z-panel - 1 = 199 (same layer as backdrop)
+*/
+
+.mapHitArea {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 35vh; /* 100vh − 65vh peek height */
+  z-index: calc(var(--z-panel) - 1);
+  background: transparent;
+  cursor: pointer;
+  display: none; /* hidden by default; shown by data-snap below */
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 767px) {
+  .mapHitArea[data-snap="peek"] { display: block; }
+  .mapHitArea[data-snap="full"] { display: none; }
+}
+
 /* ─── Desktop layout (≥768px) — Option B: panel overlaps map right edge ─────── */
 
 @media (min-width: 768px) {
@@ -767,13 +832,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .panel {
-    /* Framer Motion handles this via prefersReduced, but belt-and-suspenders */
+    /* Framer Motion handles enter/exit via prefersReduced flag */
     transform: none !important;
-    transition: opacity 0.15s ease;
+    transition: none; /* disables height snap transition */
     animation: none;
   }
   .backdrop {
-    transition: background 0.15s ease;
+    transition: none; /* disables height transition on mobile */
   }
   .skeleton {
     animation: none;

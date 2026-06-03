@@ -337,10 +337,20 @@ export default function NeighbourhoodPanel({
   const [detailReport,    setDetailReport]    = useState<RecentReport | null>(null)
   const [isDetailExiting, setIsDetailExiting] = useState(false)
 
+  // ── Peek / full snap state (mobile only) ─────────────────────────────────────
+  const [snapPoint, setSnapPoint] = useState<'peek' | 'full'>('peek')
+  const panelBodyRef = useRef<HTMLDivElement>(null)
+
   function openDetail(report: RecentReport, e: React.MouseEvent | React.KeyboardEvent) {
     openedFromRef.current = e.currentTarget as HTMLElement
+    if (!isDesktop) setSnapPoint('full')
     setDetailReport(report)
     setTimeout(() => backBtnRef.current?.focus(), 50)
+  }
+
+  function handleBodyScroll(e: React.UIEvent<HTMLDivElement>) {
+    if (isDesktop || snapPoint === 'full') return
+    if (e.currentTarget.scrollTop > 0) setSnapPoint('full')
   }
 
   function closeDetail() {
@@ -373,6 +383,19 @@ export default function NeighbourhoodPanel({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onClose, detailReport])
 
+  // Reset to peek whenever a new neighbourhood is opened
+  useEffect(() => {
+    setSnapPoint('peek')
+  }, [fsa])
+
+  // Expand to full if body content overflows the 65vh peek height
+  useEffect(() => {
+    if (isDesktop || !panelBodyRef.current) return
+    const contentHeight = panelBodyRef.current.scrollHeight
+    const peekHeight    = window.innerHeight * 0.65
+    if (contentHeight > peekHeight) setSnapPoint('full')
+  }, [stats, isDesktop])
+
   const isSparse    = !stats || stats.totalCount < 3
   const title       = stats?.neighbourhood ?? fsa.toUpperCase()
   const resolvedFsa = (stats?.fsa ?? fsa).toUpperCase()
@@ -395,11 +418,26 @@ export default function NeighbourhoodPanel({
 
   return (
     <>
+      {/* Map hit area — mobile peek state only: transparent overlay above panel
+          that dismisses the panel when the user taps the visible map area */}
+      {!isDesktop && (
+        <div
+          className={styles.mapHitArea}
+          data-snap={snapPoint}
+          onClick={onClose}
+          role="button"
+          aria-label="Close panel and return to map"
+          tabIndex={-1}
+        />
+      )}
+
       {/* Backdrop — shown on both desktop and mobile.
           Desktop: CSS overrides to rgba(.08) — map stays readable.
-          Mobile:  CSS default rgba(.28) — heavier dim. */}
+          Mobile:  CSS default rgba(.28) — heavier dim. Shrinks to panel
+          height in peek state so the map above the panel is undimmed. */}
       <motion.div
         className={styles.backdrop}
+        data-snap={!isDesktop ? snapPoint : undefined}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -419,6 +457,7 @@ export default function NeighbourhoodPanel({
       <motion.div
         className={styles.panel}
         data-mode={stats && stats.totalCount >= 3 ? 'aggregate' : 'sparse'}
+        data-snap={isDesktop ? undefined : snapPoint}
         style={{ transformOrigin: isDesktop ? 'right center' : 'bottom center' }}
         initial={
           prefersReduced
@@ -489,7 +528,7 @@ export default function NeighbourhoodPanel({
         </div>
 
         {/* Scrollable body */}
-        <div className={styles.body}>
+        <div className={styles.body} ref={panelBodyRef} onScroll={handleBodyScroll}>
           {loading ? (
             <SkeletonBody />
           ) : stats && !isSparse ? (

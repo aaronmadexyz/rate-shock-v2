@@ -337,10 +337,20 @@ p {
 
 /* Exit (default): 150ms accelerate-out — snappy, faster than entry */
 .env-hover-wrap {
+  position: relative; /* enables ::before tap target extension */
   transform-origin: bottom center;
   filter: drop-shadow(0 2px 6px rgba(26,25,23,.12));
   transition: transform 150ms cubic-bezier(0.4, 0, 1, 1),
               filter   150ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Invisible tap target extension — 12px outset in all directions.
+   40×28px envelope + 24px total = 52×40px effective target ✓ WCAG 2.5.5 */
+.env-hover-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
 }
 
 /* Entry: 200ms overshoot-enter */
