@@ -62,16 +62,17 @@ function buildIcon(fill: string, seal: string, scale: number, duration = 0, dela
   const bobStyle = duration > 0
     ? `animation:envelopeBob ${duration}ms ease-in-out infinite;animation-delay:${delay}ms;`
     : ''
-  const svgAria = ariaLabel
-    ? `role="img" aria-label="${ariaLabel}"`
+  // Outer wrapper carries role+aria so the SVG stays decorative (WCAG 1.1.1)
+  const outerAria = ariaLabel
+    ? `role="button" tabindex="0" aria-label="${ariaLabel}"`
     : `aria-hidden="true"`
   const trackColor = TOKENS.colors.n200 // #D4D3CE — envelope border / track
   const paperColor = TOKENS.colors.n150 // #E2E1DD — envelope flap fill
   const html =
-    `<div class="env-hover-wrap" style="display:inline-block;transform-origin:bottom center">` +
+    `<div class="env-hover-wrap" ${outerAria} style="display:inline-block;transform-origin:bottom center;cursor:pointer">` +
     `<div style="width:${W}px;height:${H}px;transform:scale(${scale.toFixed(3)});transform-origin:bottom center;overflow:visible">` +
     `<div class="envelope-marker" style="will-change:transform;${bobStyle}">` +
-    `<svg width="${W}" height="${H}" viewBox="0 0 40 28" fill="none" ${svgAria} style="display:block;overflow:visible">` +
+    `<svg width="${W}" height="${H}" viewBox="0 0 40 28" fill="none" aria-hidden="true" style="display:block;overflow:visible">` +
     `<rect x="0.5" y="0.5" width="39" height="27" rx="2.5" fill="${fill}" stroke="${trackColor}" stroke-width="0.8"/>` +
     `<polygon points="0,0 40,0 20,15" fill="${paperColor}" opacity="0.8"/>` +
     `<circle cx="20" cy="6.5" r="4" fill="${seal}"/>` +
@@ -233,10 +234,11 @@ interface HoverPreviewProps {
   onMouseEnter:   () => void
   onMouseLeave:   () => void
   onFirstShown:   () => void
+  onNavigate:     () => void
 }
 
 function HoverPreview({
-  sub, x, y, isFirst, prefersReduced, onMouseEnter, onMouseLeave, onFirstShown,
+  sub, x, y, isFirst, prefersReduced, onMouseEnter, onMouseLeave, onFirstShown, onNavigate,
 }: HoverPreviewProps) {
   const label  = getAreaLabel(sub.fsa)
   const pct    = pctString(sub.rate_change_pct)
@@ -244,51 +246,68 @@ function HoverPreview({
   return (
     <motion.div
       className={styles.preview}
+      role="tooltip"
       style={{
         position:        'fixed',
         left:            x,
         top:             y - 8,
         transform:       'translateX(-50%) translateY(-100%)',
-        transformOrigin: 'bottom center',
+        transformOrigin: 'bottom center', // Rule 5 — grows up from marker
         zIndex:          300, // z-tooltip
       }}
+      // Rule 2: starts at scale(0.97) not 0; Rule 4: ease-out; Rule 6: 180ms
       initial={isFirst && !prefersReduced
-        ? { opacity: 0, scale: 0.95, y: 4 }
+        ? { opacity: 0, scale: 0.97, y: 4 }
         : { opacity: 0 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0,
-              transition: { duration: prefersReduced ? 0.15 : 0.08,
+              transition: { duration: prefersReduced ? 0.15 : 0.12,
                             ease: [0.4, 0, 1, 1] as [number,number,number,number] } }}
+      // Rule 3: subsequent (isFirst=false) appear instantly (duration:0)
       transition={isFirst && !prefersReduced
-        ? { type: 'spring', stiffness: 400, damping: 28, mass: 0.8, delay: 0.1 }
+        ? { duration: 0.18, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] }
         : { duration: 0 }}
       onAnimationComplete={() => { if (isFirst) onFirstShown() }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={onNavigate}
     >
-      <SentimentFace sentiment={sub.sentiment} size={20} />
-      <span style={{
-        fontVariationSettings: "'opsz' 32",
-        fontSize:              15,
-        fontWeight:            700,
-        letterSpacing:         '-0.02em',
-        fontVariantNumeric:    'tabular-nums',
-        marginLeft:            6,
-        color:                 rateColor(sub.sentiment),
-      }}>
-        {pct}
-      </span>
-      <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--n-400)', marginLeft: 8 }}>
-        {label}
-      </span>
-      <span style={{
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize:   11,
-        color:      'var(--n-400)',
-        marginLeft: 6,
-      }}>
-        · click for details
-      </span>
+      {/* Main content row */}
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <SentimentFace sentiment={sub.sentiment} size={20} />
+        <span style={{
+          fontVariationSettings: "'opsz' 32",
+          fontSize:              15,
+          fontWeight:            700,
+          letterSpacing:         '-0.02em',
+          fontVariantNumeric:    'tabular-nums',
+          marginLeft:            6,
+          color:                 rateColor(sub.sentiment),
+        }}>
+          {pct}
+        </span>
+        <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--n-400)', marginLeft: 8 }}>
+          {label}
+        </span>
+      </div>
+      {/* "View details" row — replaces "click for details" */}
+      <div className={styles.viewDetails}>
+        View details
+        <svg
+          width="10" height="10"
+          viewBox="0 0 10 10"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M2 5h6M5.5 2.5L8 5l-2.5 2.5"
+            stroke="currentColor"
+            strokeWidth="1.3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
       {/* 12px invisible bridge — prevents dismiss flicker when cursor crosses gap */}
       <div
         className={styles.bridge}
@@ -358,6 +377,23 @@ function MapMarker({
     return { x: rect.left + pt.x, y: rect.top + pt.y }
   }
 
+  // Keyboard navigation: Enter/Space on a focused envelope navigates to detail
+  useEffect(() => {
+    const el   = markerRef.current?.getElement()
+    const wrap = el?.querySelector<HTMLElement>('.env-hover-wrap')
+    if (!el || !wrap) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return
+      e.preventDefault()
+      const coords = getScreenCoords()
+      if (coords) onMarkerClick(s, coords.x, coords.y)
+    }
+    wrap.addEventListener('keydown', handleKeyDown)
+    return () => wrap.removeEventListener('keydown', handleKeyDown)
+  // getScreenCoords is a stable closure over pos/mapRef — safe to omit from deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s, onMarkerClick])
+
   return (
     <Marker
       ref={markerRef as React.Ref<L.Marker>}
@@ -387,7 +423,7 @@ interface MapViewProps {
   likeMeMode?:          boolean
   userProfile?:         UserProfile | null
   onCohortResult?:      (result: CohortResult | null) => void
-  onCtaClick?:          () => void
+  onCtaClick?:          (fsa?: string) => void
   onMatchCountChange?:  (n: number) => void
 }
 
@@ -402,6 +438,16 @@ export default function MapView({
   const [isLoading,   setIsLoading]   = useState(true)
   const [viewerFsa,   setViewerFsa]   = useState<string | null>(null)
   const [isMobile,    setIsMobile]    = useState(false)
+
+  // Desktop breakpoint for side-panel layout — starts false (SSR-safe, no hydration mismatch)
+  const [isDesktop, setIsDesktop] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    setIsDesktop(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   // NeighbourhoodPanel state
   const [panelFsa,     setPanelFsa]     = useState<string | null>(null)
@@ -467,7 +513,8 @@ export default function MapView({
   }, [])
 
   const startHideTimer = useCallback(() => {
-    hideTimerRef.current = setTimeout(() => setActiveTooltip(null), 150)
+    // 200ms grace period — cursor can travel from envelope to tooltip without dismissal
+    hideTimerRef.current = setTimeout(() => setActiveTooltip(null), 200)
   }, [])
 
   const closePanel = useCallback(() => {
@@ -533,6 +580,33 @@ export default function MapView({
   useEffect(() => {
     onReady?.({ prependSubmission, flyToFsa })
   }, [onReady, prependSubmission, flyToFsa])
+
+  // After the map container resizes (panel open/close on desktop), invalidate Leaflet's
+  // tile cache so tiles load correctly in the new dimensions.
+  // 340ms = 320ms layout transition + 20ms buffer.
+  useEffect(() => {
+    if (!localMapRef.current) return
+    const timer = setTimeout(() => {
+      localMapRef.current?.invalidateSize({ animate: false })
+    }, 340)
+    return () => clearTimeout(timer)
+  }, [panelFsa, isDesktop])
+
+  // After the map resizes, centre the selected envelope in the visible map area.
+  // 360ms = 320ms transition + 20ms invalidateSize buffer + 20ms rounding buffer.
+  // Mobile skipped — panel is a bottom drawer, envelope is visible above it.
+  useEffect(() => {
+    if (!panelFsa || !localMapRef.current || !isDesktop) return
+    const centroid = getCentroid(panelFsa)
+    if (!centroid) return
+    const timer = setTimeout(() => {
+      localMapRef.current?.setView(centroid, localMapRef.current?.getZoom() ?? 12, {
+        animate: true,
+        duration: 0.5,
+      })
+    }, 360)
+    return () => clearTimeout(timer)
+  }, [panelFsa, isDesktop])
 
   // Fetch once on mount
   useEffect(() => {
@@ -607,8 +681,29 @@ export default function MapView({
 
   const at = activeTooltip
 
+  // Panel width in px for map area shrink (desktop only)
+  const PANEL_WIDTH = 480
+
   return (
     <>
+      {/* Map area wrapper — on desktop, right edge shrinks when panel is open.
+          transition: .32s ease-out matches the panel slide-in duration (Rule 4/6).
+          Intentional exception to Emil Rule 6 <300ms: this is a layout transition
+          (structural viewport change), not a UI micro-interaction. */}
+      <div
+        style={{
+          position:   'fixed',
+          top:        0,
+          left:       0,
+          bottom:     0,
+          right:      isDesktop && !!panelFsa ? PANEL_WIDTH : 0,
+          overflow:   'hidden',
+          zIndex:     0, /* z-map */
+          transition: isDesktop
+            ? 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1)'
+            : 'none',
+        }}
+      >
       <MapContainer
         center={[43.651, -79.383]}
         zoom={12}
@@ -618,7 +713,7 @@ export default function MapView({
         maxZoom={16}
         zoomControl={false}
         attributionControl={false}
-        style={{ position: 'fixed', inset: 0, zIndex: 0, /* z-map */ width: '100vw', height: '100dvh', touchAction: 'none' }}
+        style={{ position: 'absolute', inset: 0, touchAction: 'none' }}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -658,6 +753,7 @@ export default function MapView({
           )
         })}
       </MapContainer>
+      </div>{/* /map area wrapper */}
 
       {/* Mode 1 — hover preview (desktop only, auto-dismisses) */}
       <AnimatePresence>
@@ -672,6 +768,11 @@ export default function MapView({
             onMouseEnter={cancelHideTimer}
             onMouseLeave={startHideTimer}
             onFirstShown={() => { tooltipEverShown.current = true }}
+            onNavigate={() => {
+              cancelHideTimer()
+              setActiveTooltip(null)
+              handleEnvelopeClick(at.sub.fsa)
+            }}
           />
         )}
       </AnimatePresence>
@@ -684,10 +785,11 @@ export default function MapView({
             stats={panelStats}
             loading={panelLoading}
             fsa={panelFsa}
+            isDesktop={isDesktop}
             onClose={closePanel}
-            onCtaClick={() => {
+            onCtaClick={(fsa) => {
               closePanel()
-              onCtaClick?.()
+              onCtaClick?.(fsa)
             }}
           />
         )}

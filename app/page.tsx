@@ -58,7 +58,8 @@ function parseUserProfile(raw: string): UserProfile | null {
 export default function Page() {
   const [mounted,       setMounted]      = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const [modalOpen,    setModalOpen]    = useState(false)
+  const [modalOpen,       setModalOpen]       = useState(false)
+  const [modalInitialFsa, setModalInitialFsa] = useState<string | undefined>()
   const [frOpen,       setFrOpen]       = useState(false)
   const [filterOpen,   setFilterOpen]   = useState(false)
   const [filters,      setFilters]      = useState<FilterState>(DEFAULT_FILTERS)
@@ -85,6 +86,18 @@ export default function Page() {
     safeSetItem('rateshock_onboarding_seen', 'true')
     setShowOnboarding(false)
     setModalOpen(true)
+  }, [])
+
+  // Opens modal and optionally pre-fills the FSA (from NeighbourhoodPanel CTA)
+  const openModalWithFsa = useCallback((fsa?: string) => {
+    if (fsa) setModalInitialFsa(fsa)
+    setModalOpen(true)
+  }, [])
+
+  // Clears pre-fill so next open (from Nav etc.) starts fresh
+  const handleModalClose = useCallback(() => {
+    setModalInitialFsa(undefined)
+    setModalOpen(false)
   }, [])
 
   // Read persisted profile + likeMeMode on mount
@@ -172,7 +185,10 @@ export default function Page() {
   }, [])
 
   return (
-    <>
+    // Root element — previously a fragment; now a real DOM node so the
+    // overall viewport shell has a single anchoring element.
+    // All children use position:fixed so this div has no layout effect.
+    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
       {/* Map — fills the viewport at z-index 0 */}
       <MapErrorBoundary>
         <MapView
@@ -182,7 +198,7 @@ export default function Page() {
           likeMeMode={likeMeMode}
           userProfile={userProfile}
           onCohortResult={handleCohortResult}
-          onCtaClick={() => setModalOpen(true)}
+          onCtaClick={openModalWithFsa}
           onMatchCountChange={setMatchCount}
         />
       </MapErrorBoundary>
@@ -225,7 +241,8 @@ export default function Page() {
       <ComponentErrorBoundary name="ShareRenewalModal">
         <ShareRenewalModal
           isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
+          onClose={handleModalClose}
+          initialFsa={modalInitialFsa}
           onVerify={handleVerify}
           onSubmitted={handleSubmitted}
           onZoomToPost={handleZoomToPost}
@@ -304,6 +321,6 @@ export default function Page() {
           CARTO
         </a>
       </div>
-    </>
+    </div>
   )
 }

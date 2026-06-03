@@ -93,75 +93,79 @@ function SkeletonBody() {
 // ─── Sparse body (totalCount < 3) ─────────────────────────────────────────────
 
 interface SparseBodyProps {
-  stats:      NeighbourhoodStats | null
-  fsa:        string
-  onCtaClick: () => void
+  stats:        NeighbourhoodStats | null
+  fsa:          string
+  globalCount?: number
 }
 
-function SparseBody({ stats, fsa, onCtaClick }: SparseBodyProps) {
-  if (!stats || !stats.recentReports.length) {
-    return (
-      <>
-        <p className={styles.sparseLabel}>{fsa.toUpperCase()}</p>
-        <p className={styles.pioneerText}>
-          No reports yet. Be the first to share yours{' '}
-          <button
-            className={styles.inlineLink}
-            onClick={onCtaClick}
-            aria-label={`Share your renewal in ${fsa.toUpperCase()}`}
-          >→</button>
-        </p>
-      </>
-    )
-  }
+function SparseBody({ stats, fsa, globalCount }: SparseBodyProps) {
+  const fsaUpper      = (stats?.fsa ?? fsa).toUpperCase()
+  const neighbourhood = stats?.neighbourhood ?? fsaUpper
+  const totalCount    = stats?.totalCount ?? 0
+  const report        = stats?.recentReports[0] ?? null
 
-  const report = stats.recentReports[0]! // recentReports.length > 0 confirmed above
+  // Section A badge text varies by how many reports exist
+  const badgeText =
+    totalCount === 0
+      ? `${fsaUpper} · First to report`
+      : totalCount === 1
+        ? `${fsaUpper} · 1 of the first to report`
+        : `${fsaUpper} · ${totalCount} reports so far`
+
+  // Section B headline
+  const headline =
+    totalCount === 0
+      ? `No renewals shared in ${neighbourhood} yet.`
+      : totalCount === 1
+        ? `1 renewal shared in ${neighbourhood} so far.`
+        : `${totalCount} renewals shared in ${neighbourhood} so far.`
 
   return (
     <>
-      <p className={styles.sparseLabel}>{fsa.toUpperCase()}</p>
-
-      <div className={styles.sparseRow}>
-        <SentimentFace sentiment={report.sentiment} size={32} />
-        <div>
-          <div
-            className={styles.rateValue}
-            style={{ fontSize: 20, color: tierColor(report.rate_change_pct) }}
-            aria-label={rateAriaLabel(report.rate_change_pct)}
-          >
-            {fmtRate(report.rate_change_pct)}
-          </div>
-          <div className={styles.reportMeta}>
-            {report.provider} · {report.insurance_type === 'auto' ? 'Auto' : 'Home'}
-          </div>
-        </div>
+      {/* Section A — Pioneer status badge */}
+      <div className={styles.pioneerBadge} role="status" aria-live="polite">
+        <span aria-hidden="true">★</span>
+        {badgeText}
       </div>
 
-      <p className={styles.pioneerText}>
-        {stats.totalCount === 1 ? (
-          <>
-            1 report in this area so far.
-            <br />
-            Be the second to share yours{' '}
-            <button
-              className={styles.inlineLink}
-              onClick={onCtaClick}
-              aria-label={`Share your renewal in ${stats.neighbourhood}`}
-            >→</button>
-          </>
-        ) : (
-          <>
-            {stats.totalCount} reports here.
-            <br />
-            Add yours to build the picture{' '}
-            <button
-              className={styles.inlineLink}
-              onClick={onCtaClick}
-              aria-label={`Share your renewal in ${stats.neighbourhood}`}
-            >→</button>
-          </>
-        )}
+      {/* Section B — Headline */}
+      <p className={styles.sparseHeadline}>{headline}</p>
+
+      {/* Section C — Body copy */}
+      <p className={styles.sparseCopy}>
+        Be one of the first to share yours. Your renewal helps neighbours in this area understand what insurers are actually charging.
       </p>
+
+      {/* Section D — Existing report preview (only when totalCount >= 1) */}
+      {totalCount >= 1 && report && (
+        <>
+          <div className={styles.sparseDivider} aria-hidden="true" />
+          <ul className={styles.sparsePreviewList} role="list">
+            <li className={styles.sparsePreviewRow} role="listitem">
+              <SentimentFace sentiment={report.sentiment} size={24} />
+              <span
+                className={styles.recentRate}
+                style={{ color: tierColor(report.rate_change_pct) }}
+                aria-label={rateAriaLabel(report.rate_change_pct)}
+              >
+                {fmtRate(report.rate_change_pct)}
+              </span>
+              <span className={styles.recentMeta}>
+                {report.provider} · {report.insurance_type === 'auto' ? 'Auto' : 'Home'}
+              </span>
+            </li>
+          </ul>
+        </>
+      )}
+
+      {/* Section E — Social proof micro-copy (only when totalCount === 0) */}
+      {totalCount === 0 && (
+        <p className={styles.sparseSocialProof}>
+          {(globalCount ?? 0) > 0
+            ? `Join ${globalCount} Ontario policyholders who've shared`
+            : 'Be among the first in Ontario'}
+        </p>
+      )}
     </>
   )
 }
@@ -277,11 +281,15 @@ function AggregateBody({ stats }: AggregateBodyProps) {
 // ─── NeighbourhoodPanel ───────────────────────────────────────────────────────
 
 interface NeighbourhoodPanelProps {
-  stats:      NeighbourhoodStats | null
-  loading:    boolean
-  fsa:        string
-  onClose:    () => void
-  onCtaClick: () => void
+  stats:        NeighbourhoodStats | null
+  loading:      boolean
+  fsa:          string
+  onClose:      () => void
+  onCtaClick:   (fsa: string) => void
+  globalCount?: number
+  isDesktop?:   boolean
+  /* When true: right-column layout, no backdrop, complementary role,
+     slide-in from right instead of slide-up from bottom */
 }
 
 export default function NeighbourhoodPanel({
@@ -290,6 +298,8 @@ export default function NeighbourhoodPanel({
   fsa,
   onClose,
   onCtaClick,
+  globalCount,
+  isDesktop = false,
 }: NeighbourhoodPanelProps) {
   const { prefersReduced } = useReducedMotion()
   const closeBtnRef = useRef<HTMLButtonElement>(null)
@@ -313,57 +323,85 @@ export default function NeighbourhoodPanel({
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
 
-  const isSparse = !stats || stats.totalCount < 3
-  const title    = stats?.neighbourhood ?? fsa.toUpperCase()
+  const isSparse    = !stats || stats.totalCount < 3
+  const title       = stats?.neighbourhood ?? fsa.toUpperCase()
+  const resolvedFsa = (stats?.fsa ?? fsa).toUpperCase()
+
   const ctaLabel = isSparse
-    ? `Share your renewal in ${title}`
+    ? `Share my renewal for ${title}`
     : `See how your renewal compares in ${title}`
+
+  // Desktop: no backdrop — map stays fully visible behind the right column
+  // Mobile: dim backdrop so map recedes
+  const backdropVisible = !isDesktop
 
   return (
     <>
-      {/* Backdrop */}
-      <motion.div
-        className={styles.backdrop}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: prefersReduced ? 0.15 : 0.3, ease: 'easeInOut' }}
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      {/* Backdrop — mobile only */}
+      {backdropVisible && (
+        <motion.div
+          className={styles.backdrop}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: prefersReduced ? 0.15 : 0.3, ease: 'easeInOut' }}
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Panel */}
+      {/* Panel
+          Desktop: slides in from right (x), Rule 5 — origin: right center
+          Mobile:  slides up from bottom (y), Rule 5 — origin: bottom center
+          Rule 2: starts scale(0.97) not 0
+          Rule 4: ease-out cubic-bezier(.16,1,.3,1)
+          Rule 6: 320ms desktop / 340ms mobile — documented exception for
+                  layout/structural transitions (same rationale as sheet drawers)
+      */}
       <motion.div
         className={styles.panel}
-        style={{ transformOrigin: 'bottom center' }}
+        style={{ transformOrigin: isDesktop ? 'right center' : 'bottom center' }}
         initial={
           prefersReduced
             ? { opacity: 0 }
-            : { y: 16, scale: 0.97, opacity: 0 }
+            : isDesktop
+              ? { x: 32, scale: 0.97, opacity: 0 }
+              : { y: 16, scale: 0.97, opacity: 0 }
         }
-        animate={{ y: 0, scale: 1, opacity: 1 }}
+        animate={{ x: 0, y: 0, scale: 1, opacity: 1 }}
         exit={
           prefersReduced
             ? { opacity: 0, transition: { duration: 0.15 } }
-            : {
-                y: 8,
-                opacity: 0,
-                transition: {
-                  duration: 0.18,
-                  ease: [0.4, 0, 1, 1] as [number, number, number, number],
-                },
-              }
+            : isDesktop
+              ? {
+                  x: 24,
+                  opacity: 0,
+                  transition: {
+                    duration: 0.18,
+                    ease: [0.4, 0, 1, 1] as [number, number, number, number],
+                  },
+                }
+              : {
+                  y: 8,
+                  opacity: 0,
+                  transition: {
+                    duration: 0.18,
+                    ease: [0.4, 0, 1, 1] as [number, number, number, number],
+                  },
+                }
         }
         transition={
           prefersReduced
             ? { duration: 0.15 }
             : {
-                duration: 0.34,
+                duration: isDesktop ? 0.32 : 0.34,
                 ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
               }
         }
-        role="dialog"
-        aria-modal="true"
+        // Desktop: complementary landmark (sidebar supporting main map content)
+        // Mobile: dialog (blocking overlay requiring user action)
+        role={isDesktop ? 'complementary' : 'dialog'}
+        aria-modal={isDesktop ? undefined : 'true'}
         aria-labelledby="np-title"
         aria-live="polite"
       >
@@ -399,14 +437,18 @@ export default function NeighbourhoodPanel({
           ) : stats && !isSparse ? (
             <AggregateBody stats={stats} />
           ) : (
-            <SparseBody stats={stats} fsa={fsa} onCtaClick={onCtaClick} />
+            <SparseBody stats={stats} fsa={fsa} globalCount={globalCount} />
           )}
         </div>
 
         {/* CTA bar */}
         <div className={styles.ctaBar}>
-          <button className={styles.ctaBtn} onClick={onCtaClick} aria-label={ctaLabel}>
-            {isSparse ? 'Share your renewal →' : 'See how yours compares →'}
+          <button
+            className={styles.ctaBtn}
+            onClick={() => onCtaClick(resolvedFsa)}
+            aria-label={ctaLabel}
+          >
+            {isSparse ? 'Share my renewal →' : 'See how yours compares →'}
           </button>
         </div>
       </motion.div>
