@@ -97,7 +97,7 @@ interface SparseBodyProps {
   stats:          NeighbourhoodStats | null
   fsa:            string
   globalCount?:   number
-  onReportClick:  (report: RecentReport, e: React.MouseEvent | React.KeyboardEvent) => void
+  onReportClick:  (report: RecentReport, trigger: HTMLElement) => void
 }
 
 function SparseBody({ stats, fsa, onReportClick }: SparseBodyProps) {
@@ -146,8 +146,8 @@ function SparseBody({ stats, fsa, onReportClick }: SparseBodyProps) {
               role="listitem"
               tabIndex={0}
               aria-label={`View details for this ${report.insurance_type} renewal — ${fmtRate(report.rate_change_pct)}`}
-              onClick={e => onReportClick(report, e)}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onReportClick(report, e) } }}
+              onClick={e => onReportClick(report, e.currentTarget as HTMLElement)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onReportClick(report, e.currentTarget as HTMLElement) } }}
             >
               <SentimentFace sentiment={report.sentiment} size={24} />
               <span
@@ -189,7 +189,7 @@ function SparseBody({ stats, fsa, onReportClick }: SparseBodyProps) {
 
 interface AggregateBodyProps {
   stats:         NeighbourhoodStats
-  onReportClick: (report: RecentReport, e: React.MouseEvent | React.KeyboardEvent) => void
+  onReportClick: (report: RecentReport, trigger: HTMLElement) => void
 }
 
 function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
@@ -281,8 +281,8 @@ function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
             role="listitem"
             tabIndex={0}
             aria-label={`View details for this ${r.insurance_type} renewal — ${fmtRate(r.rate_change_pct)}`}
-            onClick={e => onReportClick(r, e)}
-            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onReportClick(r, e) } }}
+            onClick={e => onReportClick(r, e.currentTarget as HTMLElement)}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onReportClick(r, e.currentTarget as HTMLElement) } }}
           >
             <SentimentFace sentiment={r.sentiment} size={24} />
             <span
@@ -359,8 +359,8 @@ export default function NeighbourhoodPanel({
     }
   }, [])
 
-  function openDetail(report: RecentReport, e: React.MouseEvent | React.KeyboardEvent) {
-    openedFromRef.current = e.currentTarget as HTMLElement
+  function openDetail(report: RecentReport, trigger: HTMLElement) {
+    openedFromRef.current = trigger
     if (!isDesktop) setSnapPoint('full')
     setDetailReport(report)
     setTimeout(() => backBtnRef.current?.focus(), 50)
@@ -621,6 +621,7 @@ export default function NeighbourhoodPanel({
                 <span
                   className={styles.detailRateVal}
                   style={{ color: tierColor(detailReport.rate_change_pct) }}
+                  aria-label={rateAriaLabel(detailReport.rate_change_pct)}
                 >
                   {fmtRate(detailReport.rate_change_pct)}
                 </span>
