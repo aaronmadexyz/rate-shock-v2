@@ -407,12 +407,13 @@
 
 .cta {
   font-family: 'Inter', system-ui, sans-serif;
-  font-size: 13px;
+  font-size: 14px;      /* raised from 13px — 14px proportionate at 44px height */
   font-weight: 500;
   letter-spacing: -0.01em;
-  line-height: 1;
-  padding: 9px 18px;
-  border-radius: 9999px;
+  line-height: 1.2;     /* was 1 */
+  padding: 12px 20px;   /* was 9px 18px — 12+12+~20px lh = 44px ✓ WCAG 2.5.5 */
+  min-height: 44px;     /* explicit minimum ✓ */
+  border-radius: var(--r-full); /* 9999px ✓ */
   border: none;
   cursor: pointer;
   white-space: nowrap;
@@ -421,6 +422,16 @@
   align-items: center;
   box-shadow: 0 1px 3px rgba(26, 25, 23, .06), 0 1px 2px rgba(26, 25, 23, .04);
   transition: background .15s, border-color .15s;
+}
+
+.cta:focus-visible {
+  outline: none;
+  /* Design system double-ring ✓ WCAG 2.4.11 */
+  box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-500);
+}
+
+.cta:active {
+  transform: scale(0.97); /* Rule 1 ✓ — CSS fallback (Framer Motion whileTap also handles this) */
 }
 
 .cta[data-state="new"] {

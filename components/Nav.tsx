@@ -50,14 +50,6 @@ export function setNavState(state: SubmissionState | string): void {
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
-function PlusIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <path d="M6.5 1v11M1 6.5h11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-    </svg>
-  )
-}
-
 function CheckIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
@@ -339,8 +331,7 @@ export default function Nav({
     if (state === 'new') {
       return (
         <span className={styles.ctaInner}>
-          <PlusIcon />
-          {drawer ? 'Compare my renewal' : 'See how your renewal compares'}
+          Share my renewal →
         </span>
       )
     }
