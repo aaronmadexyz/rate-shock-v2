@@ -42,13 +42,47 @@
 
 /* ─── Drag handle ────────────────────────────────────────────────────────────── */
 
-.dragHandle {
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--n-300);
-  margin: 12px auto 0;
+.dragHandleWrap {
+  padding: 8px 0 4px;
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   flex-shrink: 0;
+}
+
+.dragHandle {
+  width: 40px;   /* was 36px — slightly more prominent gesture affordance */
+  height: 5px;   /* was 4px */
+  border-radius: var(--r-full);
+  background: var(--n-200); /* was n-300 — softer: decorative element */
+  flex-shrink: 0;
+}
+
+/* ─── Swipe hint ─────────────────────────────────────────────────────────────── */
+
+/* Decorative one-time hint — 10px mono, n-300 exempt per design system
+   (accompanies the visual drag handle gesture; not standalone text).
+   aria-hidden="true" — screen reader users navigate differently. */
+
+@keyframes hintFade {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.swipeHint {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--n-300);
+  text-align: center;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  margin: 4px 0 0;
+  padding: 0;
+  animation: hintFade 2s ease-out 1.5s both;
+  /* Starts after 1.5s delay — user sees it, then it fades. One-shot. */
 }
 
 /* ─── Header ─────────────────────────────────────────────────────────────────── */
@@ -270,16 +304,35 @@
   box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-500);
 }
 
-/* Chevron — signals tappable row */
+/* Row action wrapper — "View details" label + chevron pushed to row's far right */
+.rowAction {
+  display: flex;
+  align-items: center;
+  gap: 4px; /* sp-1 */
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* "View details" label — 10px decorative mono; n-400 on n-0 = 4.57:1 ✓ AA */
+.rowActionLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--n-400);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+/* Chevron — directional indicator (decorative; n-300 exempt ✓) */
 .rowChevron {
   color: var(--n-300);
   flex-shrink: 0;
-  margin-left: auto;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, transform 0.15s ease;
 }
 
 .reportRow:hover .rowChevron {
   color: var(--n-500);
+  transform: translateX(2px); /* subtle directional nudge on hover */
 }
 
 /* ─── Detail layer — stacked over summary within panel ──────────────────────── */
@@ -783,9 +836,9 @@
   }
 
   /* No swipe gesture on desktop */
-  .dragHandle {
-    display: none;
-  }
+  .dragHandleWrap { display: none; }
+  .dragHandle     { display: none; }
+  .swipeHint      { display: none; }
 
   /* Desktop header: more vertical breathing room */
   .header {
@@ -846,5 +899,10 @@
   }
   .pioneerBadge {
     animation: none; /* All delight animations disabled under reduced motion */
+  }
+  .swipeHint {
+    /* Hint relies on animation to appear and fade — without motion, show nothing */
+    animation: none;
+    opacity: 0;
   }
 }

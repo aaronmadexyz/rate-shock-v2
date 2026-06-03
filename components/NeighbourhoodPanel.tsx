@@ -160,9 +160,12 @@ function SparseBody({ stats, fsa, onReportClick }: SparseBodyProps) {
               <span className={styles.recentMeta}>
                 {report.provider} · {report.insurance_type === 'auto' ? 'Auto' : 'Home'}
               </span>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={styles.rowChevron}>
-                <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <div className={styles.rowAction}>
+                <span className={styles.rowActionLabel}>View details</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={styles.rowChevron}>
+                  <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
             </li>
           ))}
         </ul>
@@ -292,9 +295,12 @@ function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
             <span className={styles.recentMeta}>
               {r.provider} · {r.insurance_type === 'auto' ? 'Auto' : 'Home'}
             </span>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={styles.rowChevron}>
-              <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <div className={styles.rowAction}>
+              <span className={styles.rowActionLabel}>View details</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={styles.rowChevron}>
+                <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
           </li>
         ))}
       </ul>
@@ -340,6 +346,18 @@ export default function NeighbourhoodPanel({
   // ── Peek / full snap state (mobile only) ─────────────────────────────────────
   const [snapPoint, setSnapPoint] = useState<'peek' | 'full'>('peek')
   const panelBodyRef = useRef<HTMLDivElement>(null)
+
+  // ── Swipe hint (shown once per session, mobile only) ─────────────────────────
+  const [showSwipeHint, setShowSwipeHint] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const seen = sessionStorage.getItem('rshock_swipe_hint_seen')
+    if (!seen) {
+      setShowSwipeHint(true)
+      sessionStorage.setItem('rshock_swipe_hint_seen', '1')
+    }
+  }, [])
 
   function openDetail(report: RecentReport, e: React.MouseEvent | React.KeyboardEvent) {
     openedFromRef.current = e.currentTarget as HTMLElement
@@ -415,6 +433,11 @@ export default function NeighbourhoodPanel({
       : stats && stats.totalCount >= 3
         ? `See how your renewal compares in ${neighbourhood}`
         : `Share your renewal for ${neighbourhood}`
+
+  function handleCtaClick() {
+    navigator.vibrate?.(10)
+    onCtaClick(resolvedFsa)
+  }
 
   return (
     <>
@@ -502,8 +525,15 @@ export default function NeighbourhoodPanel({
         aria-labelledby="np-title"
         aria-live="polite"
       >
-        {/* Drag handle */}
-        <div className={styles.dragHandle} aria-hidden="true" />
+        {/* Drag handle + one-time swipe hint */}
+        <div className={styles.dragHandleWrap} aria-hidden="true">
+          <div className={styles.dragHandle} />
+          {showSwipeHint && (
+            <p className={styles.swipeHint} aria-hidden="true">
+              swipe down to close
+            </p>
+          )}
+        </div>
 
         {/* Header */}
         <div className={styles.header}>
@@ -550,7 +580,7 @@ export default function NeighbourhoodPanel({
           {/* CTA button */}
           <button
             className={styles.ctaBtn}
-            onClick={() => onCtaClick(resolvedFsa)}
+            onClick={handleCtaClick}
             aria-label={ctaAriaLabel}
           >
             {ctaLabel}
