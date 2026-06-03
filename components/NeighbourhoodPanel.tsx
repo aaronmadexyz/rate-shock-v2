@@ -331,32 +331,28 @@ export default function NeighbourhoodPanel({
     ? `Share my renewal for ${title}`
     : `See how your renewal compares in ${title}`
 
-  // Desktop: no backdrop — map stays fully visible behind the right column
-  // Mobile: dim backdrop so map recedes
-  const backdropVisible = !isDesktop
-
   return (
     <>
-      {/* Backdrop — mobile only */}
-      {backdropVisible && (
-        <motion.div
-          className={styles.backdrop}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: prefersReduced ? 0.15 : 0.3, ease: 'easeInOut' }}
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
+      {/* Backdrop — shown on both desktop and mobile.
+          Desktop: CSS overrides to rgba(.08) — map stays readable.
+          Mobile:  CSS default rgba(.28) — heavier dim. */}
+      <motion.div
+        className={styles.backdrop}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: prefersReduced ? 0.15 : 0.3, ease: 'easeInOut' }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* Panel
-          Desktop: slides in from right (x), Rule 5 — origin: right center
-          Mobile:  slides up from bottom (y), Rule 5 — origin: bottom center
-          Rule 2: starts scale(0.97) not 0
-          Rule 4: ease-out cubic-bezier(.16,1,.3,1)
-          Rule 6: 320ms desktop / 340ms mobile — documented exception for
-                  layout/structural transitions (same rationale as sheet drawers)
+          Desktop: pure translateX from right edge — no scale, no fade.
+            Rule 4: ease-out cubic-bezier(.16,1,.3,1) ✓
+            Rule 5: transform-origin right center (entry direction) ✓
+            Rule 6: 280ms enter / 180ms exit — both < 300ms ✓
+          Mobile: slide-up from bottom + scale from .97 (unchanged)
+            Rule 2: starts scale(0.97) not 0 ✓
       */}
       <motion.div
         className={styles.panel}
@@ -365,7 +361,7 @@ export default function NeighbourhoodPanel({
           prefersReduced
             ? { opacity: 0 }
             : isDesktop
-              ? { x: 32, scale: 0.97, opacity: 0 }
+              ? { x: 400 }                          // start fully off-screen right
               : { y: 16, scale: 0.97, opacity: 0 }
         }
         animate={{ x: 0, y: 0, scale: 1, opacity: 1 }}
@@ -374,8 +370,7 @@ export default function NeighbourhoodPanel({
             ? { opacity: 0, transition: { duration: 0.15 } }
             : isDesktop
               ? {
-                  x: 24,
-                  opacity: 0,
+                  x: 400,                            // slide back fully off-screen
                   transition: {
                     duration: 0.18,
                     ease: [0.4, 0, 1, 1] as [number, number, number, number],
@@ -394,12 +389,12 @@ export default function NeighbourhoodPanel({
           prefersReduced
             ? { duration: 0.15 }
             : {
-                duration: isDesktop ? 0.32 : 0.34,
+                duration: isDesktop ? 0.28 : 0.34,
                 ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
               }
         }
-        // Desktop: complementary landmark (sidebar supporting main map content)
-        // Mobile: dialog (blocking overlay requiring user action)
+        // Desktop: complementary landmark (persistent sidebar beside map content)
+        // Mobile: dialog (blocking overlay requiring user action to dismiss)
         role={isDesktop ? 'complementary' : 'dialog'}
         aria-modal={isDesktop ? undefined : 'true'}
         aria-labelledby="np-title"

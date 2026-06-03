@@ -581,30 +581,29 @@ export default function MapView({
     onReady?.({ prependSubmission, flyToFsa })
   }, [onReady, prependSubmission, flyToFsa])
 
-  // After the map container resizes (panel open/close on desktop), invalidate Leaflet's
-  // tile cache so tiles load correctly in the new dimensions.
-  // 340ms = 320ms layout transition + 20ms buffer.
-  useEffect(() => {
-    if (!localMapRef.current) return
-    const timer = setTimeout(() => {
-      localMapRef.current?.invalidateSize({ animate: false })
-    }, 340)
-    return () => clearTimeout(timer)
-  }, [panelFsa, isDesktop])
-
-  // After the map resizes, centre the selected envelope in the visible map area.
-  // 360ms = 320ms transition + 20ms invalidateSize buffer + 20ms rounding buffer.
-  // Mobile skipped — panel is a bottom drawer, envelope is visible above it.
+  // When the panel opens on desktop, pan the map left so the selected envelope
+  // stays visible in the area beside the panel rather than hidden underneath.
+  // Pan offset = half the panel width (200px) so the centroid lands in the
+  // visible portion of the map. Skipped on mobile — bottom drawer doesn't occlude.
   useEffect(() => {
     if (!panelFsa || !localMapRef.current || !isDesktop) return
     const centroid = getCentroid(panelFsa)
     if (!centroid) return
+    const PANEL_WIDTH = 400
     const timer = setTimeout(() => {
-      localMapRef.current?.setView(centroid, localMapRef.current?.getZoom() ?? 12, {
-        animate: true,
-        duration: 0.5,
+      const map = localMapRef.current!
+      const containerPt = map.latLngToContainerPoint(centroid)
+      // Shift centroid left by half panel width so it appears in the visible area
+      const adjustedPt = map.containerPointToLatLng([
+        containerPt.x - PANEL_WIDTH / 2,
+        containerPt.y,
+      ])
+      map.panTo(adjustedPt, {
+        animate:      true,
+        duration:     0.32,   // matches panel slide-in duration
+        easeLinearity: 0.25,
       })
-    }, 360)
+    }, 50) // small delay so panel animation has started before map pans
     return () => clearTimeout(timer)
   }, [panelFsa, isDesktop])
 
@@ -681,29 +680,9 @@ export default function MapView({
 
   const at = activeTooltip
 
-  // Panel width in px for map area shrink (desktop only)
-  const PANEL_WIDTH = 480
-
   return (
     <>
-      {/* Map area wrapper — on desktop, right edge shrinks when panel is open.
-          transition: .32s ease-out matches the panel slide-in duration (Rule 4/6).
-          Intentional exception to Emil Rule 6 <300ms: this is a layout transition
-          (structural viewport change), not a UI micro-interaction. */}
-      <div
-        style={{
-          position:   'fixed',
-          top:        0,
-          left:       0,
-          bottom:     0,
-          right:      isDesktop && !!panelFsa ? PANEL_WIDTH : 0,
-          overflow:   'hidden',
-          zIndex:     0, /* z-map */
-          transition: isDesktop
-            ? 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1)'
-            : 'none',
-        }}
-      >
+      {/* Map — full viewport, always full width (Option B: panel overlaps right edge) */}
       <MapContainer
         center={[43.651, -79.383]}
         zoom={12}
@@ -713,7 +692,7 @@ export default function MapView({
         maxZoom={16}
         zoomControl={false}
         attributionControl={false}
-        style={{ position: 'absolute', inset: 0, touchAction: 'none' }}
+        style={{ position: 'fixed', inset: 0, zIndex: 0, /* z-map */ width: '100vw', height: '100dvh', touchAction: 'none' }}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -753,7 +732,6 @@ export default function MapView({
           )
         })}
       </MapContainer>
-      </div>{/* /map area wrapper */}
 
       {/* Mode 1 — hover preview (desktop only, auto-dismisses) */}
       <AnimatePresence>
