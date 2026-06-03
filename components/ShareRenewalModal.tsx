@@ -151,6 +151,7 @@ function heroColor(val: number, mode: 'pct' | 'dol', sign: 'inc' | 'dec'): strin
 }
 
 function formatSliderVal(val: number, mode: 'pct' | 'dol', sign: 'inc' | 'dec'): string {
+  if (mode === 'pct' && val === 0) return '0%' // 0% is neither increase nor decrease — no sign
   const pfx = sign === 'dec' ? '−' : '+'
   if (mode === 'pct') {
     if (sign === 'inc' && val >= 50) return '+50%+'
@@ -323,6 +324,9 @@ interface ShareRenewalModalProps {
   onSubmitted?: (sub: Submission) => void
   onZoomToPost?: (fsa: string) => void
   onEnableLikeMe?: () => void
+  initialFsa?: string
+  /* Optional FSA pre-filled on open. Passed from NeighbourhoodPanel
+     when user taps the pioneer CTA from a sparse area. */
 }
 
 // ─── Stepper component ────────────────────────────────────────────────────────
@@ -410,7 +414,7 @@ function Stepper({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitted, onZoomToPost, onEnableLikeMe }: ShareRenewalModalProps) {
+export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitted, onZoomToPost, onEnableLikeMe, initialFsa }: ShareRenewalModalProps) {
   // ── form state ──────────────────────────────────────────────────────────────
   const [step, setStep]           = useState<Step>(1)
   const [fsa, setFsa]             = useState('')
@@ -428,6 +432,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const [sign, setSign]           = useState<'inc' | 'dec'>('inc')
   const [mode, setMode]           = useState<'pct' | 'dol'>('dol')
   const [rval, setRval]           = useState(480)
+  const [dolStr, setDolStr]       = useState('480')   // raw string for the "Amount changed" input; null-check on empty string distinguishes 0 from blank
   const [prevPrem, setPrevPrem]   = useState<number | null>(null)
   const [prevPremError, setPrevPremError] = useState('')
 
@@ -572,7 +577,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       if (d.provider) setProvider(d.provider)
       if (d.sign)        setSign(d.sign)
       if (d.mode)        setMode(d.mode)
-      if (d.rval != null) setRval(d.rval)
+      if (d.rval != null) { setRval(d.rval); setDolStr(String(d.rval)) }
       if (d.prevPrem != null) setPrevPrem(d.prevPrem)
       if (d.sent)        setSent(d.sent)
       if (d.yrs != null || d.cl != null || d.cv != null || d.hcl != null) {
@@ -600,6 +605,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
         setDollarAmount(parseInt(pendingDollar, 10))
       }
     } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
+
+  // ── initialFsa pre-fill: resolve neighbourhood hint on open ─────────────────
+  // Only fires when isOpen transitions to true — initialFsa is read from closure.
+  useEffect(() => {
+    if (!isOpen || !initialFsa) return
+    const upper = initialFsa.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3)
+    if (upper.length === 3) void onFsaInput(upper)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
@@ -662,7 +676,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       cv:  { v: 0, k: 0, dir: 'up' },
       hcl: { v: 0, k: 0, dir: 'up' },
     })
-    setSign('inc'); setMode('dol'); setRval(480); updateTrack(480, 0, 2000)
+    setSign('inc'); setMode('dol'); setRval(480); setDolStr('480'); updateTrack(480, 0, 2000)
     setPrevPrem(null); setPrevPremError('')
     setSubmissionId(null); setDollarAmount(null)
     setPatchDone(false); setPatchLoading(false); setPatchError('')
@@ -742,7 +756,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   function switchMode(m: 'pct' | 'dol') {
     setMode(m)
     if (m === 'pct') { const mx = sign === 'dec' ? 30 : 50; setRval(18); updateTrack(18, 0, mx) }
-    else             { setRval(480); updateTrack(480, 0, 2000) }
+    else             { setRval(480); setDolStr('480'); updateTrack(480, 0, 2000) }
   }
 
   function setSignFn(s: 'inc' | 'dec') {
@@ -848,8 +862,9 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
       setStep(2)
     } else if (step === 2) {
       if (sent === 0) { setSentErr(true); return }
-      // Dollar mode submission gate: prevPrem required to calculate pct
-      if (mode === 'dol' && !(rval > 0 && prevPrem !== null && prevPrem > 0)) {
+      // Dollar mode submission gate: prevPrem required to calculate pct.
+      // dolStr !== '' distinguishes "user entered 0" from "field is empty".
+      if (mode === 'dol' && !(dolStr !== '' && prevPrem !== null && prevPrem > 0)) {
         setPrevPremError('Add your previous premium to calculate your % change, or switch to % mode to enter directly.')
         return
       }
@@ -1218,7 +1233,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   // ── Count-up when animDone and data resolved ─────────────────────────────────
   useEffect(() => {
     if (!animDone || compLoading) return
-    const computedPct = mode === 'dol' && rval > 0 && prevPrem !== null && prevPrem > 0
+    const computedPct = mode === 'dol' && dolStr !== '' && prevPrem !== null && prevPrem > 0
       ? calculatePct(rval, prevPrem)
       : null
     const targetYou = mode === 'pct'
@@ -1328,8 +1343,9 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   const stepTitle  = step === 1 ? 'About your policy' : step === 2 ? 'What did they charge you?' : ''
-  // In dollar mode, use prevPrem-computed pct for contextual label when available
-  const triPct     = mode === 'dol' && rval > 0 && prevPrem !== null && prevPrem > 0
+  // In dollar mode, use prevPrem-computed pct for contextual label when available.
+  // dolStr !== '' check: 0 is a valid change amount; empty string means the field is blank.
+  const triPct     = mode === 'dol' && dolStr !== '' && prevPrem !== null && prevPrem > 0
     ? calculatePct(rval, prevPrem)
     : null
   const ctxVal     = mode === 'dol' && triPct !== null ? triPct : rval
@@ -1338,8 +1354,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
   const heroText   = mode === 'pct'
     ? formatSliderVal(rval, 'pct', sign)
     : triPct !== null
-      ? `${sign === 'dec' ? '−' : '+'}${triPct}%`
-      : rval > 0
+      ? `${triPct === 0 ? '' : sign === 'dec' ? '−' : '+'}${triPct}%`
+      : dolStr !== ''
         ? formatSliderVal(rval, 'dol', sign)
         : `${sign === 'dec' ? '−' : '+'}?%`
 
@@ -1523,7 +1539,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         value={fsa}
                         maxLength={3}
                         placeholder="M5V"
-                        autoComplete="off"
+                        autoComplete="postal-code"
                         autoCapitalize="characters"
                         autoCorrect="off"
                         spellCheck={false}
@@ -1531,6 +1547,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         aria-invalid={fsaError ? 'true' : 'false'}
                         aria-describedby="fsaError"
                         onChange={e => onFsaInput(e.target.value)}
+                        onPaste={e => {
+                          e.preventDefault()
+                          const pasted = e.clipboardData
+                            .getData('text')
+                            .replace(/\s/g, '')
+                            .toUpperCase()
+                            .slice(0, 3)
+                          void onFsaInput(pasted)
+                        }}
                         style={{
                           fontFamily: "'IBM Plex Mono', monospace",
                           fontSize: 22, fontWeight: 500,
@@ -1848,9 +1873,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             aria-valuemax={sign === 'dec' ? 30 : 50}
                             aria-valuenow={rval}
                             aria-valuetext={
-                              rval >= 50 && sign === 'inc'
-                                ? '50 percent or more increase'
-                                : `${rval} percent ${sign === 'dec' ? 'decrease' : 'increase'}`
+                              rval === 0
+                                ? 'zero percent — no change'
+                                : rval >= 50 && sign === 'inc'
+                                  ? '50 percent or more increase'
+                                  : `${rval} percent ${sign === 'dec' ? 'decrease' : 'increase'}`
                             }
                             onChange={e => onRange(Number(e.target.value))}
                             style={{
@@ -1921,9 +1948,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                   min={0} max={9999} step={1}
                                   autoComplete="off"
                                   aria-describedby="triResult"
-                                  value={rval > 0 ? String(rval) : ''}
+                                  value={dolStr}
                                   onChange={e => {
-                                    const v = parseInt(e.target.value)
+                                    const raw = e.target.value
+                                    setDolStr(raw)
+                                    const v = parseInt(raw)
                                     setRval(isNaN(v) || v < 0 ? 0 : v)
                                     if (prevPremError) setPrevPremError('')
                                   }}
@@ -2001,7 +2030,9 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                 fontWeight: 700, letterSpacing: '-.02em',
                                 color: sign === 'dec' ? 'var(--pos-600)' : 'var(--p-700)',
                               }}>
-                                {sign === 'dec' ? '−' : '+'}{triPct}% {sign === 'dec' ? 'decrease' : 'increase'}
+                                {triPct === 0
+                                  ? '0% — no change this renewal'
+                                  : `${sign === 'dec' ? '−' : '+'}${triPct}% ${sign === 'dec' ? 'decrease' : 'increase'}`}
                               </span>
                               <span style={{
                                 fontFamily: "'Inter', system-ui, sans-serif", fontSize: 11,
