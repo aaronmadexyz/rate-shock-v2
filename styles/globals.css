@@ -146,6 +146,16 @@
   --border-subtle:     var(--n-100);
   --border-default:    var(--n-200);
   --border-strong:     var(--n-300);
+
+  /* ── Nav height — set dynamically by Nav.tsx on mount.
+     Fallback: 72px (strip ~22px + bar ~46px mobile ≈ 68px + small buffer).
+     Used to keep the NeighbourhoodPanel below the nav bar. */
+  --nav-height: 72px;
+
+  /* ── Panel height constraints (mobile bottom sheet).
+     Panel never overlaps the nav. 24px = sp-6 clearance below nav bottom. */
+  --panel-max-height:  calc(100dvh - var(--nav-height) - 24px);
+  --panel-peek-height: calc(var(--panel-max-height) * 0.65);
 }
 
 /* ─── NAV ────────────────────────────────────────────────────────────────── */

@@ -21,8 +21,9 @@
   box-shadow:
     0 -4px 32px rgba(26, 25, 23, 0.10),
     0 -1px 4px rgba(26, 25, 23, 0.05);
-  /* Default max-height — overridden by data-mode below */
-  max-height: 72vh;
+  /* Never overlap the nav bar. --panel-max-height = 100dvh - --nav-height - 24px.
+     --nav-height is set dynamically by Nav.tsx; fallback keeps panel safe. */
+  max-height: var(--panel-max-height, calc(100dvh - 96px));
   display: flex;
   flex-direction: column;
   transform-origin: bottom center;
@@ -32,8 +33,8 @@
 
 /* Sparse: panel closes around content — no large whitespace gap */
 .panel[data-mode="sparse"] {
-  max-height: 72vh;
-  min-height: min(72vh, 480px);
+  max-height: var(--panel-max-height, calc(100dvh - 96px));
+  min-height: min(var(--panel-max-height, calc(100dvh - 96px)), 480px);
   /* Concrete min-height so position:absolute .detailLayer has a parent
      height to anchor against — without this, height:auto collapses
      the detail layer to 0px, hiding the back button */
@@ -50,7 +51,7 @@
 
 /* Aggregate: more height for the full report list */
 .panel[data-mode="aggregate"] {
-  max-height: 85vh;
+  max-height: var(--panel-max-height, calc(100dvh - 96px));
 }
 
 /* ─── Drag handle ────────────────────────────────────────────────────────────── */
@@ -765,27 +766,29 @@
     transition: height .28s cubic-bezier(.16,1,.3,1);
   }
 
+  /* peek = 65% of available height below nav gap
+     full = 100% of available height below nav gap */
   .panel[data-snap="peek"] {
-    height: 65vh;
-    max-height: 65vh;
+    height: var(--panel-peek-height, calc((100dvh - 96px) * 0.65));
+    max-height: var(--panel-peek-height, calc((100dvh - 96px) * 0.65));
   }
 
   .panel[data-snap="full"] {
-    height: 92vh;
-    max-height: 92vh;
+    height: var(--panel-max-height, calc(100dvh - 96px));
+    max-height: var(--panel-max-height, calc(100dvh - 96px));
   }
 
-  /* Backdrop covers only the panel area in peek — top 35% of map stays bright */
+  /* Backdrop covers only the panel area in peek — map above stays bright */
   .backdrop {
     inset: auto 0 0 0; /* bottom-anchored; overrides base inset:0 */
-    height: 65vh;
+    height: var(--panel-peek-height, calc((100dvh - 96px) * 0.65));
     transition: height .28s cubic-bezier(.16,1,.3,1);
   }
 
-  /* Backdrop expands to full viewport when panel is fully expanded */
+  /* Backdrop expands with panel when fully expanded */
   .backdrop[data-snap="full"] {
     top: 0;
-    height: 92vh;
+    height: var(--panel-max-height, calc(100dvh - 96px));
   }
 }
 
@@ -803,7 +806,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 35vh; /* 100vh − 65vh peek height */
+  /* 100dvh minus peek panel height = visible map area above the panel */
+  height: calc(100dvh - var(--panel-peek-height, calc((100dvh - 96px) * 0.65)));
   z-index: calc(var(--z-panel) - 1);
   background: transparent;
   cursor: pointer;
@@ -885,11 +889,18 @@
     padding: 0 24px 32px; /* sp-6 sp-8 */
   }
 
-  /* Desktop: full-height column regardless of data-mode */
+  /* Desktop: full-height column regardless of data-mode or snap point
+     (snap points are only set on mobile anyway — this is belt-and-suspenders) */
   .panel[data-mode="sparse"],
   .panel[data-mode="aggregate"] {
     max-height: 100dvh;
     height: 100dvh;
+  }
+
+  .panel[data-snap="peek"],
+  .panel[data-snap="full"] {
+    height: 100dvh;
+    max-height: 100dvh;
   }
 
   /* Footer sticky at bottom */

@@ -241,6 +241,19 @@ export default function Nav({
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
+  // ── Nav height CSS variable — used by NeighbourhoodPanel to stay below nav ──
+  useEffect(() => {
+    function update() {
+      const bar = document.querySelector('[data-nav-root]') as HTMLElement | null
+      if (!bar) return
+      const h = bar.getBoundingClientRect().bottom
+      document.documentElement.style.setProperty('--nav-height', `${Math.ceil(h)}px`)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
   // ── Count animation guard ──────────────────────────────────────────────────
   // Hide count span from AT during the 500ms roll-up. prefers-reduced-motion
   // snaps to final value immediately (useAnimatedCounter) so no guard needed.
@@ -429,7 +442,7 @@ export default function Nav({
       </div>
 
       {/* ── Main bar ───────────────────────────────────────────────────────── */}
-      <div className={styles.bar}>
+      <div className={styles.bar} data-nav-root>
         <div className={styles.barInner}>
 
           {/* Brand */}

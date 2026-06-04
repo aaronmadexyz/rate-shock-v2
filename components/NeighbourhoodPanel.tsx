@@ -376,17 +376,10 @@ export default function NeighbourhoodPanel({
     }
   }, [])
 
-  // iOS Safari: window.innerHeight is the VISIBLE viewport (excludes URL bar).
-  // 100vh on iOS includes the URL bar area → content can be hidden behind it.
-  // Computing the concrete pixel height once on mount and using it when the
-  // detail layer is open ensures the panel never clips behind the URL bar.
-  const [panelDetailHeight, setPanelDetailHeight] = useState<string>('85vh')
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const h = Math.round(window.innerHeight * 0.85)
-    setPanelDetailHeight(`${h}px`)
-  }, [])
+  // When the detail layer is open, give the panel a concrete height so
+  // position:absolute .detailLayer fills it correctly on iOS Safari.
+  // --panel-max-height is defined in globals.css and set dynamically by Nav.tsx;
+  // it uses 100dvh which correctly excludes the iOS Safari URL bar.
 
   function openDetail(report: RecentReport, trigger: HTMLElement) {
     openedFromRef.current = trigger
@@ -570,7 +563,7 @@ export default function NeighbourhoodPanel({
           // Concrete pixel height when detail is open — gives position:absolute
           // detailLayer a real dimension to fill on iOS Safari (100vh includes
           // the URL bar, window.innerHeight gives the visible viewport)
-          ...(detailReport && !isDesktop ? { height: panelDetailHeight } : {}),
+          ...(detailReport && !isDesktop ? { height: 'var(--panel-max-height)' } : {}),
           transformOrigin: isDesktop ? 'right center' : 'bottom center',
         }}
       >
