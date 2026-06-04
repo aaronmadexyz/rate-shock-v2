@@ -744,6 +744,20 @@
   .burger {
     display: none !important;
   }
+
+  /* ── Desktop nav spacing ── */
+
+  /* Remove fixed height so bar grows from CTA button natural height:
+     padding(12) + min-height(44) + padding(12) = 68px ✓ */
+  .bar {
+    height: auto;
+  }
+
+  .barInner {
+    height: auto;          /* was 100% — only needed with fixed .bar height */
+    padding: 12px 32px;    /* sp-3 sp-8 — on 4px grid ✓ */
+    gap: 24px;             /* sp-6 ✓ — was 12px, more breathing room on desktop */
+  }
 }
 
 /* ══════════════════════════════════════════
