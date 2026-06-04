@@ -391,6 +391,8 @@ export default function NeighbourhoodPanel({
   function openDetail(report: RecentReport, trigger: HTMLElement) {
     openedFromRef.current = trigger
     if (!isDesktop) setSnapPoint('full')
+    // Reset body scroll so the detail layer starts from a clean position
+    if (panelBodyRef.current) panelBodyRef.current.scrollTop = 0
     setDetailReport(report)
     setTimeout(() => backBtnRef.current?.focus(), 50)
   }
@@ -405,6 +407,9 @@ export default function NeighbourhoodPanel({
     setTimeout(() => {
       setIsDetailExiting(false)
       setDetailReport(null)
+      // Reset body scroll to top so the panel header is visible after returning
+      // from the detail view — prevents mid-scroll position showing wrong content
+      if (panelBodyRef.current) panelBodyRef.current.scrollTop = 0
       // Skip focus restoration on touch devices. On iOS Safari, .focus() on a
       // non-input element triggers a viewport scroll that pushes the fixed panel
       // off-screen. Keyboard users (desktop) still get correct focus management.
