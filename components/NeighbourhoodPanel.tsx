@@ -91,6 +91,63 @@ function SkeletonBody() {
   )
 }
 
+// ─── Report row (shared by SparseBody and AggregateBody) ─────────────────────
+// Separate component so each row owns a stable ref — onTap uses the ref rather
+// than e.currentTarget (which is unreliable with PointerEvent on some mobile
+// browsers when Framer Motion drag is active on a parent).
+
+interface ReportRowProps {
+  report:        RecentReport
+  onReportClick: (r: RecentReport, el: HTMLElement) => void
+  className:     string
+  ariaLabel:     string
+}
+
+function ReportRow({ report, onReportClick, className, ariaLabel }: ReportRowProps) {
+  const rowRef = useRef<HTMLLIElement>(null)
+
+  function handleActivate(el: HTMLElement) {
+    onReportClick(report, el)
+  }
+
+  return (
+    <motion.li
+      ref={rowRef}
+      className={className}
+      role="listitem"
+      tabIndex={0}
+      aria-label={ariaLabel}
+      dragListener={false}
+      onClick={e => handleActivate(e.currentTarget as HTMLElement)}
+      onTap={() => { if (rowRef.current) handleActivate(rowRef.current) }}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          if (rowRef.current) handleActivate(rowRef.current)
+        }
+      }}
+    >
+      <SentimentFace sentiment={report.sentiment} size={24} />
+      <span
+        className={styles.recentRate}
+        style={{ color: tierColor(report.rate_change_pct) }}
+        aria-label={rateAriaLabel(report.rate_change_pct)}
+      >
+        {fmtRate(report.rate_change_pct)}
+      </span>
+      <span className={styles.recentMeta}>
+        {report.provider} · {report.insurance_type === 'auto' ? 'Auto' : 'Home'}
+      </span>
+      <div className={styles.rowAction}>
+        <span className={styles.rowActionLabel}>View details</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={styles.rowChevron}>
+          <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+    </motion.li>
+  )
+}
+
 // ─── Sparse body (totalCount < 3) ─────────────────────────────────────────────
 
 interface SparseBodyProps {
@@ -140,35 +197,13 @@ function SparseBody({ stats, fsa, onReportClick }: SparseBodyProps) {
       {reports.length > 0 && (
         <ul className={styles.sparsePreviewList} role="list">
           {reports.map(report => (
-            <motion.li
+            <ReportRow
               key={report.id}
+              report={report}
+              onReportClick={onReportClick}
               className={`${styles.sparsePreviewRow} ${styles.reportRow}`}
-              role="listitem"
-              tabIndex={0}
-              aria-label={`View details for this ${report.insurance_type} renewal — ${fmtRate(report.rate_change_pct)}`}
-              onClick={e => onReportClick(report, e.currentTarget as HTMLElement)}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onReportClick(report, e.currentTarget as HTMLElement) } }}
-              dragListener={false}
-              onTap={e => onReportClick(report, e.currentTarget as HTMLElement)}
-            >
-              <SentimentFace sentiment={report.sentiment} size={24} />
-              <span
-                className={styles.recentRate}
-                style={{ color: tierColor(report.rate_change_pct) }}
-                aria-label={rateAriaLabel(report.rate_change_pct)}
-              >
-                {fmtRate(report.rate_change_pct)}
-              </span>
-              <span className={styles.recentMeta}>
-                {report.provider} · {report.insurance_type === 'auto' ? 'Auto' : 'Home'}
-              </span>
-              <div className={styles.rowAction}>
-                <span className={styles.rowActionLabel}>View details</span>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={styles.rowChevron}>
-                  <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            </motion.li>
+              ariaLabel={`View details for this ${report.insurance_type} renewal — ${fmtRate(report.rate_change_pct)}`}
+            />
           ))}
         </ul>
       )}
@@ -273,39 +308,17 @@ function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
       <p className={`${styles.sectionLabel} ${styles.sectionLabelSpaced}`}>RECENT</p>
       <ul className={styles.recentList} role="list">
         {stats.recentReports.map((r: RecentReport, i: number) => (
-          <motion.li
+          <ReportRow
             key={r.id}
+            report={r}
+            onReportClick={onReportClick}
             className={[
               styles.recentRow,
               styles.reportRow,
               i === stats.recentReports.length - 1 ? styles.recentRowLast : '',
             ].filter(Boolean).join(' ')}
-            role="listitem"
-            tabIndex={0}
-            aria-label={`View details for this ${r.insurance_type} renewal — ${fmtRate(r.rate_change_pct)}`}
-            onClick={e => onReportClick(r, e.currentTarget as HTMLElement)}
-            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onReportClick(r, e.currentTarget as HTMLElement) } }}
-            dragListener={false}
-            onTap={e => onReportClick(r, e.currentTarget as HTMLElement)}
-          >
-            <SentimentFace sentiment={r.sentiment} size={24} />
-            <span
-              className={styles.recentRate}
-              style={{ color: tierColor(r.rate_change_pct) }}
-              aria-label={rateAriaLabel(r.rate_change_pct)}
-            >
-              {fmtRate(r.rate_change_pct)}
-            </span>
-            <span className={styles.recentMeta}>
-              {r.provider} · {r.insurance_type === 'auto' ? 'Auto' : 'Home'}
-            </span>
-            <div className={styles.rowAction}>
-              <span className={styles.rowActionLabel}>View details</span>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={styles.rowChevron}>
-                <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-          </motion.li>
+            ariaLabel={`View details for this ${r.insurance_type} renewal — ${fmtRate(r.rate_change_pct)}`}
+          />
         ))}
       </ul>
     </>
@@ -550,7 +563,7 @@ export default function NeighbourhoodPanel({
         <div
           className={styles.dragHandleWrap}
           aria-hidden="true"
-          onPointerDown={e => { if (!isDesktop) dragControls.start(e) }}
+          onPointerDown={e => { e.stopPropagation(); if (!isDesktop) dragControls.start(e) }}
           style={{ touchAction: 'none' }}
         >
           <div className={styles.dragHandle} />
