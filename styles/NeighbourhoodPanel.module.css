@@ -505,7 +505,7 @@
 .profileLbl {
   font-size: 11px;
   color: var(--n-500); /* #706F67 — 5.05:1 on n-0 ✓ AA */
-  line-height: 1.4;
+  line-height: 1.5; /* WCAG 1.4.12: ≥1.5× font-size ✓ (was 1.4) */
 }
 
 /* Comment */

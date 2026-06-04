@@ -33,7 +33,9 @@ const SENT_LABELS = ['', 'Very fair', 'Fair', 'Neutral', 'Unfair', 'Very unfair'
 const DRAFT_KEY       = 'rateshock_form_draft'
 const DRAFT_SHOWN_KEY = 'rateshock_draft_shown'
 
-const VP_MAP   = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
+/* WCAG 1.4.4: maximum-scale=1/user-scalable=no removed — pinch-zoom must not
+   be blocked. MapContainer has touchAction:none for gesture conflict handling. */
+const VP_MAP   = 'width=device-width, initial-scale=1, viewport-fit=cover'
 const VP_MODAL = 'width=device-width, initial-scale=1, viewport-fit=cover'
 
 const PROVIDERS = [

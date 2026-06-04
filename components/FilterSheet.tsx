@@ -341,7 +341,8 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
   // Re-enable pinch-zoom on mobile while sheet is open
   useEffect(() => {
     if (!isMobile) return
-    const VP_MAP   = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
+    /* WCAG 1.4.4: maximum-scale=1/user-scalable=no removed — pinch-zoom must not be blocked. */
+    const VP_MAP   = 'width=device-width, initial-scale=1, viewport-fit=cover'
     const VP_MODAL = 'width=device-width, initial-scale=1, viewport-fit=cover'
     const vp = document.querySelector('meta[name=viewport]')
     vp?.setAttribute('content', isOpen ? VP_MODAL : VP_MAP)
