@@ -323,15 +323,18 @@
 .rowAction {
   display: flex;
   align-items: center;
-  gap: 4px; /* sp-1 */
+  gap: 4px;           /* sp-1 between label and chevron */
   flex-shrink: 0;
   margin-left: auto;
+  padding-left: 12px; /* sp-3 — separates action zone from meta content ✓ */
 }
 
-/* "View details" label — 10px decorative mono; n-400 on n-0 = 4.57:1 ✓ AA */
+/* "View details" label — 11px mono; n-400 on n-0 = 4.57:1 ✓ AA
+   11px is the design system minimum for functional text.
+   10px is reserved for purely decorative swatch labels only. */
 .rowActionLabel {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--n-400);
   letter-spacing: 0.03em;
