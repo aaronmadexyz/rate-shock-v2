@@ -405,7 +405,13 @@ export default function NeighbourhoodPanel({
     setTimeout(() => {
       setIsDetailExiting(false)
       setDetailReport(null)
-      openedFromRef.current?.focus()
+      // Skip focus restoration on touch devices. On iOS Safari, .focus() on a
+      // non-input element triggers a viewport scroll that pushes the fixed panel
+      // off-screen. Keyboard users (desktop) still get correct focus management.
+      const isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+      if (!isTouchDevice) {
+        openedFromRef.current?.focus()
+      }
     }, DETAIL_EXIT_MS)
   }
 
