@@ -102,7 +102,7 @@
 /* ─── Header ─────────────────────────────────────────────────────────────────── */
 
 .header {
-  padding: 14px 20px 12px;
+  padding: 12px 20px; /* sp-3 sp-5 — on 4px grid ✓ (was 14px top, off-grid) */
   border-bottom: 1px solid var(--n-100);
   display: flex;
   align-items: center;
@@ -219,7 +219,7 @@
 
 .typeAvg {
   font-family: var(--mono);
-  font-size: 22px;
+  font-size: 20px; /* was 22px — not on design system type scale; 20px = sp-5 ✓ */
   font-weight: 700;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -339,6 +339,7 @@
   color: var(--n-400);
   letter-spacing: 0.03em;
   white-space: nowrap;
+  line-height: 1.5; /* WCAG 1.4.12 ✓ */
 }
 
 /* Chevron — directional indicator (decorative; n-300 exempt ✓) */
@@ -393,7 +394,7 @@
 .detailHeader {
   display: flex;
   align-items: center;
-  padding: 14px 20px 12px;
+  padding: 12px 20px; /* sp-3 sp-5 ✓ — padding-top overridden below for iOS safe area */
   /* iOS safe area — pushes back button below the notch / Dynamic Island
      when the panel top is near the screen edge (e.g. full-height detail).
      max() ensures minimum 14px padding when env() returns 0. */

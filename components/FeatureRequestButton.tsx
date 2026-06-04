@@ -247,9 +247,9 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                     </p>
                     <p style={{
                       fontFamily: "'Inter', system-ui, sans-serif",
-                      fontSize:   12,
+                      fontSize:   13, /* Caption spec ✓ — was 12px, not on type scale */
                       color:      'var(--n-400)',
-                      marginTop:  2,
+                      marginTop:  4, /* sp-1 ✓ — was 2px, off-grid */
                     }}>
                       These are the top asks so far.
                     </p>
@@ -279,7 +279,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
 
                 {/* Top requests — idle state only */}
                 {uiState !== 'loading' && (
-                  <div style={{ margin: '12px 0 14px' }}>
+                  <div style={{ margin: '12px 0 16px' }}> {/* sp-3 sp-4 ✓ — was 14px, off-grid */}
                     <div style={{
                       fontFamily: "'IBM Plex Mono', monospace",
                       fontSize: 11, fontWeight: 500,
@@ -293,7 +293,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                         key={req}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 8,
-                          padding: '6px 0',
+                          padding: '8px 0', /* sp-2 ✓ — was 6px, off-grid */
                           borderBottom: i < TOP_REQUESTS.length - 1 ? '1px solid var(--n-100)' : 'none',
                         }}
                       >
@@ -304,7 +304,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                         }}>{req}</span>
                       </div>
                     ))}
-                    <div style={{ height: 1, background: 'var(--n-100)', margin: '14px 0' }} />
+                    <div style={{ height: 1, background: 'var(--n-100)', margin: '12px 0' }} /> {/* sp-3 ✓ — was 14px, off-grid */}
                   </div>
                 )}
 
@@ -333,7 +333,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                       width:        '100%',
                       minHeight:    88,
                       padding:      '10px 12px',
-                      border:       '1.5px solid var(--n-100)',
+                      border:       '1px solid var(--n-150)', /* 1px standard ✓ — was 1.5px non-standard; n-150 matches panel border language */
                       borderRadius: 'var(--r-md)',
                       background:   'var(--n-0)',
                       color:        'var(--n-900)',
