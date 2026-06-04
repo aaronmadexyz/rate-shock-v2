@@ -39,11 +39,13 @@
      the detail layer to 0px, hiding the back button */
 }
 
-/* When detail layer is animating in, allow translateX(100%) start to
-   be visible outside the panel bounds before sliding into view.
-   .detailLayer has its own overflow:hidden to clip its content. */
+/* Panel state when detail layer is open.
+   overflow:hidden is intentional — position:absolute children use percentage
+   transforms (translateX(100%) = own width) which animate entirely within
+   the panel's coordinate space. overflow:visible breaks position:absolute
+   containment on iOS Safari. */
 .panelDetailOpen {
-  overflow: visible;
+  overflow: hidden;
 }
 
 /* Aggregate: more height for the full report list */
@@ -388,9 +390,13 @@
   display: flex;
   align-items: center;
   padding: 14px 20px 12px;
+  /* iOS safe area — pushes back button below the notch / Dynamic Island
+     when the panel top is near the screen edge (e.g. full-height detail).
+     max() ensures minimum 14px padding when env() returns 0. */
+  padding-top: max(14px, calc(14px + env(safe-area-inset-top)));
   border-bottom: 1px solid var(--n-100);
   flex-shrink: 0;
-  background: var(--n-0); /* explicit — ensures opaque on all browsers */
+  background: var(--n-0);
 }
 
 .backBtn {

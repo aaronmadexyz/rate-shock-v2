@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type React from 'react'
-import { motion, useDragControls } from 'framer-motion'
+import { motion } from 'framer-motion'
 import type { NeighbourhoodStats, RecentReport } from '@/lib/types'
 import { useReducedMotion } from '@/lib/motionSafety'
 import styles from '@/styles/NeighbourhoodPanel.module.css'
@@ -351,7 +351,6 @@ export default function NeighbourhoodPanel({
   isDesktop = false,
 }: NeighbourhoodPanelProps) {
   const { prefersReduced } = useReducedMotion()
-  const dragControls = useDragControls()
   const closeBtnRef  = useRef<HTMLButtonElement>(null)
   const backBtnRef   = useRef<HTMLButtonElement>(null)
   const openerRef    = useRef<HTMLElement | null>(null)
@@ -375,6 +374,18 @@ export default function NeighbourhoodPanel({
       setShowSwipeHint(true)
       sessionStorage.setItem('rshock_swipe_hint_seen', '1')
     }
+  }, [])
+
+  // iOS Safari: window.innerHeight is the VISIBLE viewport (excludes URL bar).
+  // 100vh on iOS includes the URL bar area → content can be hidden behind it.
+  // Computing the concrete pixel height once on mount and using it when the
+  // detail layer is open ensures the panel never clips behind the URL bar.
+  const [panelDetailHeight, setPanelDetailHeight] = useState<string>('85vh')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const h = Math.round(window.innerHeight * 0.85)
+    setPanelDetailHeight(`${h}px`)
   }, [])
 
   function openDetail(report: RecentReport, trigger: HTMLElement) {
@@ -502,7 +513,6 @@ export default function NeighbourhoodPanel({
         ].filter(Boolean).join(' ')}
         data-mode={stats && stats.totalCount >= 3 ? 'aggregate' : 'sparse'}
         data-snap={isDesktop ? undefined : snapPoint}
-        style={{ transformOrigin: isDesktop ? 'right center' : 'bottom center' }}
         initial={
           prefersReduced
             ? { opacity: 0 }
@@ -545,27 +555,16 @@ export default function NeighbourhoodPanel({
         aria-modal={isDesktop ? undefined : 'true'}
         aria-labelledby="np-title"
         aria-live="polite"
-        // ── Drag to dismiss (mobile only, handle-initiated) ──
-        // dragListener={false} means the panel surface does NOT capture pointer
-        // events for drag detection — only dragControls.start() from the handle
-        // initiates a drag. This lets all child onClick handlers fire normally.
-        drag={isDesktop ? false : 'y'}
-        dragControls={dragControls}
-        dragListener={false}
-        dragConstraints={{ top: 0 }}
-        dragElastic={{ top: 0, bottom: 0.4 }}
-        dragSnapToOrigin
-        onDragEnd={(_, info) => {
-          if (info.velocity.y > 300 || info.offset.y > 80) onClose()
+        style={{
+          // Concrete pixel height when detail is open — gives position:absolute
+          // detailLayer a real dimension to fill on iOS Safari (100vh includes
+          // the URL bar, window.innerHeight gives the visible viewport)
+          ...(detailReport && !isDesktop ? { height: panelDetailHeight } : {}),
+          transformOrigin: isDesktop ? 'right center' : 'bottom center',
         }}
       >
         {/* Drag handle + one-time swipe hint */}
-        <div
-          className={styles.dragHandleWrap}
-          aria-hidden="true"
-          onPointerDown={e => { e.stopPropagation(); if (!isDesktop) dragControls.start(e) }}
-          style={{ touchAction: 'none' }}
-        >
+        <div className={styles.dragHandleWrap} aria-hidden="true">
           <div className={styles.dragHandle} />
           {showSwipeHint && (
             <p className={styles.swipeHint} aria-hidden="true">
