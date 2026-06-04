@@ -400,6 +400,8 @@ export default function NeighbourhoodPanel({
     setTimeout(() => {
       setIsDetailExiting(false)
       setDetailReport(null)
+      // Return panel to peek height — without this it stays at 'full' after Back
+      setSnapPoint('peek')
       // Reset body scroll to top so the panel header is visible after returning
       // from the detail view — prevents mid-scroll position showing wrong content
       if (panelBodyRef.current) panelBodyRef.current.scrollTop = 0
