@@ -236,11 +236,12 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <p style={{
-                      fontFamily: "'Inter', system-ui, sans-serif",
-                      fontSize:   14,
-                      fontWeight: 500,
-                      color:      'var(--n-900)',
-                      lineHeight: 1.3,
+                      fontFamily:    "'Inter', system-ui, sans-serif",
+                      fontSize:      15,   /* Body spec: 15px 500 — anchors modal title ✓ */
+                      fontWeight:    500,
+                      letterSpacing: '-0.01em',
+                      color:         'var(--n-900)',
+                      lineHeight:    1.3,
                     }}>
                       What should we build next?
                     </p>
@@ -299,7 +300,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                         <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--n-200)', flexShrink: 0 }} />
                         <span style={{
                           fontFamily: "'Inter', system-ui, sans-serif",
-                          fontSize: 12, color: 'var(--n-600)', lineHeight: 1.4,
+                          fontSize: 13, color: 'var(--n-600)', lineHeight: 1.4, /* Caption spec ✓ */
                         }}>{req}</span>
                       </div>
                     ))}
@@ -327,8 +328,8 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                     }}
                     style={{
                       fontFamily:   "'Inter', system-ui, sans-serif",
-                      fontSize:     14,
-                      lineHeight:   1.6,
+                      fontSize:     13,   /* Caption spec — matches surrounding copy ✓ */
+                      lineHeight:   1.65, /* WCAG 1.4.12 ✓ */
                       width:        '100%',
                       minHeight:    88,
                       padding:      '10px 12px',
@@ -367,7 +368,8 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                     fontFamily:   "'Inter', system-ui, sans-serif",
                     fontSize:     14,
                     fontWeight:   500,
-                    padding:      '10px 0',
+                    padding:      '12px 0', /* sp-3 on 4px grid ✓ */
+                    minHeight:    44,        /* WCAG 2.5.5 ✓ */
                     borderRadius: 9999,
                     border:       'none',
                     cursor:       isEmpty || isLoading ? 'not-allowed' : 'pointer',

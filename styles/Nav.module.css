@@ -368,12 +368,12 @@
 ══════════════════════════════════════════ */
 
 .iconBtn {
-  position: relative; /* required for ::before tap-target expander */
-  width: 32px;
-  height: 32px;
+  width: 44px;             /* WCAG 2.5.5 — 44×44px minimum ✓ (was 32px + ::before hack) */
+  height: 44px;
   border-radius: 50%;
-  border: 1px solid var(--n-100);
-  background: #FFFFFF;
+  border: 1px solid var(--n-200); /* n-200 — design system secondary button border ✓ */
+  background: var(--n-0);
+  color: var(--n-400);    /* #767670 — 4.57:1 on n-0 ✓ AA (non-text: 3:1 required) */
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -382,17 +382,18 @@
   transition: background .15s, border-color .15s;
 }
 
-/* Tap target expander: 32px + 12px = 44px ✓ minimum touch target */
-.iconBtn::before {
-  content: '';
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
+.iconBtn:hover {
+  background: var(--n-25);
+  border-color: var(--n-300);
 }
 
-.iconBtn:hover {
-  background: #F5F4F1;
-  border-color: #D4D3CE;
+.iconBtn:active {
+  transform: scale(0.97); /* Rule 1 ✓ */
+}
+
+.iconBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-500); /* double ring ✓ WCAG 2.4.11 */
 }
 
 /* ══════════════════════════════════════════
