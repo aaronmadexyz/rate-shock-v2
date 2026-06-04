@@ -478,7 +478,10 @@ export default function NeighbourhoodPanel({
             Rule 2: starts scale(0.97) not 0 ✓
       */}
       <motion.div
-        className={styles.panel}
+        className={[
+          styles.panel,
+          detailReport ? styles.panelDetailOpen : '',
+        ].filter(Boolean).join(' ')}
         data-mode={stats && stats.totalCount >= 3 ? 'aggregate' : 'sparse'}
         data-snap={isDesktop ? undefined : snapPoint}
         style={{ transformOrigin: isDesktop ? 'right center' : 'bottom center' }}
