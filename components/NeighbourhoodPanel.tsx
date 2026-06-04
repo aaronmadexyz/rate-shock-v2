@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type React from 'react'
-import { motion } from 'framer-motion'
+import { motion, useDragControls } from 'framer-motion'
 import type { NeighbourhoodStats, RecentReport } from '@/lib/types'
 import { useReducedMotion } from '@/lib/motionSafety'
 import styles from '@/styles/NeighbourhoodPanel.module.css'
@@ -140,7 +140,7 @@ function SparseBody({ stats, fsa, onReportClick }: SparseBodyProps) {
       {reports.length > 0 && (
         <ul className={styles.sparsePreviewList} role="list">
           {reports.map(report => (
-            <li
+            <motion.li
               key={report.id}
               className={`${styles.sparsePreviewRow} ${styles.reportRow}`}
               role="listitem"
@@ -148,6 +148,8 @@ function SparseBody({ stats, fsa, onReportClick }: SparseBodyProps) {
               aria-label={`View details for this ${report.insurance_type} renewal — ${fmtRate(report.rate_change_pct)}`}
               onClick={e => onReportClick(report, e.currentTarget as HTMLElement)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onReportClick(report, e.currentTarget as HTMLElement) } }}
+              dragListener={false}
+              onTap={e => onReportClick(report, e.currentTarget as HTMLElement)}
             >
               <SentimentFace sentiment={report.sentiment} size={24} />
               <span
@@ -166,7 +168,7 @@ function SparseBody({ stats, fsa, onReportClick }: SparseBodyProps) {
                   <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-            </li>
+            </motion.li>
           ))}
         </ul>
       )}
@@ -271,7 +273,7 @@ function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
       <p className={`${styles.sectionLabel} ${styles.sectionLabelSpaced}`}>RECENT</p>
       <ul className={styles.recentList} role="list">
         {stats.recentReports.map((r: RecentReport, i: number) => (
-          <li
+          <motion.li
             key={r.id}
             className={[
               styles.recentRow,
@@ -283,6 +285,8 @@ function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
             aria-label={`View details for this ${r.insurance_type} renewal — ${fmtRate(r.rate_change_pct)}`}
             onClick={e => onReportClick(r, e.currentTarget as HTMLElement)}
             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onReportClick(r, e.currentTarget as HTMLElement) } }}
+            dragListener={false}
+            onTap={e => onReportClick(r, e.currentTarget as HTMLElement)}
           >
             <SentimentFace sentiment={r.sentiment} size={24} />
             <span
@@ -301,7 +305,7 @@ function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
                 <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-          </li>
+          </motion.li>
         ))}
       </ul>
     </>
@@ -334,6 +338,7 @@ export default function NeighbourhoodPanel({
   isDesktop = false,
 }: NeighbourhoodPanelProps) {
   const { prefersReduced } = useReducedMotion()
+  const dragControls = useDragControls()
   const closeBtnRef  = useRef<HTMLButtonElement>(null)
   const backBtnRef   = useRef<HTMLButtonElement>(null)
   const openerRef    = useRef<HTMLElement | null>(null)
@@ -527,9 +532,27 @@ export default function NeighbourhoodPanel({
         aria-modal={isDesktop ? undefined : 'true'}
         aria-labelledby="np-title"
         aria-live="polite"
+        // ── Drag to dismiss (mobile only, handle-initiated) ──
+        // dragListener={false} means the panel surface does NOT capture pointer
+        // events for drag detection — only dragControls.start() from the handle
+        // initiates a drag. This lets all child onClick handlers fire normally.
+        drag={isDesktop ? false : 'y'}
+        dragControls={dragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0 }}
+        dragElastic={{ top: 0, bottom: 0.4 }}
+        dragSnapToOrigin
+        onDragEnd={(_, info) => {
+          if (info.velocity.y > 300 || info.offset.y > 80) onClose()
+        }}
       >
         {/* Drag handle + one-time swipe hint */}
-        <div className={styles.dragHandleWrap} aria-hidden="true">
+        <div
+          className={styles.dragHandleWrap}
+          aria-hidden="true"
+          onPointerDown={e => { if (!isDesktop) dragControls.start(e) }}
+          style={{ touchAction: 'none' }}
+        >
           <div className={styles.dragHandle} />
           {showSwipeHint && (
             <p className={styles.swipeHint} aria-hidden="true">
