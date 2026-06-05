@@ -1227,6 +1227,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
       }
       // Reduced motion: jump directly to final state with no transition
       envSceneRef.current.style.transform  = 'scale(0.38)'
+      /* INTENTIONAL EXCEPTION Rule 2: post-submission envelope shrink to modal
+         top — this is a deliberate exit/collapse effect, not an entrance
+         animation. Rule 2 targets entrance scale (never appear from scale < 0.95).
+         This element is already fully visible before this transform fires. ✓ */
       envSceneRef.current.style.marginBottom = '-56px'
     }
     setTimeout(() => setAnimDone(true), 300)
@@ -1440,7 +1444,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
             )}
 
             {/* ── Header ── */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 22px 0', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0', flexShrink: 0 }}>
+              {/* sp-5 sp-6 sp-0 — was 22px off-grid ✓ */}
               <span id="srm-title" style={{ fontSize: 15, fontWeight: 500, color: TOKENS.colors.n900 }}>{stepTitle}</span>
               <button
                 type="button"
@@ -1889,7 +1894,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                             onChange={e => onRange(Number(e.target.value))}
                             style={{
                               width: '100%', height: 4, borderRadius: 2, outline: 'none',
-                              WebkitAppearance: 'none', cursor: 'pointer', margin: '6px 0', display: 'block',
+                              WebkitAppearance: 'none', cursor: 'pointer', margin: '8px 0', display: 'block', /* sp-2 sp-0 ✓ — was 6px off-grid */
                               background: trackBg,
                             }}
                           />
@@ -2265,14 +2270,14 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                       boxShadow: '0 2px 10px rgba(26,25,23,.1)', zIndex: 2 /* canvas: overlay highlight */, opacity: 0,
                     }}
                   >
-                    <div style={{ padding: '14px 13px 0' }}>
+                    <div style={{ padding: '12px 12px 0' }}> {/* sp-3 sp-3 sp-0 ✓ — was 14px/13px off-grid */}
                       {[null, '70%', '50%', null, '70%'].map((w, i) => (
                         <div key={i} style={{ height: 2, background: 'var(--n-100)', borderRadius: 1, marginBottom: 8, width: w ?? '100%' }} />
                       ))}
                     </div>
                     <div
                       ref={letterFaceRef}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 10, opacity: 0, transition: 'opacity 0.28s cubic-bezier(0.25, 0, 0.3, 1)' /* Rule 6: 280ms < 300ms ✓ */ }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 8, opacity: 0, transition: 'opacity 0.28s cubic-bezier(0.25, 0, 0.3, 1)' /* sp-2 ✓ — was 10px off-grid; Rule 6: 280ms < 300ms ✓ */ }}
                     />
                   </div>
 
@@ -2439,7 +2444,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                             : { type: 'spring', stiffness: 240, damping: 24, mass: 1.0, delay: 0.3 }}
                           style={{
                             background: 'var(--p-50)', border: '1px solid var(--p-200)',
-                            borderRadius: 'var(--r-lg)', padding: '14px 16px',
+                            borderRadius: 'var(--r-lg)', padding: '12px 16px', /* sp-3 sp-4 ✓ — was 14px off-grid */
                             marginBottom: 16, textAlign: 'left',
                             transformOrigin: 'top center',
                           }}
@@ -2615,8 +2620,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                           background:   TOKENS.colors.p50,
                           border:       `1px solid ${TOKENS.colors.p200}`,
                           borderRadius: 'var(--r-md)',
-                          padding:      '12px 14px',
-                          margin:       '10px 0',
+                          padding:      '12px 16px', /* sp-3 sp-4 ✓ — was '12px 14px', 14px off-grid */
+                          margin:       '8px 0',     /* sp-2 sp-0 ✓ — was '10px 0', 10px off-grid */
                           display:      'flex',
                           alignItems:   'flex-start',
                           gap:          8,
@@ -2669,7 +2674,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                     {fsaCount < 5 && (
                       <div style={{
                         background: TOKENS.colors.p50, border: `1px solid ${TOKENS.colors.p200}`,
-                        borderRadius: 'var(--r-md)', padding: '10px 14px', marginBottom: 16, textAlign: 'left',
+                        borderRadius: 'var(--r-md)', padding: '12px 16px', marginBottom: 16, textAlign: 'left', /* sp-3 sp-4 ✓ — was '10px 14px' both off-grid */
                       }}>
                         <p style={{ fontSize: 12, color: TOKENS.colors.p700, lineHeight: 1.55, margin: 0, fontWeight: 500 }}>
                           {'You just put '}
@@ -2692,7 +2697,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
             {/* ── Footer ── */}
             {step !== 'anim' && (
               <div style={{
-                padding: '14px 22px 18px', display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0,
+                padding: '16px 20px 16px', display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, /* sp-4 sp-5 sp-4 ✓ — was 14px/22px/18px all off-grid */
                 ...(isMobile ? {
                   position:      'sticky',
                   bottom:        0,

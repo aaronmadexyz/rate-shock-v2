@@ -47,7 +47,7 @@
 /* Separator dot — quiet, recedes */
 .stripDot {
   color: var(--n-600);      /* var(--n-600) — decorative separator ✓ */
-  margin: 0 6px;
+  margin: 0 8px; /* sp-0 sp-2 ✓ — was 6px off-grid */
   font-size: 11px;
   font-weight: 400;
 }
@@ -561,7 +561,7 @@
   border: none;
   border-top: 1px solid var(--n-100);
   cursor: pointer;
-  padding: 10px 12px;
+  padding: 8px 12px; /* sp-2 sp-3 ✓ — was 10px off-grid */
   display: flex;
   align-items: center;
   gap: 8px;

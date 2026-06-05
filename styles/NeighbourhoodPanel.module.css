@@ -87,7 +87,7 @@
 
 .swipeHint {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px; /* DS minimum for functional text ✓ — was 10px below minimum */
   font-weight: 400;
   color: var(--n-300);
   text-align: center;
@@ -367,7 +367,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  z-index: 1; /* local stacking — above summary content */
+  z-index: 1; /* canvas: layer 1 — detail layer above summary within panel ✓ */
   animation: detailSlideIn 0.24s cubic-bezier(.16,1,.3,1) both;
   /* Rule 4: ease-out cubic ✓  Rule 6: 240ms < 300ms ✓ */
   will-change: transform;
