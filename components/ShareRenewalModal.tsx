@@ -123,8 +123,8 @@ function sliderLabel(val: number, mode: 'pct' | 'dol', sign: 'inc' | 'dec'): { t
   if (val <= 9)  return { text: 'Around the Ontario average', color: 'var(--n-400)' }
   if (val <= 16) return { text: 'Above the Ontario average', color: 'var(--cau-600)' }
   if (val <= 24) return { text: 'Significantly above average', color: 'var(--cau-600)' }
-  if (val <= 34) return { text: 'Well above average · Worth verifying this', color: 'var(--neg-500)' }
-  return { text: 'Exceptionally high — this should definitely be verified', color: 'var(--neg-500)' }
+  if (val <= 34) return { text: 'Well above average', color: 'var(--neg-500)' }
+  return { text: 'Exceptionally high increase', color: 'var(--neg-500)' }
 }
 
 // Maps a stored (signed) rate_change_pct to a display colour tier.
@@ -322,7 +322,6 @@ interface StepperState {
 interface ShareRenewalModalProps {
   isOpen: boolean
   onClose: () => void
-  onVerify?: () => void
   onSubmitted?: (sub: Submission) => void
   onZoomToPost?: (fsa: string) => void
   onEnableLikeMe?: () => void
@@ -416,7 +415,7 @@ function Stepper({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitted, onZoomToPost, onEnableLikeMe, initialFsa }: ShareRenewalModalProps) {
+export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoomToPost, onEnableLikeMe, initialFsa }: ShareRenewalModalProps) {
   // ── form state ──────────────────────────────────────────────────────────────
   const [step, setStep]           = useState<Step>(1)
   const [fsa, setFsa]             = useState('')
@@ -460,7 +459,6 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
   // ── post-anim state ─────────────────────────────────────────────────────────
   const [animDone, setAnimDone]         = useState(false)
-  const [showVerify, setShowVerify]     = useState(false)
   const [showLikeMeCard, setShowLikeMeCard] = useState(false)
   const [compLoading, setCompLoading] = useState(false)
   const [areaMed,    setAreaMed]    = useState<number | null>(null)
@@ -683,7 +681,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     setSubmissionId(null); setDollarAmount(null)
     setPatchDone(false); setPatchLoading(false); setPatchError('')
     setSent(0); setSentErr(false); setNote(''); setConsent(false)
-    setSubmitting(false); setAnimDone(false); setShowVerify(false); setShowLikeMeCard(false)
+    setSubmitting(false); setAnimDone(false); setShowLikeMeCard(false)
     setShowRestoreNotice(false)
     safeRemoveItem(DRAFT_KEY)
     safeRemoveItem(DRAFT_SHOWN_KEY)
@@ -1028,7 +1026,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     })()
 
     // Update nav state and surface the submission to the map immediately
-    setNavState('unverified')
+    setNavState('verified')
+    /* Submission is the final step — nav goes directly to verified state. */
     safeSetItem('ratemap_user_profile', JSON.stringify({
       insurance_type:  insType,
       provider,
@@ -1276,13 +1275,6 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
     }, 1500)
   }, [animDone, compLoading, rval, mode, prevPrem, areaMed, ontMed])
 
-  // ── Delay verify prompt 2800ms after comparison card is ready ──────────────
-  useEffect(() => {
-    if (!animDone || compLoading) return
-    const t = setTimeout(() => setShowVerify(true), 2800)
-    return () => clearTimeout(t)
-  }, [animDone, compLoading])
-
   // ── Profiles Like Me discovery card — show once per session ────────────────
   useEffect(() => {
     if (!animDone || compLoading) return
@@ -1317,12 +1309,6 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
           : `${fsaCount} renewals on the map for ${areaLabel || fsa}.`
       ) : fsa.length >= 1 ? areaLabel : ''
   const fsaHintColor = fsaHintIsLoading ? 'var(--n-400)' : 'var(--p-500)'
-
-  // ── Comparison card ──────────────────────────────────────────────────────────
-  const daysRemaining = 21
-  const urgencyText = daysRemaining <= 7
-    ? `${daysRemaining} days left to contribute for your area.`
-    : `${daysRemaining} days remaining in the current data window. The more neighbours contribute, the clearer the picture becomes.`
 
   // Whether we have a percentage to compare (pct mode, or dollar mode with prevPrem calculated)
   const hasPct = mode === 'pct' || (mode === 'dol' && prevPrem !== null && prevPrem > 0)
@@ -2313,14 +2299,6 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       )
                     })()}
 
-                    {/* Urgency note */}
-                    <div style={{
-                      background: TOKENS.colors.cau50, border: `1px solid ${TOKENS.colors.cau200}`, borderRadius: 'var(--r-md)',
-                      padding: '10px 14px', marginBottom: 16, textAlign: 'left',
-                    }}>
-                      <p style={{ fontSize: 12, color: TOKENS.colors.cau600, lineHeight: 1.55 }}>{urgencyText}</p>
-                    </div>
-
                     {/* Comparison card */}
                     <div style={{ border: '1px solid var(--n-100)', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 16 }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: TOKENS.colors.n0 }}>
@@ -2686,41 +2664,6 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                       </div>
                     )}
 
-                    {/* Verify prompt — appears 2800ms after comparison card */}
-                    {showVerify && <div style={{ marginBottom: 4 }}>
-                      <p style={{ fontSize: 13, fontWeight: 500, color: TOKENS.colors.n900, marginBottom: 8 }}>
-                        Add your letter. Make it official.
-                      </p>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <button
-                          type="button"
-                          onClick={onVerify}
-                          style={{
-                            fontFamily: TOKENS.font, fontSize: 13, fontWeight: 500,
-                            padding: '8px 20px', borderRadius: TOKENS.radius.rFull,
-                            border: 'none', background: TOKENS.colors.n900, color: TOKENS.colors.n0,
-                            cursor: 'pointer', transition: 'opacity .15s',
-                          }}
-                          onMouseEnter={e => (e.currentTarget.style.opacity = '.82')}
-                          onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                        >Verify my renewal</button>
-                        <button
-                          type="button"
-                          onClick={handleClose}
-                          style={{
-                            fontFamily: TOKENS.font, fontSize: 13, fontWeight: 500,
-                            padding: '6px 16px', borderRadius: TOKENS.radius.rFull,
-                            border: 'none', background: 'none', color: 'var(--n-400)',
-                            cursor: 'pointer', transition: 'background .15s, color .15s',
-                            display: 'block', width: '100%', textAlign: 'center',
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.background = TOKENS.colors.n50; e.currentTarget.style.color = TOKENS.colors.n600 }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--n-400)' }}
-                          onMouseDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)' }}
-                          onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = '' }}
-                        >Skip for now</button>
-                      </div>
-                    </div>}
                   </div>
                 )}
               </div>

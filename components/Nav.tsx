@@ -22,7 +22,6 @@ type SearchStatus = 'idle' | 'loading' | 'valid' | 'pioneer' | 'invalid'
 
 const LS_KEY     = 'ratemap_submission_state'
 const LS_PIONEER = 'ratemap_is_pioneer'
-const LS_POSTED  = 'ratemap_posted_at'
 const NAV_EVENT  = 'ratemap:nav-state'
 
 const ONTARIO_PREFIXES = new Set(['K', 'L', 'M', 'N', 'P'])
@@ -30,7 +29,7 @@ const ONTARIO_PREFIXES = new Set(['K', 'L', 'M', 'N', 'P'])
 // Preload the modal chunk on hover/focus so it's ready before the user taps
 const preloadModal = () => { void import('@/components/ShareRenewalModal') }
 
-const VALID_STATES: SubmissionState[] = ['new', 'unverified', 'verified']
+const VALID_STATES: SubmissionState[] = ['new', 'verified']
 
 function parseSubmissionState(raw: string | null): SubmissionState {
   if (raw !== null && VALID_STATES.includes(raw as SubmissionState)) {
@@ -45,7 +44,6 @@ export function setNavState(state: SubmissionState | string): void {
   if (typeof window === 'undefined') return
   const s = state as SubmissionState
   safeSetItem(LS_KEY, s)
-  if (s === 'unverified') safeSetItem(LS_POSTED, new Date().toISOString())
   window.dispatchEvent(new CustomEvent(NAV_EVENT, { detail: s }))
 }
 
@@ -118,7 +116,6 @@ export default function Nav({
   // ── Submission state ───────────────────────────────────────────────────────
   const [state,         setState]         = useState<SubmissionState>('new')
   const [isPioneer,     setIsPioneer]     = useState(false)
-  const [daysLeft,      setDaysLeft]      = useState(30)
   const [drawerOpen,    setDrawerOpen]    = useState(false)
   const [shareToast,    setShareToast]    = useState(false)
   const [mounted,       setMounted]       = useState(false)
@@ -178,18 +175,12 @@ export default function Nav({
       setIsPioneer(true)
     }
 
-    const postedAt = safeGetItem(LS_POSTED)
-    if (postedAt) {
-      const elapsed = Math.floor((Date.now() - new Date(postedAt).getTime()) / 86_400_000)
-      setDaysLeft(Math.max(0, 30 - elapsed))
-    }
-
     // Neighbourhood activity badge
     const storedFsa   = safeGetItem('ratemap_last_fsa')
     const lastVisit   = safeGetItem('rateshock_last_visit')
     safeSetItem('rateshock_last_visit', Date.now().toString())
     const currentSt   = parseSubmissionState(safeGetItem(LS_KEY))
-    if (storedFsa && lastVisit && (currentSt === 'unverified' || currentSt === 'verified')) {
+    if (storedFsa && lastVisit && currentSt === 'verified') {
       supabase
         .from('submissions')
         .select('*', { count: 'exact', head: true })
@@ -332,7 +323,6 @@ export default function Nav({
   }, [onCtaClick])
 
   // ── Derived ────────────────────────────────────────────────────────────────
-  const isUrgent        = state === 'unverified' && daysLeft <= 7 && daysLeft > 0
   const neighbourhood   = searchValue.length === 3 ? getAreaLabel(searchValue) : ''
   const showSearchStatus = searchStatus === 'pioneer' || searchStatus === 'invalid'
   const badgeLabel      = activityCount > 9 ? '9+' : String(activityCount)
@@ -346,19 +336,6 @@ export default function Nav({
       return (
         <span className={styles.ctaInner}>
           Share my renewal →
-        </span>
-      )
-    }
-    if (state === 'unverified') {
-      return (
-        <span className={styles.ctaInner}>
-          <span className={styles.dot} />
-          {drawer ? 'Verify my post' : 'Verify your post'}
-          {daysLeft > 0 && (
-            <span className={isUrgent ? `${styles.urgencyBadge} ${styles.urgent}` : styles.urgencyBadge}>
-              {daysLeft}d
-            </span>
-          )}
         </span>
       )
     }
@@ -523,28 +500,6 @@ export default function Nav({
           {/* Right cluster */}
           <div className={styles.rightCluster}>
 
-            {/* Pioneer nudge — desktop only (CSS hides on mobile) */}
-            {mounted && isPioneer && state !== 'new' && (
-              <div style={{ position: 'relative' }}>
-                <motion.button
-                  type="button"
-                  onClick={() => void handleShare()}
-                  className={styles.nudge}
-                  whileTap={tapTransition}
-                >
-                  <ShareCheckIcon />
-                  You&apos;re on the map
-                  <span className={styles.nudgeSep} aria-hidden="true" />
-                  Share with neighbours
-                </motion.button>
-                {shareToast && (
-                  <div role="status" aria-live="polite" className={styles.shareToast}>
-                    Link copied
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Lightbulb — desktop only (CSS hides on mobile) */}
             <motion.button
               type="button"
@@ -644,35 +599,9 @@ export default function Nav({
 
               {/* Status note */}
               {state !== 'new' && (
-                <p
-                  className={styles.drawerStatus}
-                  style={{
-                    color:      isUrgent ? 'var(--cau-600)' : undefined,
-                    fontWeight: isUrgent ? 500      : undefined,
-                  }}
-                >
-                  {state === 'unverified'
-                    ? (isUrgent
-                        ? `Your renewal window closes in ${daysLeft} day${daysLeft === 1 ? '' : 's'}. Verify before it lapses.`
-                        : 'Your renewal is on the map — verify it to make it count more.')
-                    : "You're verified and on the map."}
+                <p className={styles.drawerStatus}>
+                  You&apos;re verified and on the map.
                 </p>
-              )}
-
-              {/* Pioneer nudge — mobile */}
-              {isPioneer && state !== 'new' && (
-                <>
-                  <motion.button
-                    type="button"
-                    onClick={() => { void handleShare(); setDrawerOpen(false) }}
-                    className={styles.drawerNudge}
-                    whileTap={tapTransition}
-                  >
-                    <ShareCheckIcon />
-                    Share with neighbours
-                  </motion.button>
-                  <div style={{ height: 1, background: 'var(--n-100)', margin: '2px 0' }} />
-                </>
               )}
 
               {/* Drawer CTA */}

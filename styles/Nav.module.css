@@ -312,43 +312,6 @@
   flex-shrink: 0;
 }
 
-/* ══════════════════════════════════════════
-   PIONEER NUDGE — desktop
-══════════════════════════════════════════ */
-
-.nudge {
-  font-family: var(--font); /* --font: 'Inter', system-ui ✓ */
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--n-600);
-  white-space: nowrap;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: var(--sp-1) var(--sp-3);
-  border-radius: var(--r-full);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  line-height: 1;
-  transition: color .15s, background .15s;
-  position: relative;
-}
-
-.nudge:hover {
-  color: var(--n-900);
-  background: var(--n-50);
-}
-
-.nudgeSep {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--n-300);
-  flex-shrink: 0;
-  display: inline-block;
-}
-
 .shareToast {
   position: absolute;
   top: calc(100% + var(--sp-2));
@@ -445,16 +408,6 @@
   background: var(--p-700);
 }
 
-.cta[data-state="unverified"] {
-  background: var(--n-0);
-  color: var(--n-800);
-  border: 1px solid var(--n-200);
-}
-.cta[data-state="unverified"]:hover {
-  background: var(--n-25);
-  border-color: var(--n-300);
-}
-
 .cta[data-state="verified"] {
   background: var(--pos-50);
   color: var(--pos-600);
@@ -468,41 +421,6 @@
   display: inline-flex;
   align-items: center;
   gap: 8px; /* sp-2 — raised from 7px (off 4px grid) */
-}
-
-/* Pulsing amber dot — unverified state */
-.dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--cau-400);
-  flex-shrink: 0;
-  animation: dotPulse 2.4s ease-in-out infinite;
-}
-
-@keyframes dotPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .55; transform: scale(.75); }
-}
-
-/* Urgency badge */
-.urgencyBadge {
-  font-family: var(--mono); /* --mono: 'IBM Plex Mono' ✓ */
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: .02em;
-  background: rgba(212, 147, 22, .14);
-  color: var(--cau-600);
-  padding: 4px 8px; /* sp-1 sp-2 ✓ */
-  border-radius: 999px;
-  white-space: nowrap;
-  line-height: 1.5; /* WCAG 1.4.12: ≥1.5× font-size required for all rendered text */
-  flex-shrink: 0;
-}
-
-.urgent {
-  background: rgba(212, 147, 22, .22);
-  color: var(--cau-600); /* cau-600 — 5.67:1 on cau-50 ✓ AA */
 }
 
 /* Activity badge */
@@ -622,11 +540,6 @@
   background: var(--p-700);
 }
 
-.drawerCta[data-state="unverified"] {
-  background: var(--n-50);
-  color: var(--n-800);
-  border: 1px solid var(--n-200);
-}
 .drawerCta[data-state="verified"] {
   background: var(--pos-50);
   color: var(--pos-600);
@@ -638,29 +551,6 @@
   text-align: center;
   padding: var(--sp-2) var(--sp-1) var(--sp-1);
   line-height: 1.5;
-}
-
-.drawerNudge {
-  font-family: var(--font); /* --font: 'Inter', system-ui ✓ */
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--n-600);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: var(--sp-3);
-  border-radius: var(--r-md);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  text-align: left;
-  letter-spacing: -0.01em;
-  transition: background .15s;
-}
-
-.drawerNudge:hover {
-  background: var(--n-50);
 }
 
 .drawerFr {
@@ -723,10 +613,6 @@
     height: auto;
     min-height: 44px; /* WCAG 2.5.5 ✓ — was 30px */
     font-size: 11px;
-  }
-
-  .nudge {
-    display: none;
   }
 
   .iconBtn {

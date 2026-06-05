@@ -172,10 +172,6 @@ export default function Page() {
     setCohortResult(r)
   }, [])
 
-  const handleVerify = useCallback(() => {
-    setModalOpen(false)
-  }, [])
-
   // Hero hint — shows once per session on first visit
   const [heroVisible, setHeroVisible] = useState(false)
   useEffect(() => {
@@ -245,7 +241,6 @@ export default function Page() {
           isOpen={modalOpen}
           onClose={handleModalClose}
           initialFsa={modalInitialFsa}
-          onVerify={handleVerify}
           onSubmitted={handleSubmitted}
           onZoomToPost={handleZoomToPost}
           onEnableLikeMe={() => setLikeMeMode(true)}

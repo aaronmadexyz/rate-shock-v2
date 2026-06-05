@@ -48,7 +48,7 @@ export interface UserProfile {
   home_claims:     number | null
 }
 
-export type NavState = 'new' | 'unverified' | 'verified'
+export type NavState = 'new' | 'verified'
 
 export interface RecentReport {
   id:                 string
