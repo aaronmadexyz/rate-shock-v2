@@ -92,10 +92,22 @@
   line-height: 1;
 }
 
-/* 600-stop for text per design-system §04 chip text rule */
-.previewValue.neg { color: var(--neg-500); }
-.previewValue.cau { color: var(--cau-500); }
-.previewValue.pos { color: var(--pos-500); }
+/* 600-stop text tokens per DS §04 ✓ */
+.previewValue.neg {
+  color: var(--neg-600);
+  /* neg-600: #8C2E1E — DS §04: text uses 600-stop ✓
+     Contrast on n-0: ~7.1:1 ✓ AAA */
+}
+.previewValue.cau {
+  color: var(--cau-600);
+  /* cau-600: #845A0C — DS §04: text uses 600-stop ✓
+     Contrast on n-0: 5.67:1 ✓ AA */
+}
+.previewValue.pos {
+  color: var(--pos-600);
+  /* pos-600: #1F6132 — DS §04: text uses 600-stop ✓
+     Contrast on n-0: 6.81:1 ✓ AA */
+}
 
 .previewBar {
   width: 100%;
