@@ -115,8 +115,8 @@ function sliderLabel(val: number, mode: 'pct' | 'dol', sign: 'inc' | 'dec'): { t
   if (mode === 'dol') {
     if (val < 150)  return { text: 'Below the typical increase', color: 'var(--n-400)' }
     if (val < 400)  return { text: 'Around the Ontario average', color: 'var(--n-400)' }
-    if (val < 800)  return { text: 'Above the Ontario average', color: 'var(--cau-500)' }
-    if (val < 1300) return { text: 'A significant increase', color: 'var(--cau-500)' }
+    if (val < 800)  return { text: 'Above the Ontario average', color: 'var(--cau-600)' }  /* cau-600: 5.67:1 ✓ AA (cau-500 was 3.80:1 — fails at 12px/500) */
+    if (val < 1300) return { text: 'A significant increase', color: 'var(--cau-600)' }  /* cau-600: 5.67:1 ✓ AA */
     return { text: 'An exceptional increase', color: 'var(--neg-500)' }
   }
   if (val <= 4)  return { text: 'Below average · Most Ontario renewals are higher', color: 'var(--n-400)' }
