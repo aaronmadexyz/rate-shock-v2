@@ -492,6 +492,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
   prefersReducedRef.current = prefersReduced
   const lastSubmitRef      = useRef<number>(0)
   const modalRef           = useRef<HTMLDivElement>(null)
+  const successBodyRef     = useRef<HTMLDivElement>(null)
   const triggerRef         = useRef<HTMLElement | null>(null)
   const counterRef         = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingFsaRef      = useRef<string>('')
@@ -1280,6 +1281,18 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
     if (!animDone || compLoading) return
     if (sessionStorage.getItem('rateshock_like_me_shown')) return
     setShowLikeMeCard(true)
+
+    // Auto-scroll comparison card into view after success animation completes.
+    // 400ms: lets the fadeUp animation (280ms) finish before scrolling.
+    setTimeout(() => {
+      if (!amsgRef.current || !successBodyRef.current) return
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      amsgRef.current.scrollIntoView({
+        behavior: reduced ? 'instant' : 'smooth',
+        block: 'nearest',
+        /* 'nearest' prevents over-scroll if card already visible */
+      })
+    }, 400)
   }, [animDone, compLoading])
 
   // ── Pioneer/early/established copy ──────────────────────────────────────────
@@ -1400,7 +1413,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
               zIndex:       600, // z-modal
               display:      'flex',
               flexDirection:'column',
-              maxHeight:    'calc(100vh - 48px)',
+              maxHeight:    'calc(100dvh - 48px)',
+              /* dvh = dynamic viewport height. Excludes iOS Safari URL bar.
+                 100vh on iOS includes the URL bar causing modal to overflow
+                 visible area. dvh uses actual visible height. ✓ */
               overflow:     'hidden',
             }}
             initial={isMobile
@@ -1484,8 +1500,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
 
             {/* ── Scrollable body ── */}
             {step !== 'anim' && (
-              <div style={{
-                padding: '16px 22px 0', overflowY: 'auto', flex: 1,
+              <div
+                ref={successBodyRef}
+                style={{
+                padding: '16px 20px 32px', overflowY: 'auto', flex: 1,
+                /* sp-4 sp-5 sp-8 — all on 4px grid ✓ (22px was off-grid) */
                 scrollbarWidth: 'thin', scrollbarColor: 'var(--n-150) transparent',
                 ...(isMobile ? {
                   maxHeight:                 'calc(92dvh - 140px)',
@@ -2222,7 +2241,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                 />
 
                 {/* Envelope scene */}
-                <div ref={envSceneRef} style={{ position: 'relative', width: 180, height: 118, margin: '70px auto 16px', overflow: 'visible', flexShrink: 0 }}>
+                <div ref={envSceneRef} style={{ position: 'relative', width: 180, height: 118, margin: '32px auto 16px', overflow: 'visible', flexShrink: 0 }}>
+                  {/* 32px = sp-8 top — was 70px, excessive dead space on mobile ✓ */}
                   {/* Z=1 Body */}
                   <svg width="180" height="118" viewBox="0 0 180 118" style={{ position: 'absolute', top: 0, left: 0, zIndex: 1 /* canvas: base envelope body */, display: 'block', overflow: 'visible' }} aria-hidden="true">
                     <rect x="0" y="0" width="180" height="118" rx="7" fill={TOKENS.colors.paperBody}/>
