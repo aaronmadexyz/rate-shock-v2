@@ -692,7 +692,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
     // reset envelope DOM
     if (flapPolyRef.current)   flapPolyRef.current.setAttribute('points', '0,0 180,0 90,68')
-    if (flapPolyRef.current)   flapPolyRef.current.setAttribute('fill', '#ECE9E3')
+    if (flapPolyRef.current)   flapPolyRef.current.setAttribute('fill', TOKENS.colors.paperFlapClosed)
     if (flapEdgeRef.current)   flapEdgeRef.current.setAttribute('points', '0,0 90,68 180,0')
     if (envFlapRef.current)  { envFlapRef.current.style.filter = 'none'; envFlapRef.current.style.zIndex = '4' }
     if (sealGroupRef.current)  sealGroupRef.current.style.opacity = '1'
@@ -1746,7 +1746,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                   }
                                 }}
                                 style={{
-                                  padding: '8px 12px', borderRadius: 9999, fontSize: 12, fontWeight: 500,
+                                  padding: '8px 12px', borderRadius: TOKENS.radius.rFull, fontSize: 12, fontWeight: 500,
                                   border: `1px solid ${provider === p ? TOKENS.colors.n900 : 'var(--n-100)'}`,
                                   background: provider === p ? TOKENS.colors.n900 : TOKENS.colors.n0,
                                   color: provider === p ? TOKENS.colors.n0 : 'var(--n-500)',
@@ -1779,7 +1779,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           fontFamily: TOKENS.mono,
                           fontSize: 11, fontWeight: 500,
                           letterSpacing: '.06em', textTransform: 'uppercase',
-                          color: 'var(--n-400)', marginRight: 2,
+                          color: 'var(--n-400)', marginRight: 0,
                         }}>This was a</span>
                         {(['inc', 'dec'] as const).map(s => {
                           const isOn = sign === s
@@ -1796,7 +1796,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                 fontFamily: TOKENS.mono,
                                 fontSize: 11, fontWeight: 500,
                                 letterSpacing: '.04em',
-                                padding: '12px 16px', borderRadius: 9999,
+                                padding: '12px 16px', borderRadius: TOKENS.radius.rFull,
                                 border: '1.5px solid',
                                 cursor: 'pointer', transition: 'all .15s',
                                 ...(isOn ? onStyle : {
@@ -1834,7 +1834,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         <div
                           role="group"
                           aria-label="Input format"
-                          style={{ display: 'flex', alignItems: 'center', background: 'var(--n-100)', borderRadius: 9999, padding: 4 }}
+                          style={{ display: 'flex', alignItems: 'center', background: 'var(--n-100)', borderRadius: TOKENS.radius.rFull, padding: 4 }}
                         >
                           {(['pct', 'dol'] as const).map(m => (
                             <button
@@ -1846,7 +1846,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               style={{
                                 fontFamily: TOKENS.mono,
                                 fontSize: 11, fontWeight: 500,
-                                padding: '8px 16px', borderRadius: 9999,
+                                padding: '8px 16px', borderRadius: TOKENS.radius.rFull,
                                 border: 'none', cursor: 'pointer',
                                 letterSpacing: '0.02em',
                                 background: mode === m ? 'var(--n-0)' : 'transparent',
@@ -2228,7 +2228,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
 
             {/* ════ ANIMATION STAGE ════ */}
             {step === 'anim' && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 22px 24px', flex: 1, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 24px', flex: 1, overflow: 'hidden' }}>
                 {/* Particles wrapper */}
                 <div
                   ref={ptcWrapRef}
@@ -2239,14 +2239,14 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 <div ref={envSceneRef} style={{ position: 'relative', width: 180, height: 118, margin: '70px auto 16px', overflow: 'visible', flexShrink: 0 }}>
                   {/* Z=1 Body */}
                   <svg width="180" height="118" viewBox="0 0 180 118" style={{ position: 'absolute', top: 0, left: 0, zIndex: 1 /* canvas: base envelope body */, display: 'block', overflow: 'visible' }} aria-hidden="true">
-                    <rect x="0" y="0" width="180" height="118" rx="7" fill="#F0EDE8"/>
-                    <polygon points="0,0 0,118 90,68" fill="#E8E4DD"/>
-                    <polygon points="180,0 180,118 90,68" fill="#E8E4DD"/>
-                    <polygon points="0,118 180,118 90,68" fill="#DED9D3"/>
-                    <line x1="0"   y1="0"   x2="90" y2="68" stroke="#CBC8C1" strokeWidth="0.8"/>
-                    <line x1="180" y1="0"   x2="90" y2="68" stroke="#CBC8C1" strokeWidth="0.8"/>
-                    <line x1="0"   y1="118" x2="90" y2="68" stroke="#CBC8C1" strokeWidth="0.8"/>
-                    <line x1="180" y1="118" x2="90" y2="68" stroke="#CBC8C1" strokeWidth="0.8"/>
+                    <rect x="0" y="0" width="180" height="118" rx="7" fill={TOKENS.colors.paperBody}/>
+                    <polygon points="0,0 0,118 90,68" fill={TOKENS.colors.paperFoldFace}/>
+                    <polygon points="180,0 180,118 90,68" fill={TOKENS.colors.paperFoldFace}/>
+                    <polygon points="0,118 180,118 90,68" fill={TOKENS.colors.paperShadowFold}/>
+                    <line x1="0"   y1="0"   x2="90" y2="68" stroke={TOKENS.colors.paperSeam} strokeWidth="0.8"/>
+                    <line x1="180" y1="0"   x2="90" y2="68" stroke={TOKENS.colors.paperSeam} strokeWidth="0.8"/>
+                    <line x1="0"   y1="118" x2="90" y2="68" stroke={TOKENS.colors.paperSeam} strokeWidth="0.8"/>
+                    <line x1="180" y1="118" x2="90" y2="68" stroke={TOKENS.colors.paperSeam} strokeWidth="0.8"/>
                     <rect x=".5" y=".5" width="179" height="117" rx="6.5" fill="none" stroke={TOKENS.colors.n200} strokeWidth="1"/>
                   </svg>
 
@@ -2266,7 +2266,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     </div>
                     <div
                       ref={letterFaceRef}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 10, opacity: 0, transition: 'opacity 0.3s cubic-bezier(0.25, 0, 0.3, 1)' }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 10, opacity: 0, transition: 'opacity 0.28s cubic-bezier(0.25, 0, 0.3, 1)' /* Rule 6: 280ms < 300ms ✓ */ }}
                     />
                   </div>
 
@@ -2287,8 +2287,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="rgba(26,25,23,0.12)"/>
                       </filter>
                     </defs>
-                    <polygon ref={flapPolyRef} points="0,0 180,0 90,68" fill="#ECE9E3"/>
-                    <polyline ref={flapEdgeRef} points="0,0 90,68 180,0" fill="none" stroke="#C8C5BE" strokeWidth="0.9" strokeLinejoin="round"/>
+                    <polygon ref={flapPolyRef} points="0,0 180,0 90,68" fill={TOKENS.colors.paperFlapClosed}/>
+                    <polyline ref={flapEdgeRef} points="0,0 90,68 180,0" fill="none" stroke={TOKENS.colors.paperFlapEdge} strokeWidth="0.9" strokeLinejoin="round"/>
                     <line x1="0" y1="0" x2="180" y2="0" stroke={TOKENS.colors.n200} strokeWidth="1"/>
                     <g ref={sealGroupRef}>
                       <circle ref={sealCircleRef} cx="90" cy="26" r="18" fill={TOKENS.colors.n200}/>
@@ -2697,7 +2697,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           onClick={onVerify}
                           style={{
                             fontFamily: TOKENS.font, fontSize: 13, fontWeight: 500,
-                            padding: '8px 20px', borderRadius: 9999,
+                            padding: '8px 20px', borderRadius: TOKENS.radius.rFull,
                             border: 'none', background: TOKENS.colors.n900, color: TOKENS.colors.n0,
                             cursor: 'pointer', transition: 'opacity .15s',
                           }}
@@ -2709,7 +2709,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           onClick={handleClose}
                           style={{
                             fontFamily: TOKENS.font, fontSize: 13, fontWeight: 500,
-                            padding: '6px 16px', borderRadius: 9999,
+                            padding: '6px 16px', borderRadius: TOKENS.radius.rFull,
                             border: 'none', background: 'none', color: 'var(--n-400)',
                             cursor: 'pointer', transition: 'background .15s, color .15s',
                             display: 'block', width: '100%', textAlign: 'center',
@@ -2743,7 +2743,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     onClick={goBack}
                     style={{
                       fontFamily: TOKENS.font, fontSize: 14, fontWeight: 500,
-                      padding: '12px 16px', borderRadius: 9999,
+                      padding: '12px 16px', borderRadius: TOKENS.radius.rFull,
                       border: `1px solid ${TOKENS.colors.n200}`, background: TOKENS.colors.n0, cursor: 'pointer',
                       color: 'var(--n-500)', transition: 'background .15s, transform .1s', whiteSpace: 'nowrap',
                     }}
@@ -2767,7 +2767,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                   }}
                   style={{
                     fontFamily: TOKENS.font, fontSize: 14, fontWeight: 500,
-                    padding: '12px 0', borderRadius: 9999,
+                    padding: '12px 0', borderRadius: TOKENS.radius.rFull,
                     border: 'none',
                     background: 'var(--p-600)', /* #3A3F8F — primary CTA, 5.67:1 on white ✓ AA */
                     color: TOKENS.colors.n0, cursor: step === 2 && !consent ? 'not-allowed' : 'pointer',

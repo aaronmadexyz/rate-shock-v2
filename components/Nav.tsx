@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import type { Map as LeafletMap } from 'leaflet'
 import { springs } from '@/lib/springs'
+import { TOKENS } from '@/lib/tokens'
 import { safeGetItem, safeSetItem } from '@/lib/storage'
 import { supabase } from '@/lib/supabase'
 import { fetchFsaCount } from '@/lib/fetchFsaCount'
@@ -91,8 +92,8 @@ function SearchSvg() {
 function ClockIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <circle cx="6.5" cy="6.5" r="5.5" stroke="#D49316" strokeWidth="1.1"/>
-      <path d="M6.5 4v2.5l1.5 1.5" stroke="#D49316" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="6.5" cy="6.5" r="5.5" stroke={TOKENS.colors.cau400} strokeWidth="1.1"/>
+      <path d="M6.5 4v2.5l1.5 1.5" stroke={TOKENS.colors.cau400} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
@@ -594,7 +595,7 @@ export default function Nav({
                 )}
               </div>
             ) : (
-              <div style={{ width: 180, height: 34, borderRadius: 9999, background: 'var(--n-150)', opacity: 0.5 }} />
+              <div style={{ width: 180, height: 34, borderRadius: TOKENS.radius.rFull, background: 'var(--n-150)', opacity: 0.5 }} />
             )}
 
             {/* Hamburger — mobile only (CSS shows on mobile) */}

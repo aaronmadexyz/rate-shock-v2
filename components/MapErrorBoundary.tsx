@@ -38,7 +38,7 @@ export class MapErrorBoundary extends React.Component<Props, State> {
               fontSize:     13,
               fontWeight:   500,
               padding:      '8px 20px',
-              borderRadius: 9999,
+              borderRadius: TOKENS.radius.rFull,
               border:       '1px solid #D4D3CE',
               background:   TOKENS.colors.n0,
               cursor:       'pointer',

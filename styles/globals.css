@@ -382,7 +382,7 @@ p {
 .marker-match {
   opacity: 1;
   transform: scale(1);
-  transition: opacity 250ms cubic-bezier(0.25,0,0.3,1), transform 300ms cubic-bezier(0.16,1,0.3,1);
+  transition: opacity 250ms cubic-bezier(0.25,0,0.3,1), transform 280ms cubic-bezier(0.16,1,0.3,1); /* Rule 6: under 300ms ✓ */
 }
 
 .marker-dim {
@@ -392,7 +392,7 @@ p {
 }
 
 .marker-pulse {
-  animation: markerPulse 300ms cubic-bezier(0.16,1,0.3,1) forwards;
+  animation: markerPulse 280ms cubic-bezier(0.16,1,0.3,1) forwards; /* Rule 6: under 300ms ✓ */
 }
 
 /* ─── PIONEER SHIMMER ───────────────────────────────────────────────────── */

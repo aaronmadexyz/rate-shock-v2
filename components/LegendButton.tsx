@@ -17,9 +17,9 @@ const ITEMS = [
 function EnvelopeSvg({ w, h }: { w: number; h: number }) {
   return (
     <svg width={w} height={h} viewBox="0 0 40 28" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <rect x="0.5" y="0.5" width="39" height="27" rx="2.5" fill="#F0EDE8" stroke="#D4D3CE" strokeWidth="0.8"/>
+      <rect x="0.5" y="0.5" width="39" height="27" rx="2.5" fill={TOKENS.colors.paperBody} stroke={TOKENS.colors.n200} strokeWidth="0.8"/>
       <polygon points="0,0 40,0 20,15" fill={TOKENS.colors.n150} opacity="0.8"/>
-      <circle cx="20" cy="6.5" r="4" fill="#D4D3CE"/>
+      <circle cx="20" cy="6.5" r="4" fill={TOKENS.colors.n200}/>
     </svg>
   )
 }
@@ -90,7 +90,7 @@ export default function LegendButton() {
         style={{
           width:          40,
           height:         40,
-          borderRadius:   9999,
+          borderRadius: TOKENS.radius.rFull,
           background:     'var(--n-0)',
           border:         '1px solid var(--n-200)',
           boxShadow:      SH_SM,
@@ -102,8 +102,8 @@ export default function LegendButton() {
         }}
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <circle cx="8" cy="8" r="6.5" stroke="#767670" strokeWidth="1.3"/>
-          <path d="M8 7.5v4M8 5.5v.01" stroke="#767670" strokeWidth="1.4" strokeLinecap="round"/>
+          <circle cx="8" cy="8" r="6.5" stroke={TOKENS.colors.n400} strokeWidth="1.3"/>
+          <path d="M8 7.5v4M8 5.5v.01" stroke={TOKENS.colors.n400} strokeWidth="1.4" strokeLinecap="round"/>
         </svg>
       </button>
 

@@ -92,7 +92,7 @@ function markerAriaLabel(s: Submission): string {
 }
 
 function makeIcon(s: Submission, duration: number, delay: number): L.DivIcon {
-  return buildIcon('#F0EDE8', sealColor(s.sentiment), markerScale(s.rate_change_pct), duration, delay, markerAriaLabel(s))
+  return buildIcon(TOKENS.colors.paperBody, sealColor(s.sentiment), markerScale(s.rate_change_pct), duration, delay, markerAriaLabel(s))
 }
 
 const SKELETON_ICON = buildIcon('#EEEDEA', '#D4D3CE', 1.0) // aria-hidden — no semantic content
@@ -692,7 +692,7 @@ export default function MapView({
         maxZoom={16}
         zoomControl={false}
         attributionControl={false}
-        style={{ position: 'fixed', inset: 0, zIndex: 0, /* z-map */ width: '100vw', height: '100dvh', touchAction: 'none' }}
+        style={{ position: 'fixed', inset: 0, zIndex: TOKENS.zIndex.zMap, /* --z-map: 0 ✓ */ width: '100vw', height: '100dvh', touchAction: 'none' }}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"

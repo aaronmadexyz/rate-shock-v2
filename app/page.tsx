@@ -28,7 +28,7 @@ import OnboardingOverlay from '@/components/OnboardingOverlay'
 const MapView = lazyLoad(() => import('@/components/MapView'), {
   ssr: false,
   loading: () => (
-    <div style={{ position: 'fixed', inset: 0, background: 'var(--n-50)', zIndex: 0 /* z-map */ }} />
+    <div style={{ position: 'fixed', inset: 0, background: 'var(--n-50)', zIndex: TOKENS.zIndex.zMap /* --z-map: 0 ✓ */ }} />
   ),
 })
 
@@ -277,7 +277,7 @@ export default function Page() {
               backdropFilter:       'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
               border:               '1px solid var(--n-150)',
-              borderRadius:         9999,
+              borderRadius:         TOKENS.radius.rFull,
               padding:              'clamp(8px, 2vw, 10px) clamp(14px, 4vw, 20px)',
               fontFamily:           TOKENS.font,
               fontSize:             13,

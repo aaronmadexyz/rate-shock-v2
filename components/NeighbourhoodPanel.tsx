@@ -5,6 +5,7 @@ import type React from 'react'
 import { motion } from 'framer-motion'
 import type { NeighbourhoodStats, RecentReport } from '@/lib/types'
 import { useReducedMotion } from '@/lib/motionSafety'
+import { TOKENS } from '@/lib/tokens'
 import styles from '@/styles/NeighbourhoodPanel.module.css'
 
 // ─── Rate tier helpers ────────────────────────────────────────────────────────
@@ -36,7 +37,7 @@ function SentimentFace({ sentiment, size }: { sentiment: number | null; size: nu
   if (sentiment === 1)
     return (
       <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
-        <circle cx="17" cy="17" r="15" fill="#3A9B55" />
+        <circle cx="17" cy="17" r="15" fill={TOKENS.colors.sealPositive} />
         <circle cx="12" cy="14" r="2" fill="white" />
         <circle cx="22" cy="14" r="2" fill="white" />
         <path d="M10 21Q17 27 24 21" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none" />
@@ -45,16 +46,16 @@ function SentimentFace({ sentiment, size }: { sentiment: number | null; size: nu
   if (sentiment === 2)
     return (
       <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
-        <circle cx="17" cy="17" r="15" fill="#93D1A2" />
-        <circle cx="12" cy="14" r="2" fill="#1F6132" />
-        <circle cx="22" cy="14" r="2" fill="#1F6132" />
-        <path d="M12 21Q17 24.5 22 21" stroke="#1F6132" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+        <circle cx="17" cy="17" r="15" fill={TOKENS.colors.pos200} />
+        <circle cx="12" cy="14" r="2" fill={TOKENS.colors.pos600} />
+        <circle cx="22" cy="14" r="2" fill={TOKENS.colors.pos600} />
+        <path d="M12 21Q17 24.5 22 21" stroke={TOKENS.colors.pos600} strokeWidth="2.2" strokeLinecap="round" fill="none" />
       </svg>
     )
   if (sentiment === 3)
     return (
       <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
-        <circle cx="17" cy="17" r="15" fill="#D49316" />
+        <circle cx="17" cy="17" r="15" fill={TOKENS.colors.cau400} />
         <circle cx="12" cy="14" r="2" fill="white" />
         <circle cx="22" cy="14" r="2" fill="white" />
         <path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
@@ -71,7 +72,7 @@ function SentimentFace({ sentiment, size }: { sentiment: number | null; size: nu
     )
   return (
     <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true">
-      <circle cx="17" cy="17" r="15" fill="#D4503A" />
+      <circle cx="17" cy="17" r="15" fill={TOKENS.colors.neg400} />
       <circle cx="12" cy="13" r="2" fill="white" />
       <circle cx="22" cy="13" r="2" fill="white" />
       <path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none" />

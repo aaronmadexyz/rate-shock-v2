@@ -258,7 +258,7 @@
   background: var(--n-0);
   border: 1px solid var(--n-200);
   border-radius: var(--r-full);
-  padding: 4px 10px;
+  padding: 4px 8px; /* sp-1 sp-2 ✓ */
   white-space: nowrap;
 }
 
@@ -494,7 +494,7 @@
 .profileStat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px; /* sp-1 ✓ (was 2px off-grid) */
 }
 
 .profileVal {
@@ -559,7 +559,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;              /* sp-1 */
-  padding: 4px 10px;     /* sp-1 */
+  padding: 4px 8px;      /* sp-1 sp-2 ✓ */
   background: var(--p-50);
   border: 1px solid var(--p-200);
   border-radius: var(--r-full);
@@ -744,7 +744,7 @@
   background: var(--p-600);
   color: var(--n-0);
   border-radius: var(--r-full);
-  padding: 14px 0;
+  padding: 12px 0; /* sp-3 sp-0 ✓ (was 14px off-grid) */
   width: 100%;
   border: none;
   cursor: pointer;

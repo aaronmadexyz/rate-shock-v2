@@ -309,7 +309,7 @@ function MapControls({
                 fontSize:     12,
                 fontWeight:   500,
                 padding:      '6px 12px',
-                borderRadius: 9999,
+                borderRadius: TOKENS.radius.rFull,
                 boxShadow:    '0 4px 12px rgba(26,25,23,.06), 0 1px 3px rgba(26,25,23,.04)',
                 display:      'flex',
                 alignItems:   'center',
@@ -360,7 +360,7 @@ function MapControls({
             gap:             7,
             height:          40,
             padding:         '0 14px',
-            borderRadius:    9999,
+            borderRadius: TOKENS.radius.rFull,
             border:          nudgeActive
               ? '1px solid var(--p-400)'
               : isActive ? '1px solid var(--p-200)' : '1px solid var(--n-200)',
@@ -383,7 +383,7 @@ function MapControls({
               backgroundColor: 'var(--p-600)',
               color:           'var(--n-0)',
               padding:         '2px 6px',
-              borderRadius:    9999,
+              borderRadius: TOKENS.radius.rFull,
             }}>
               {activeCount}
             </span>
@@ -408,7 +408,7 @@ function MapControls({
             height:          40,
             width:           isMobile ? 40 : 'auto',
             padding:         isMobile ? 0 : '0 14px',
-            borderRadius:    9999,
+            borderRadius: TOKENS.radius.rFull,
             border:          likeMeMode ? '1px solid var(--p-200)' : '1px solid var(--n-200)',
             backgroundColor: likeMeMode ? 'var(--p-50)' : 'var(--n-0)',
             color:           likeMeMode ? 'var(--p-600)' : 'var(--n-800)',
@@ -423,7 +423,7 @@ function MapControls({
           whileTap={{ scale: 0.97, transition: tapTransition }}
         >
           <ProfilesIcon active={likeMeMode} />
-          {!isMobile && <span style={{ marginLeft: 7 }}>Like me</span>}
+          {!isMobile && <span style={{ marginLeft: 8 }}>Like me</span>}
         </motion.button>
       )}
 

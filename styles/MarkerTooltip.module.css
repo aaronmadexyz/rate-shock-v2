@@ -161,7 +161,7 @@
   font-size: 14px;
   font-weight: 500;
   padding: 9px 16px;
-  border-radius: 9999px;
+  border-radius: var(--r-full);
   border: none;
   background: var(--p-600);
   color: #FFFFFF;

@@ -248,7 +248,7 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
         style={{
           transformOrigin: 'left center',
           height:          40,
-          borderRadius:    9999,
+          borderRadius: TOKENS.radius.rFull,
           background:      'var(--n-0)',
           border:          isExpanded ? '1.5px solid var(--p-400)' : '1px solid var(--n-200)',
           boxShadow:       isExpanded ? '0 0 0 3px rgba(99,106,197,.12)' : SH_SM,

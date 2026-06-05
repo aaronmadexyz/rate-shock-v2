@@ -25,7 +25,7 @@ type UIState = 'idle' | 'loading' | 'success' | 'error'
 function CheckIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <path d="M3.5 9l4 4L14.5 5" stroke="#1F6132" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M3.5 9l4 4L14.5 5" stroke={TOKENS.colors.pos600} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
@@ -370,7 +370,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                     fontWeight:   500,
                     padding:      '12px 0', /* sp-3 on 4px grid ✓ */
                     minHeight:    44,        /* WCAG 2.5.5 ✓ */
-                    borderRadius: 9999,
+                    borderRadius: TOKENS.radius.rFull,
                     border:       'none',
                     cursor:       isEmpty || isLoading ? 'not-allowed' : 'pointer',
                     opacity:      isEmpty || isLoading ? 0.32 : 1,

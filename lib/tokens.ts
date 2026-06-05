@@ -55,9 +55,15 @@ export const TOKENS = {
     sealNegative:      '#D4503A',
     sealNegativeShine: '#F2A597',
 
-    // Paper colors — envelope body
-    paperBody: '#F0EDE8',
-    paperFlap: '#E6E3DD',
+    // Paper colors — envelope body and illustration shades
+    paperBody:       '#F0EDE8', // envelope base
+    paperFlap:       '#E6E3DD', // closed flap surface
+    paperFlapOpen:   '#E2DDD7', // flap after fold — slightly darker
+    paperFoldFace:   '#E8E4DD', // inner fold-face panels (lighter than flap)
+    paperFlapClosed: '#ECE9E3', // flap fill at rest / after reset
+    paperShadowFold: '#DED9D3', // bottom shadow fold panel
+    paperSeam:       '#CBC8C1', // seam fold stroke lines
+    paperFlapEdge:   '#C8C5BE', // flap edge highlight stroke
 
     // Map colors
     mapLand:   '#EEEDEA',

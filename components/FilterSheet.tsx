@@ -457,7 +457,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
                 fontSize:      12,
                 fontWeight:    500,
                 padding:       '8px 12px',
-                borderRadius:  9999,
+                borderRadius: TOKENS.radius.rFull,
                 border:        `1px solid ${on ? 'var(--n-900)' : 'var(--n-400)'}`,
                 background:    on ? 'var(--n-900)' : 'var(--n-0)',
                 color:         on ? 'var(--n-0)' : 'var(--n-600)',

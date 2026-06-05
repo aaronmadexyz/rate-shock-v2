@@ -48,7 +48,7 @@
    conflict with the button's inline boxShadow (inline styles override CSS animations) */
 .nudgeRing {
   display: inline-flex;
-  border-radius: 9999px;
+  border-radius: var(--r-full);
   /* INTENTIONAL EXCEPTION to Rule 6 (under 300ms):
      900ms one-shot mount animation — not a UI state transition.
      Plays once on first visit only (sessionStorage guard). Does not repeat.
