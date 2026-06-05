@@ -167,7 +167,7 @@ const FILTER_CSS = `
     width: 20px; height: 20px; border-radius: 50%;
     background: var(--n-0);
     border: 1.5px solid var(--n-200);
-    box-shadow: 0 1px 3px rgba(0,0,0,.12);
+    box-shadow: 0 1px 3px rgba(26,25,23,.12); /* n-900 warm undertone ✓ Design system §02 shadow spec */
     cursor: pointer;
     pointer-events: all;
     transition: border-color .15s, transform .1s;
@@ -178,7 +178,7 @@ const FILTER_CSS = `
     width: 20px; height: 20px; border-radius: 50%;
     background: var(--n-0);
     border: 1.5px solid var(--n-200);
-    box-shadow: 0 1px 3px rgba(0,0,0,.12);
+    box-shadow: 0 1px 3px rgba(26,25,23,.12); /* n-900 warm undertone ✓ Design system §02 shadow spec */
     cursor: pointer;
     pointer-events: all;
     transition: border-color .15s, transform .1s;

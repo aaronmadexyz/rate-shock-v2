@@ -33,7 +33,7 @@
 @media (prefers-reduced-motion: reduce) {
   .preview {
     /* Framer Motion handles duration:0 on exit but belt-and-suspenders */
-    transition: opacity 0.12s ease;
+    transition: opacity 0.12s cubic-bezier(.25,0,.3,1); /* Rule 4: DS exit/fade curve ✓ */
     transform: none !important;
   }
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import styles from '@/styles/Onboarding.module.css'
 
 interface Props {
@@ -13,7 +13,8 @@ interface Props {
 const SPRING_GENTLE = { type: 'spring' as const, stiffness: 240, damping: 24, mass: 1 }
 
 export default function OnboardingOverlay({ isVisible, onDismiss, onSubmit }: Props) {
-  const cardRef = useRef<HTMLDivElement>(null)
+  const cardRef      = useRef<HTMLDivElement>(null)
+  const prefersReduced = useReducedMotion()
 
   // Focus trap
   useEffect(() => {
@@ -73,9 +74,13 @@ export default function OnboardingOverlay({ isVisible, onDismiss, onSubmit }: Pr
             aria-labelledby="onboarding-title"
             tabIndex={-1}
             ref={cardRef}
-            initial={{ opacity: 0, scale: 0.96, y: '-48%', x: '-50%' }}
+            initial={prefersReduced
+              ? { opacity: 0, y: '-50%', x: '-50%' }
+              : { opacity: 0, scale: 0.96, y: '-48%', x: '-50%' }} /* prefers-reduced-motion: opacity only, no scale ✓ */
             animate={{ opacity: 1, scale: 1,    y: '-50%', x: '-50%' }}
-            exit={{   opacity: 0, scale: 0.96, y: '-48%', x: '-50%' }}
+            exit={prefersReduced
+              ? { opacity: 0, y: '-50%', x: '-50%' }
+              : { opacity: 0, scale: 0.96, y: '-48%', x: '-50%' }} /* prefers-reduced-motion: opacity only, no scale ✓ */
             transition={SPRING_GENTLE}
             style={{ top: '50%', left: '50%', transform: 'none' }}
             onKeyDown={handleKeyDown}

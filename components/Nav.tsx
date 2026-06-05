@@ -583,7 +583,7 @@ export default function Nav({
                 {/* Activity badge — Rule 5: origin-aware (top right) */}
                 {activityCount > 0 && (
                   <motion.span
-                    initial={{ scale: 0.5, opacity: 0 }}
+                    initial={{ scale: 0.97, opacity: 0 }} /* Rule 2: min starting scale .97 ✓ — was 0.5, too aggressive */
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', ...springs.snappy }}
                     style={{ transformOrigin: 'top right' }}

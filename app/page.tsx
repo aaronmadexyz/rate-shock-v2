@@ -4,7 +4,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { getTimeOfDay, timeOfDayTokens } from '@/lib/timeOfDay'
 import lazyLoad from 'next/dynamic'
 import type { Map as LeafletMap } from 'leaflet'
@@ -56,6 +56,8 @@ function parseUserProfile(raw: string): UserProfile | null {
 }
 
 export default function Page() {
+  const prefersReduced = useReducedMotion()
+
   const [mounted,       setMounted]      = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [modalOpen,       setModalOpen]       = useState(false)
@@ -255,10 +257,10 @@ export default function Page() {
         {heroVisible && !modalOpen && !filterOpen && (
           <motion.div
             key="hero-hint"
-            initial={{ opacity: 0, y: -4, x: '-50%' }}
-            animate={{ opacity: 1, y: 0,  x: '-50%' }}
-            exit={{ opacity: 0, y: -4, x: '-50%', transition: { duration: 0.15, ease: [0.4, 0, 1, 1] as [number,number,number,number] } }}
-            transition={{ type: 'spring', stiffness: 240, damping: 24, mass: 1 }}
+            initial={prefersReduced ? { opacity: 0, x: '-50%' } : { opacity: 0, y: -4, x: '-50%' }} /* prefers-reduced-motion: opacity only, no y-shift ✓ */
+            animate={prefersReduced ? { opacity: 1, x: '-50%' } : { opacity: 1, y: 0,  x: '-50%' }}
+            exit={{ opacity: 0, ...(prefersReduced ? { x: '-50%' } : { y: -4, x: '-50%' }), transition: { duration: 0.15, ease: [0.4, 0, 1, 1] as [number,number,number,number] } }}
+            transition={prefersReduced ? { duration: 0 } : { type: 'spring', stiffness: 240, damping: 24, mass: 1 }}
             style={{
               position:      'fixed',
               top:           88,

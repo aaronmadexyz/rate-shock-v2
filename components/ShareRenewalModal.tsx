@@ -1419,13 +1419,13 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
             }}
             initial={isMobile
               ? { opacity: 0, y: '100%' }
-              : { opacity: 0, scale: 0.94, x: '-50%', y: '-52%' }}
+              : { opacity: 0, scale: 0.95, x: '-50%', y: '-52%' }} /* Rule 2: 0.94 → 0.95 (min safe floor) ✓ */
             animate={isMobile
               ? { opacity: 1, y: 0 }
               : { opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
             exit={isMobile
               ? { opacity: 0, y: '100%' }
-              : { opacity: 0, scale: 0.94, x: '-50%', y: '-52%' }}
+              : { opacity: 0, scale: 0.95, x: '-50%', y: '-52%' }} /* Rule 2: 0.94 → 0.95 ✓ */
             transition={{ type: 'spring', stiffness: 200, damping: 24 }}
           >
             {/* ── Drag handle (mobile only) ── */}

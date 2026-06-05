@@ -95,8 +95,12 @@
   text-transform: lowercase;
   margin: 4px 0 0;
   padding: 0;
-  animation: hintFade 2s ease-out 1.5s both;
-  /* Starts after 1.5s delay — user sees it, then it fades. One-shot. */
+  animation: hintFade 2s cubic-bezier(.16,1,.3,1) 1.5s both;
+  /* INTENTIONAL EXCEPTION Rule 6: One-shot decorative hint fade. 2s duration
+     allows the user to read "swipe down to close" before it disappears.
+     Not a UI state transition. Plays once per session. Disabled under
+     prefers-reduced-motion (animation: none in reduced-motion block below).
+     Rule 4: ease-out replaced with DS entry curve ✓ */
 }
 
 /* ─── Header ─────────────────────────────────────────────────────────────────── */
@@ -132,7 +136,7 @@
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 150ms ease;
+  transition: background 150ms cubic-bezier(.16,1,.3,1); /* Rule 4: hover entry ✓ */
 }
 
 .closeBtn::before {
@@ -302,7 +306,7 @@
   cursor: pointer;
   min-height: 44px; /* WCAG minimum touch target ✓ */
   border-radius: var(--r-md);
-  transition: background 0.12s ease;
+  transition: background 0.12s cubic-bezier(.16,1,.3,1); /* Rule 4 ✓ */
 }
 
 .reportRow:hover {
@@ -310,7 +314,7 @@
 }
 
 .reportRow:active {
-  transform: scale(0.98); /* Rule 1: scale on press ✓ */
+  transform: scale(0.97); /* Rule 1: scale(.97) on :active ✓ */
 }
 
 .reportRow:focus-visible {
@@ -346,7 +350,7 @@
 .rowChevron {
   color: var(--n-300);
   flex-shrink: 0;
-  transition: color 0.15s ease, transform 0.15s ease;
+  transition: color 0.15s cubic-bezier(.16,1,.3,1), transform 0.15s cubic-bezier(.16,1,.3,1); /* Rule 4 ✓ */
 }
 
 .reportRow:hover .rowChevron {
@@ -375,8 +379,8 @@
 }
 
 .detailLayerExit {
-  animation: detailSlideOut 0.18s ease-in both;
-  /* Rule 6: fast exit 180ms ✓ */
+  animation: detailSlideOut 0.18s cubic-bezier(.4,0,1,1) both;
+  /* Rule 4: DS exit curve ✓  Rule 6: 180ms < 300ms ✓ */
 }
 
 @keyframes detailSlideOut {
@@ -702,7 +706,7 @@
     var(--n-100) 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.4s ease infinite;
+  animation: shimmer 1.4s cubic-bezier(.25,0,.3,1) infinite; /* Rule 4: DS curve replaces browser ease ✓ (shimmer exempt Rule 6) */
 }
 
 .skRow1 { width: 60%; height: 24px; }
@@ -746,7 +750,7 @@
   cursor: pointer;
   display: block;
   text-align: center;
-  transition: background 150ms ease;
+  transition: background 150ms cubic-bezier(.16,1,.3,1); /* Rule 4: hover entry ✓ */
 }
 
 .ctaBtn:hover  { background: var(--p-700); }
