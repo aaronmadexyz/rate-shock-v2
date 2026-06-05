@@ -12,7 +12,7 @@
   box-shadow: 0 1px 2px rgba(26,25,23,.04);
   display: flex;
   flex-direction: column;    /* two rows: main content + View details */
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font); /* --font: 'Inter', system-ui ✓ */
   position: relative;
 }
 
@@ -63,7 +63,7 @@
   border-radius: var(--r-lg);
   padding: var(--sp-3) var(--sp-4);
   box-shadow: 0 4px 12px rgba(26,25,23,.06), 0 1px 3px rgba(26,25,23,.04);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font); /* --font: 'Inter', system-ui ✓ */
   letter-spacing: -0.01em;
 }
 
@@ -97,7 +97,7 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font); /* --font: 'Inter', system-ui ✓ */
   letter-spacing: -0.01em;
   display: none;
 }
@@ -119,7 +119,7 @@
 
 .contextLine {
   margin-top: 4px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono); /* --mono: 'IBM Plex Mono' ✓ */
   font-size: 11px;
   font-weight: 500;
   line-height: 1.5; /* WCAG 1.4.12 minimum */
@@ -157,7 +157,7 @@
 .closeBtn:active { transform: scale(0.97); } /* Rule 1 — scale(0.97) on press */
 
 .ctaBtn {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font); /* --font: 'Inter', system-ui ✓ */
   font-size: 14px;
   font-weight: 500;
   padding: 9px 16px;

@@ -106,7 +106,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono); /* --mono: 'IBM Plex Mono' ✓ */
   font-size: 11px;
   color: var(--n-500); /* 4.7:1 on white ✓ AA — raised from rgba opacity */
   pointer-events: all;
