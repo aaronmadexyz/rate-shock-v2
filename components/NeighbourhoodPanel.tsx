@@ -5,6 +5,7 @@ import type React from 'react'
 import { motion } from 'framer-motion'
 import type { NeighbourhoodStats, RecentReport } from '@/lib/types'
 import { useReducedMotion } from '@/lib/motionSafety'
+import { useAnimatedCounter } from '@/lib/useAnimatedCounter'
 import { TOKENS } from '@/lib/tokens'
 import styles from '@/styles/NeighbourhoodPanel.module.css'
 
@@ -29,6 +30,15 @@ function rateAriaLabel(pct: number | null): string {
   if (pct === null) return 'no data'
   if (pct < 0) return `${Math.abs(pct)} percent decrease`
   return `${pct} percent increase`
+}
+
+// Formats an animated counter string with correct sign prefix.
+// Uses U+2212 (−) for typographic minus, not a hyphen.
+function formatDisplayed(displayed: string, actual: number | null): string {
+  if (actual === null) return '—'
+  const v    = parseFloat(displayed)
+  const sign = actual < 0 ? '−' : actual > 0 ? '+' : ''
+  return `${sign}${Math.abs(v).toFixed(1)}%`
 }
 
 // ─── Sentiment face (mirrors MapView.tsx) ─────────────────────────────────────
@@ -231,6 +241,21 @@ interface AggregateBodyProps {
 }
 
 function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
+  const displayedAutoAvg = useAnimatedCounter(
+    stats.autoAvgPct ?? null,
+    {
+      duration: 600,
+      decimals: 1,
+      /* 600ms — data visualisation counter. Documented exception to Rule 6
+         (300ms UI transitions) per design system §05. Same duration as
+         the data strip counters. */
+    }
+  )
+  const displayedHomeAvg = useAnimatedCounter(
+    stats.homeAvgPct ?? null,
+    { duration: 600, decimals: 1 }
+  )
+
   return (
     <>
       {/* Section 1 — Type breakdown */}
@@ -254,8 +279,11 @@ function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
             className={`${styles.typeAvg}${stats.autoAvgPct === null ? ` ${styles.typeAvgEmpty}` : ''}`}
             style={stats.autoAvgPct !== null ? { color: tierColor(stats.autoAvgPct) } : undefined}
             aria-label={rateAriaLabel(stats.autoAvgPct)}
+            aria-hidden={displayedAutoAvg === null}
           >
-            {fmtRate(stats.autoAvgPct)}
+            {displayedAutoAvg !== null
+              ? formatDisplayed(displayedAutoAvg, stats.autoAvgPct)
+              : '—'}
           </div>
           <div className={styles.typeCount}>
             {stats.autoCount > 0
@@ -282,8 +310,11 @@ function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
             className={`${styles.typeAvg}${stats.homeAvgPct === null ? ` ${styles.typeAvgEmpty}` : ''}`}
             style={stats.homeAvgPct !== null ? { color: tierColor(stats.homeAvgPct) } : undefined}
             aria-label={rateAriaLabel(stats.homeAvgPct)}
+            aria-hidden={displayedHomeAvg === null}
           >
-            {fmtRate(stats.homeAvgPct)}
+            {displayedHomeAvg !== null
+              ? formatDisplayed(displayedHomeAvg, stats.homeAvgPct)
+              : '—'}
           </div>
           <div className={styles.typeCount}>
             {stats.homeCount > 0
@@ -360,6 +391,17 @@ export default function NeighbourhoodPanel({
   // ── Detail layer state ────────────────────────────────────────────────────────
   const [detailReport,    setDetailReport]    = useState<RecentReport | null>(null)
   const [isDetailExiting, setIsDetailExiting] = useState(false)
+
+  // ── Detail rate counter — resets automatically when detailReport changes ──────
+  const displayedDetailRate = useAnimatedCounter(
+    detailReport?.rate_change_pct ?? null,
+    {
+      duration: 500,
+      decimals: 1,
+      /* 500ms — single focal number, slightly faster than avg values (600ms).
+         Documented Rule 6 exception for data counters per design system §05. */
+    }
+  )
 
   // ── Peek / full snap state (mobile only) ─────────────────────────────────────
   const [snapPoint, setSnapPoint] = useState<'peek' | 'full'>('peek')
@@ -667,8 +709,11 @@ export default function NeighbourhoodPanel({
                   className={styles.detailRateVal}
                   style={{ color: tierColor(detailReport.rate_change_pct) }}
                   aria-label={rateAriaLabel(detailReport.rate_change_pct)}
+                  aria-hidden={displayedDetailRate === null}
                 >
-                  {fmtRate(detailReport.rate_change_pct)}
+                  {displayedDetailRate !== null
+                    ? formatDisplayed(displayedDetailRate, detailReport.rate_change_pct)
+                    : '—'}
                 </span>
               </div>
 
