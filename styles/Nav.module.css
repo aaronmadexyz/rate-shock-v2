@@ -9,6 +9,7 @@
   right: 0;
   z-index: calc(var(--z-nav) + 1); /* 101 — strip sits above main bar */
   height: 28px;
+  padding: 4px 16px; /* sp-1 sp-4 — compact strip ✓ */
   background: var(--n-800);
   display: flex;
   align-items: center;
@@ -226,7 +227,7 @@
   background: var(--n-50);
   border: 1px solid var(--n-100);
   border-radius: var(--r-full);
-  padding: 0 14px 0 34px;
+  padding: 8px 14px 8px 34px; /* sp-2 top/bottom ✓ */
   outline: none;
   color: var(--n-900);
   -webkit-appearance: none;
@@ -695,17 +696,23 @@
   }
 
   .bar {
-    top: 24px; /* sp-6 — matches mobile strip height ✓ (was 22px off-grid) */
-    height: 46px;
+    top: 24px; /* sp-6 — matches mobile strip height ✓ */
+    height: auto; /* padding-driven: 12 + 44 + 12 = 68px ✓ */
   }
 
   .barInner {
-    padding: 0 16px;
+    padding: 12px 16px;
+    /* sp-3 sp-4 — on 4px grid ✓
+       12 + 44 + 12 = 68px nav height.
+       Reference navbar.html uses 14px but 14px
+       is off-grid; 12px is the nearest token. */
+    gap: 8px; /* sp-2 — tighter on mobile ✓ */
   }
 
   .brandSub {
-    font-size: 11px;
-    max-width: 160px;
+    display: none;
+    /* Hidden on mobile per navbar.html reference spec — sub-text competes
+       with search bar on narrow viewports. Visible from 681px upward. */
   }
 
   .searchWrap {
@@ -739,7 +746,7 @@
   }
 
   .drawerWrap {
-    top: 68px;
+    top: 92px; /* 24px strip + 68px auto bar ✓ */
   }
 }
 
