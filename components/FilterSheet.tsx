@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence, useDragControls, useReducedMotion } from 'framer-motion'
 import { springs } from '@/lib/springs'
 import { supabase } from '@/lib/supabase'
+import { TOKENS } from '@/lib/tokens'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,7 +44,7 @@ export function countFilters(f: FilterState): number {
 // ─── Shared style ─────────────────────────────────────────────────────────────
 
 const sectionLabel: React.CSSProperties = {
-  fontFamily:    "'IBM Plex Mono', monospace",
+  fontFamily:    TOKENS.mono,
   fontSize:      11,
   fontWeight:    500,
   letterSpacing: '0.06em',
@@ -474,7 +475,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
               {name}
               {count > 0 && (
                 <span style={{
-                  fontFamily:    "'IBM Plex Mono', monospace",
+                  fontFamily:    TOKENS.mono,
                   fontSize:      11,
                   fontWeight:    500,
                   color:         on ? 'var(--n-200)' : 'var(--n-400)', /* n-200 on n-900 bg ≈ 6.7:1 ✓; n-400 on n-0 bg = 4.57:1 ✓ */
@@ -499,7 +500,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
           justifyContent: 'space-between', marginBottom: 8,
         }}>
           <span style={{
-            fontFamily:         "'IBM Plex Mono', monospace",
+            fontFamily:         TOKENS.mono,
             fontSize:           14, fontWeight: 600,
             color:              'var(--n-900)',
             letterSpacing:      '-0.02em',
@@ -507,9 +508,9 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
           }}>
             {filters.rMin < 0 ? `−${Math.abs(filters.rMin)}%` : `${filters.rMin}%`}
           </span>
-          <span style={{ fontSize: 11, color: 'var(--n-400)', fontFamily: "'IBM Plex Mono', monospace" }}>to</span>
+          <span style={{ fontSize: 11, color: 'var(--n-400)', fontFamily: TOKENS.mono }}>to</span>
           <span style={{
-            fontFamily:         "'IBM Plex Mono', monospace",
+            fontFamily:         TOKENS.mono,
             fontSize:           14, fontWeight: 600,
             color:              'var(--n-900)',
             letterSpacing:      '-0.02em',
@@ -551,10 +552,10 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
 
         {/* Boundary labels — range markers, deliberately quiet */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--n-400)' }}>
+          <span style={{ fontFamily: TOKENS.mono, fontSize: 11, color: 'var(--n-400)' }}>
             {filters.rMin < 0 ? `−${Math.abs(filters.rMin)}%` : `${filters.rMin}%`}
           </span>
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--n-400)' }}>
+          <span style={{ fontFamily: TOKENS.mono, fontSize: 11, color: 'var(--n-400)' }}>
             {filters.rMax >= 50 ? '50%+' : `${filters.rMax}%`}
           </span>
         </div>
@@ -588,7 +589,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
           Filter
         </h2>
         <span style={{
-          fontFamily:    "'IBM Plex Mono', monospace",
+          fontFamily:    TOKENS.mono,
           fontSize:      11,
           fontWeight:    500,
           color:         matchCount === 0 ? 'var(--neg-500)' : 'var(--n-400)',

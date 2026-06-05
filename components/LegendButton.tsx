@@ -132,7 +132,7 @@ export default function LegendButton() {
             }}
           >
             <div style={{
-              fontFamily:    "'IBM Plex Mono', monospace",
+              fontFamily:    TOKENS.mono,
               fontSize:      11,
               fontWeight:    500,
               letterSpacing: '0.06em',
@@ -147,7 +147,7 @@ export default function LegendButton() {
                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <EnvelopeSvg w={w} h={h} />
                   <span style={{
-                    fontFamily: "'Inter', system-ui, sans-serif",
+                    fontFamily: TOKENS.font,
                     fontSize:   11,
                     color:      'var(--n-600)',
                     lineHeight: 1,

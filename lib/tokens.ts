@@ -102,6 +102,11 @@ export const TOKENS = {
     shadowXl: '0 16px 48px rgba(26,25,23,.10), 0 4px 12px rgba(26,25,23,.04)',
   },
 
+  // ─── FONT FAMILY REFERENCES (for TSX inline styles) ─────────────────────
+
+  font: 'var(--font)',  /* Inter — body text */
+  mono: 'var(--mono)',  /* IBM Plex Mono — data labels, system text */
+
   // ─── TYPOGRAPHY ───────────────────────────────────────────────────────────
 
   fonts: {

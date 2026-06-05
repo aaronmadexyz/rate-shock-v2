@@ -298,7 +298,7 @@ const SB_STYLE: React.CSSProperties = {
   width: 40, height: 40, border: 'none', background: TOKENS.colors.n0,
   cursor: 'pointer', fontSize: 17, color: 'var(--n-400)',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
-  transition: 'background .12s', fontFamily: "'Inter', system-ui, sans-serif",
+  transition: 'background .12s', fontFamily: TOKENS.font,
   flexShrink: 0, lineHeight: 1, padding: 0,
 }
 
@@ -1486,7 +1486,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                 <span
                   aria-hidden="true"
                   style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontFamily: TOKENS.mono,
                     fontSize: 11, fontWeight: 500, letterSpacing: '0.04em',
                     color: 'var(--n-400)', textTransform: 'uppercase', marginLeft: 4,
                   }}
@@ -1559,7 +1559,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           void onFsaInput(pasted)
                         }}
                         style={{
-                          fontFamily: "'IBM Plex Mono', monospace",
+                          fontFamily: TOKENS.mono,
                           fontSize: 22, fontWeight: 500,
                           width: '100%', padding: '12px 16px',
                           border: fsaError ? `1.5px solid ${TOKENS.colors.neg400}` : '1.5px solid var(--n-100)',
@@ -1626,7 +1626,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               color: insType === t ? TOKENS.colors.n0 : 'var(--n-500)',
                               cursor: 'pointer', transition: 'all .2s cubic-bezier(.16,1,.3,1)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                              fontFamily: "'Inter', system-ui, sans-serif",
+                              fontFamily: TOKENS.font,
                             }}
                           >
                             {t === 'auto' ? (
@@ -1691,7 +1691,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           style={{
                             display: provSearch === '' && provider ? 'none' : 'block',
                             width: '100%',
-                            fontFamily: "'Inter', system-ui, sans-serif",
+                            fontFamily: TOKENS.font,
                             fontSize: 13,
                             padding: '8px 12px',
                             border: '1.5px solid var(--n-100)',
@@ -1751,7 +1751,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                   background: provider === p ? TOKENS.colors.n900 : TOKENS.colors.n0,
                                   color: provider === p ? TOKENS.colors.n0 : 'var(--n-500)',
                                   cursor: 'pointer', transition: 'all .15s',
-                                  fontFamily: "'Inter', system-ui, sans-serif",
+                                  fontFamily: TOKENS.font,
                                 }}
                               >{p}</button>
                             ))
@@ -1776,7 +1776,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}
                       >
                         <span style={{
-                          fontFamily: "'IBM Plex Mono', monospace",
+                          fontFamily: TOKENS.mono,
                           fontSize: 11, fontWeight: 500,
                           letterSpacing: '.06em', textTransform: 'uppercase',
                           color: 'var(--n-400)', marginRight: 2,
@@ -1793,7 +1793,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               aria-pressed={isOn}
                               onClick={() => setSignFn(s)}
                               style={{
-                                fontFamily: "'IBM Plex Mono', monospace",
+                                fontFamily: TOKENS.mono,
                                 fontSize: 11, fontWeight: 500,
                                 letterSpacing: '.04em',
                                 padding: '12px 16px', borderRadius: 9999,
@@ -1819,7 +1819,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           aria-live="polite"
                           aria-atomic="true"
                           style={{
-                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontFamily: TOKENS.mono,
                             fontSize: 'clamp(40px, 8vw, 52px)',
                             fontWeight: 700,
                             letterSpacing: '-0.03em',
@@ -1844,7 +1844,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               aria-pressed={mode === m}
                               onClick={() => switchMode(m)}
                               style={{
-                                fontFamily: "'IBM Plex Mono', monospace",
+                                fontFamily: TOKENS.mono,
                                 fontSize: 11, fontWeight: 500,
                                 padding: '8px 16px', borderRadius: 9999,
                                 border: 'none', cursor: 'pointer',
@@ -1889,8 +1889,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             }}
                           />
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                            <span style={{ fontSize: 11, color: TOKENS.colors.n400, fontFamily: "'IBM Plex Mono', monospace" }}>0%</span>
-                            <span style={{ fontSize: 11, color: TOKENS.colors.n400, fontFamily: "'IBM Plex Mono', monospace" }}>
+                            <span style={{ fontSize: 11, color: TOKENS.colors.n400, fontFamily: TOKENS.mono }}>0%</span>
+                            <span style={{ fontSize: 11, color: TOKENS.colors.n400, fontFamily: TOKENS.mono }}>
                               {sign === 'dec' ? '30%' : '50%+'}
                             </span>
                           </div>
@@ -1905,14 +1905,14 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           borderRadius: 'var(--r-lg)',
                         }}>
                           <div style={{
-                            fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, fontWeight: 500,
+                            fontFamily: TOKENS.mono, fontSize: 11, fontWeight: 500,
                             letterSpacing: '.06em', textTransform: 'uppercase',
                             color: 'var(--n-500)', marginBottom: 8,
                             display: 'flex', alignItems: 'center', gap: 8,
                           }}>
                             Dollar amounts
                             <span style={{
-                              fontFamily: "'Inter', system-ui, sans-serif",
+                              fontFamily: TOKENS.font,
                               fontWeight: 400, letterSpacing: 0, textTransform: 'none',
                               fontSize: 11, color: 'var(--n-500)',
                             }}>— fill any two to calculate the third</span>
@@ -1923,7 +1923,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               <label
                                 htmlFor="triDollar"
                                 style={{
-                                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
+                                  fontFamily: TOKENS.mono, fontSize: 11,
                                   fontWeight: 500, letterSpacing: '.06em',
                                   textTransform: 'uppercase', color: 'var(--n-500)',
                                   marginBottom: 4, display: 'block',
@@ -1939,7 +1939,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                 onFocusCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = TOKENS.colors.p400; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 3px rgba(99,106,197,.09)' }}
                                 onBlurCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--n-200)'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}
                               >
-                                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 500, color: 'var(--n-400)', flexShrink: 0, userSelect: 'none' }}>
+                                <span style={{ fontFamily: TOKENS.mono, fontSize: 13, fontWeight: 500, color: 'var(--n-400)', flexShrink: 0, userSelect: 'none' }}>
                                   {sign === 'dec' ? '−$' : '+$'}
                                 </span>
                                 <input
@@ -1959,7 +1959,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                     if (prevPremError) setPrevPremError('')
                                   }}
                                   style={{
-                                    flex: 1, fontFamily: "'IBM Plex Mono', monospace",
+                                    flex: 1, fontFamily: TOKENS.mono,
                                     fontSize: 14, fontWeight: 500, color: 'var(--n-900)',
                                     border: 'none', outline: 'none', background: 'transparent',
                                     width: '100%', minWidth: 0, padding: 0,
@@ -1972,7 +1972,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               <label
                                 htmlFor="triPrevPrem"
                                 style={{
-                                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
+                                  fontFamily: TOKENS.mono, fontSize: 11,
                                   fontWeight: 500, letterSpacing: '.06em',
                                   textTransform: 'uppercase', color: 'var(--n-500)',
                                   marginBottom: 4, display: 'block',
@@ -1988,7 +1988,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                 onFocusCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = TOKENS.colors.p400; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 3px rgba(99,106,197,.09)' }}
                                 onBlurCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--n-200)'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}
                               >
-                                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 500, color: 'var(--n-400)', flexShrink: 0, userSelect: 'none' }}>$</span>
+                                <span style={{ fontFamily: TOKENS.mono, fontSize: 13, fontWeight: 500, color: 'var(--n-400)', flexShrink: 0, userSelect: 'none' }}>$</span>
                                 <input
                                   id="triPrevPrem"
                                   type="number"
@@ -2004,7 +2004,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                     if (prevPremError) setPrevPremError('')
                                   }}
                                   style={{
-                                    flex: 1, fontFamily: "'IBM Plex Mono', monospace",
+                                    flex: 1, fontFamily: TOKENS.mono,
                                     fontSize: 14, fontWeight: 500, color: 'var(--n-900)',
                                     border: 'none', outline: 'none', background: 'transparent',
                                     width: '100%', minWidth: 0, padding: 0,
@@ -2028,7 +2028,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               }}
                             >
                               <span style={{
-                                fontFamily: "'IBM Plex Mono', monospace", fontSize: 15,
+                                fontFamily: TOKENS.mono, fontSize: 15,
                                 fontWeight: 700, letterSpacing: '-.02em',
                                 color: sign === 'dec' ? 'var(--pos-600)' : 'var(--p-700)',
                               }}>
@@ -2037,7 +2037,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                   : `${sign === 'dec' ? '−' : '+'}${triPct}% ${sign === 'dec' ? 'decrease' : 'increase'}`}
                               </span>
                               <span style={{
-                                fontFamily: "'Inter', system-ui, sans-serif", fontSize: 11,
+                                fontFamily: TOKENS.font, fontSize: 11,
                                 color: sign === 'dec' ? 'var(--pos-500)' : 'var(--p-500)',
                                 lineHeight: 1.45,
                               }}>
@@ -2053,7 +2053,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               style={{
                                 fontSize: 11, color: 'var(--neg-500)',
                                 marginTop: 8, lineHeight: 1.4,
-                                fontFamily: "'Inter', system-ui, sans-serif",
+                                fontFamily: TOKENS.font,
                               }}
                             >
                               {prevPremError}
@@ -2102,7 +2102,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                 border: `1.5px solid ${sent === n ? SC[n] : 'var(--n-100)'}`,
                                 cursor: 'pointer', transition: 'border-color .22s cubic-bezier(.16,1,.3,1), background .22s cubic-bezier(.16,1,.3,1)',
                                 background: sent === n ? SC[n] + '28' : TOKENS.colors.n0,
-                                fontFamily: "'Inter', system-ui, sans-serif",
+                                fontFamily: TOKENS.font,
                                 willChange: 'transform',
                               }}
                               aria-label={SENT_LABELS[n]}
@@ -2143,7 +2143,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                             onChange={handleNoteChange}
                             style={{
                               width: '100%', padding: '12px 12px',
-                              fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
+                              fontFamily: TOKENS.font, fontSize: 14,
                               border: '1.5px solid var(--n-100)', borderRadius: 'var(--r-lg)',
                               background: TOKENS.colors.n0, color: TOKENS.colors.n900, outline: 'none',
                               resize: 'none', lineHeight: 1.6, minHeight: 76,
@@ -2328,7 +2328,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         <div style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid var(--n-100)' }}>
                           <div
                             style={{
-                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
+                              fontFamily: TOKENS.mono, fontSize: 11,
                               fontWeight: 500, letterSpacing: '.02em', textTransform: 'uppercase',
                               color: 'var(--n-400)', marginBottom: 4, whiteSpace: 'nowrap',
                             }}
@@ -2356,7 +2356,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         <div style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid var(--n-100)' }}>
                           <div
                             style={{
-                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
+                              fontFamily: TOKENS.mono, fontSize: 11,
                               fontWeight: 500, letterSpacing: '.02em', textTransform: 'uppercase',
                               color: 'var(--n-400)', marginBottom: 4, whiteSpace: 'nowrap',
                             }}
@@ -2383,7 +2383,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                         <div style={{ padding: '12px 8px', textAlign: 'center' }}>
                           <div
                             style={{
-                              fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
+                              fontFamily: TOKENS.mono, fontSize: 11,
                               fontWeight: 500, letterSpacing: '.02em', textTransform: 'uppercase',
                               color: 'var(--n-400)', marginBottom: 4, whiteSpace: 'nowrap',
                             }}
@@ -2453,7 +2453,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                 <circle cx="8" cy="8" r="7" stroke="var(--pos-600)" strokeWidth="1.3"/>
                                 <path d="M5 8l2.5 2.5L11 5.5" stroke="var(--pos-600)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
-                              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--pos-600)', fontFamily: "'Inter', system-ui, sans-serif" }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--pos-600)', fontFamily: TOKENS.font }}>
                                 Done — your post is now fully comparable with percentage data.
                               </span>
                             </div>
@@ -2466,10 +2466,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                   <path d="M5 5h6M5 8h6M5 11h3" stroke="var(--p-500)" strokeWidth="1.2" strokeLinecap="round"/>
                                 </svg>
                                 <div>
-                                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--p-600)', marginBottom: 4, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--p-600)', marginBottom: 4, fontFamily: TOKENS.font }}>
                                     Unlock neighbourhood comparisons
                                   </div>
-                                  <div id="patchHelper" style={{ fontSize: 12, color: 'var(--p-500)', lineHeight: 1.5, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                                  <div id="patchHelper" style={{ fontSize: 12, color: 'var(--p-500)', lineHeight: 1.5, fontFamily: TOKENS.font }}>
                                     You submitted a dollar amount. Add your previous premium and we'll calculate your % increase — making your post fully comparable.
                                   </div>
                                 </div>
@@ -2495,7 +2495,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                   }}
                                 >
                                   <span style={{
-                                    fontFamily: "'IBM Plex Mono', monospace",
+                                    fontFamily: TOKENS.mono,
                                     fontSize: 14, fontWeight: 500,
                                     color: 'var(--n-400)', marginRight: 4, flexShrink: 0,
                                   }}>$</span>
@@ -2513,7 +2513,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                     onChange={() => { if (patchError) setPatchError('') }}
                                     style={{
                                       flex: 1,
-                                      fontFamily: "'IBM Plex Mono', monospace",
+                                      fontFamily: TOKENS.mono,
                                       fontSize: 14, fontWeight: 500,
                                       color: 'var(--n-900)',
                                       border: 'none', outline: 'none',
@@ -2533,7 +2533,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                     fontSize: 13, fontWeight: 500,
                                     border: 'none', cursor: patchLoading ? 'default' : 'pointer',
                                     whiteSpace: 'nowrap', flexShrink: 0,
-                                    fontFamily: "'Inter', system-ui, sans-serif",
+                                    fontFamily: TOKENS.font,
                                     transition: 'background .15s, transform .1s',
                                     opacity: patchLoading ? 0.65 : 1,
                                   }}
@@ -2549,7 +2549,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                                 <p role="alert" aria-live="assertive" style={{
                                   fontSize: 11, color: 'var(--neg-500)',
                                   marginTop: 8, lineHeight: 1.4,
-                                  fontFamily: "'Inter', system-ui, sans-serif",
+                                  fontFamily: TOKENS.font,
                                 }}>
                                   {patchError}
                                 </p>
@@ -2567,7 +2567,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           type="button"
                           onClick={() => { handleClose(); onZoomToPost?.(fsa.toUpperCase()) }}
                           style={{
-                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontFamily: TOKENS.mono,
                             fontSize: 11, fontWeight: 500,
                             color: 'var(--n-400)', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', gap: 4,
@@ -2598,7 +2598,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           color: TOKENS.colors.p600,
                           textDecoration: 'none',
                           marginTop: 8,
-                          fontFamily: "'Inter', system-ui, sans-serif",
+                          fontFamily: TOKENS.font,
                         }}
                         onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
                         onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
@@ -2631,10 +2631,10 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           <path d="M11 9c1.7.4 3 1.9 3 3.5" stroke="var(--p-500)" strokeWidth="1.2" strokeLinecap="round"/>
                         </svg>
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: TOKENS.colors.p600, marginBottom: 4, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: TOKENS.colors.p600, marginBottom: 4, fontFamily: TOKENS.font }}>
                             Filter the map to drivers like you
                           </div>
-                          <div style={{ fontSize: 12, color: 'var(--p-500)', lineHeight: 1.5, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                          <div style={{ fontSize: 12, color: 'var(--p-500)', lineHeight: 1.5, fontFamily: TOKENS.font }}>
                             See how your renewal compares to drivers with a similar profile and provider.
                           </div>
                           <button
@@ -2656,7 +2656,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                               border:         'none',
                               cursor:         'pointer',
                               padding:        0,
-                              fontFamily:     "'Inter', system-ui, sans-serif",
+                              fontFamily:     TOKENS.font,
                             }}
                             onMouseEnter={e => (e.currentTarget.style.color = TOKENS.colors.p700)}
                             onMouseLeave={e => (e.currentTarget.style.color = TOKENS.colors.p600)}
@@ -2696,7 +2696,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           type="button"
                           onClick={onVerify}
                           style={{
-                            fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, fontWeight: 500,
+                            fontFamily: TOKENS.font, fontSize: 13, fontWeight: 500,
                             padding: '8px 20px', borderRadius: 9999,
                             border: 'none', background: TOKENS.colors.n900, color: TOKENS.colors.n0,
                             cursor: 'pointer', transition: 'opacity .15s',
@@ -2708,7 +2708,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                           type="button"
                           onClick={handleClose}
                           style={{
-                            fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, fontWeight: 500,
+                            fontFamily: TOKENS.font, fontSize: 13, fontWeight: 500,
                             padding: '6px 16px', borderRadius: 9999,
                             border: 'none', background: 'none', color: 'var(--n-400)',
                             cursor: 'pointer', transition: 'background .15s, color .15s',
@@ -2742,7 +2742,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     type="button"
                     onClick={goBack}
                     style={{
-                      fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
+                      fontFamily: TOKENS.font, fontSize: 14, fontWeight: 500,
                       padding: '12px 16px', borderRadius: 9999,
                       border: `1px solid ${TOKENS.colors.n200}`, background: TOKENS.colors.n0, cursor: 'pointer',
                       color: 'var(--n-500)', transition: 'background .15s, transform .1s', whiteSpace: 'nowrap',
@@ -2766,7 +2766,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onVerify, onSubmitt
                     }
                   }}
                   style={{
-                    fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
+                    fontFamily: TOKENS.font, fontSize: 14, fontWeight: 500,
                     padding: '12px 0', borderRadius: 9999,
                     border: 'none',
                     background: 'var(--p-600)', /* #3A3F8F — primary CTA, 5.67:1 on white ✓ AA */

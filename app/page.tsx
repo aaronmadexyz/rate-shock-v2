@@ -279,7 +279,7 @@ export default function Page() {
               border:               '1px solid var(--n-150)',
               borderRadius:         9999,
               padding:              'clamp(8px, 2vw, 10px) clamp(14px, 4vw, 20px)',
-              fontFamily:           "'Inter', system-ui, sans-serif",
+              fontFamily:           TOKENS.font,
               fontSize:             13,
               fontWeight:           500,
               color:                'var(--n-900)',

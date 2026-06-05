@@ -208,7 +208,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                   <CheckIcon />
                 </div>
                 <p style={{
-                  fontFamily:  "'Inter', system-ui, sans-serif",
+                  fontFamily:  TOKENS.font,
                   fontSize:    15,
                   fontWeight:  500,
                   color:       'var(--n-900)',
@@ -218,7 +218,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                   Thanks for the input.
                 </p>
                 <p style={{
-                  fontFamily:  "'Inter', system-ui, sans-serif",
+                  fontFamily:  TOKENS.font,
                   fontSize:    13,
                   color:       'var(--n-500)',
                   textAlign:   'center',
@@ -236,7 +236,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <p style={{
-                      fontFamily:    "'Inter', system-ui, sans-serif",
+                      fontFamily:    TOKENS.font,
                       fontSize:      15,   /* Body spec: 15px 500 — anchors modal title ✓ */
                       fontWeight:    500,
                       letterSpacing: '-0.01em',
@@ -246,7 +246,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                       What should we build next?
                     </p>
                     <p style={{
-                      fontFamily: "'Inter', system-ui, sans-serif",
+                      fontFamily: TOKENS.font,
                       fontSize:   13, /* Caption spec ✓ — was 12px, not on type scale */
                       color:      'var(--n-400)',
                       marginTop:  4, /* sp-1 ✓ — was 2px, off-grid */
@@ -281,7 +281,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                 {uiState !== 'loading' && (
                   <div style={{ margin: '12px 0 16px' }}> {/* sp-3 sp-4 ✓ — was 14px, off-grid */}
                     <div style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontFamily: TOKENS.mono,
                       fontSize: 11, fontWeight: 500,
                       letterSpacing: '0.06em', textTransform: 'uppercase',
                       color: 'var(--n-400)', marginBottom: 8,
@@ -299,7 +299,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                       >
                         <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--n-200)', flexShrink: 0 }} />
                         <span style={{
-                          fontFamily: "'Inter', system-ui, sans-serif",
+                          fontFamily: TOKENS.font,
                           fontSize: 13, color: 'var(--n-600)', lineHeight: 1.4, /* Caption spec ✓ */
                         }}>{req}</span>
                       </div>
@@ -327,7 +327,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                       if (uiState === 'error') setUiState('idle')
                     }}
                     style={{
-                      fontFamily:   "'Inter', system-ui, sans-serif",
+                      fontFamily:   TOKENS.font,
                       fontSize:     13,   /* Caption spec — matches surrounding copy ✓ */
                       lineHeight:   1.65, /* WCAG 1.4.12 ✓ */
                       width:        '100%',
@@ -344,7 +344,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                     }}
                   />
                   <p style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontFamily: TOKENS.mono,
                     fontSize:   11,
                     color:      'var(--n-400)',
                     marginTop:  4,
@@ -365,7 +365,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                     width:        '100%',
                     background:   'var(--p-600)',
                     color:        'var(--n-0)',
-                    fontFamily:   "'Inter', system-ui, sans-serif",
+                    fontFamily:   TOKENS.font,
                     fontSize:     14,
                     fontWeight:   500,
                     padding:      '12px 0', /* sp-3 on 4px grid ✓ */
@@ -391,7 +391,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                 {/* Error message */}
                 {uiState === 'error' && (
                   <p style={{
-                    fontFamily: "'Inter', system-ui, sans-serif",
+                    fontFamily: TOKENS.font,
                     fontSize:   12,
                     color:      'var(--neg-500)',
                     marginTop:  8,

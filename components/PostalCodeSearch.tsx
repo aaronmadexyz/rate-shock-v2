@@ -156,7 +156,7 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
           >
             <span style={{
               display:      'block',
-              fontFamily:   "'Inter', system-ui, sans-serif",
+              fontFamily:   TOKENS.font,
               fontSize:     12,
               color:        'var(--neg-500)',
               background:   'var(--n-0)',
@@ -295,7 +295,7 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
                 onKeyDown={handleKeyDown}
                 onBlur={handleBlur}
                 style={{
-                  fontFamily:  "'IBM Plex Mono', monospace",
+                  fontFamily:  TOKENS.mono,
                   fontSize:    13,
                   color:       'var(--n-900)',
                   border:      'none',

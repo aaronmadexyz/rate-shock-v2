@@ -57,14 +57,14 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <ProfilesIcon />
           <span style={{
-            fontFamily: "'Inter', system-ui, sans-serif",
+            fontFamily: TOKENS.font,
             fontSize: 12, fontWeight: 500, color: 'var(--n-500)',
           }}>
             Not enough similar profiles yet
           </span>
         </div>
         <p style={{
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: TOKENS.font,
           fontSize: 11, color: 'var(--n-400)', lineHeight: 1.5, margin: 0,
         }}>
           Need 8+ to build a cohort. Showing all{' '}
@@ -98,7 +98,7 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <ProfilesIcon active />
         <span style={{
-          fontFamily:    "'Inter', system-ui, sans-serif",
+          fontFamily:    TOKENS.font,
           fontSize:      11, fontWeight: 500, color: 'var(--n-400)',
           textTransform: 'uppercase', letterSpacing: '.04em',
         }}>
@@ -107,7 +107,7 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{
-          fontFamily:         "'Inter', system-ui, sans-serif",
+          fontFamily:         TOKENS.font,
           fontSize:           22, fontWeight: 600, color: 'var(--n-900)',
           letterSpacing:      '-.02em',
           fontVariantNumeric: 'tabular-nums',
@@ -115,21 +115,21 @@ function CohortCard({ result, profile }: { result: CohortResult | null; profile:
           +{result.median}%
         </span>
         <span style={{
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: TOKENS.font,
           fontSize:   12, color: 'var(--n-400)',
         }}>
           median · {result.count} profiles
         </span>
       </div>
       <div style={{
-        fontFamily: "'IBM Plex Mono', monospace",
+        fontFamily: TOKENS.mono,
         fontSize:   11, color: 'var(--n-500)', marginTop: 4,
       }}>
         Range: +{result.min}% – +{result.max}%
       </div>
       {tierNote && (
         <p style={{
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: TOKENS.font,
           fontSize:   11, color: 'var(--n-400)', lineHeight: 1.5,
           marginTop:  6, marginBottom: 0,
         }}>
@@ -305,7 +305,7 @@ function MapControls({
               <div style={{
                 background:   'var(--n-900)',
                 color:        'var(--n-0)',
-                fontFamily:   "'Inter', system-ui, sans-serif",
+                fontFamily:   TOKENS.font,
                 fontSize:     12,
                 fontWeight:   500,
                 padding:      '6px 12px',
@@ -349,7 +349,7 @@ function MapControls({
           aria-controls="filter-panel"
           aria-describedby={nudgeVisible ? 'filter-nudge-tooltip' : undefined}
           style={{
-            fontFamily:      "'Inter', system-ui, sans-serif",
+            fontFamily:      TOKENS.font,
             fontSize:        13,
             fontWeight:      500,
             letterSpacing:   '-0.01em',
@@ -376,7 +376,7 @@ function MapControls({
           <span className={styles.filterLabelShort}>Filter</span>
           {isActive && (
             <span style={{
-              fontFamily:      "'IBM Plex Mono', monospace",
+              fontFamily:      TOKENS.mono,
               fontSize:        10,
               fontWeight:      500,
               lineHeight:      1.4,
@@ -413,7 +413,7 @@ function MapControls({
             backgroundColor: likeMeMode ? 'var(--p-50)' : 'var(--n-0)',
             color:           likeMeMode ? 'var(--p-600)' : 'var(--n-800)',
             boxShadow:       SH_SM,
-            fontFamily:      "'Inter', system-ui, sans-serif",
+            fontFamily:      TOKENS.font,
             fontSize:        13,
             fontWeight:      500,
             letterSpacing:   '-0.01em',

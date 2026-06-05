@@ -28,13 +28,13 @@ export class MapErrorBoundary extends React.Component<Props, State> {
             gap:            8,
           }}
         >
-          <p style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, color: 'var(--n-500)', margin: 0 }}>
+          <p style={{ fontFamily: TOKENS.font, fontSize: 14, color: 'var(--n-500)', margin: 0 }}>
             The map failed to load.
           </p>
           <button
             onClick={() => window.location.reload()}
             style={{
-              fontFamily:   "'Inter', system-ui, sans-serif",
+              fontFamily:   TOKENS.font,
               fontSize:     13,
               fontWeight:   500,
               padding:      '8px 20px',
