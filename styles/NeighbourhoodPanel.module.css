@@ -790,13 +790,30 @@
   .backdrop {
     inset: auto 0 0 0; /* bottom-anchored; overrides base inset:0 */
     height: var(--panel-peek-height, calc((100dvh - 96px) * 0.65));
-    transition: height .28s cubic-bezier(.16,1,.3,1);
+    transition: height .28s cubic-bezier(.16,1,.3,1),
+                background .28s cubic-bezier(.16,1,.3,1);
+    /* Rule 4: ease-out cubic ✓  Rule 6: 280ms < 300ms ✓
+       background transition fires when data-snap changes peek→full */
   }
 
-  /* Backdrop expands with panel when fully expanded */
+  /* Peek state — very subtle warm overlay.
+     Map remains fully readable and interactive above the panel.
+     n-900 warm undertone rgba(26,25,23) — design system §02 shadow spec ✓
+     .06 opacity: spatial hierarchy signal without dimming the map. */
+  .backdrop[data-snap="peek"] {
+    background: rgba(26, 25, 23, .06);
+    pointer-events: none;
+    /* Tap target in peek is .mapHitArea, not the backdrop.
+       pointer-events: none keeps the map interactive. */
+  }
+
+  /* Full state — backdrop expands and dims */
   .backdrop[data-snap="full"] {
     top: 0;
     height: var(--panel-max-height, calc(100dvh - 96px));
+    background: rgba(26, 25, 23, .28);
+    /* Full dim — heavier than peek, map recedes ✓ */
+    pointer-events: all;
   }
 }
 
