@@ -256,6 +256,22 @@ function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
     { duration: 600, decimals: 1 }
   )
 
+  /* WCAG: keep counters aria-hidden for the full animation duration so a
+     screen reader navigating mid-count-up reads the final value, not an
+     intermediate one. 650ms > 600ms counter — clears after animation ends. */
+  const [autoAvgDone,  setAutoAvgDone]  = useState(false)
+  const [homeAvgDone,  setHomeAvgDone]  = useState(false)
+  useEffect(() => {
+    setAutoAvgDone(false)
+    const t = setTimeout(() => setAutoAvgDone(true), 650)
+    return () => clearTimeout(t)
+  }, [stats.autoAvgPct])
+  useEffect(() => {
+    setHomeAvgDone(false)
+    const t = setTimeout(() => setHomeAvgDone(true), 650)
+    return () => clearTimeout(t)
+  }, [stats.homeAvgPct])
+
   return (
     <>
       {/* Section 1 — Type breakdown */}
@@ -279,7 +295,7 @@ function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
             className={`${styles.typeAvg}${stats.autoAvgPct === null ? ` ${styles.typeAvgEmpty}` : ''}`}
             style={stats.autoAvgPct !== null ? { color: tierColor(stats.autoAvgPct) } : undefined}
             aria-label={rateAriaLabel(stats.autoAvgPct)}
-            aria-hidden={displayedAutoAvg === null}
+            aria-hidden={!autoAvgDone || displayedAutoAvg === null}
           >
             {displayedAutoAvg !== null
               ? formatDisplayed(displayedAutoAvg, stats.autoAvgPct)
@@ -310,7 +326,7 @@ function AggregateBody({ stats, onReportClick }: AggregateBodyProps) {
             className={`${styles.typeAvg}${stats.homeAvgPct === null ? ` ${styles.typeAvgEmpty}` : ''}`}
             style={stats.homeAvgPct !== null ? { color: tierColor(stats.homeAvgPct) } : undefined}
             aria-label={rateAriaLabel(stats.homeAvgPct)}
-            aria-hidden={displayedHomeAvg === null}
+            aria-hidden={!homeAvgDone || displayedHomeAvg === null}
           >
             {displayedHomeAvg !== null
               ? formatDisplayed(displayedHomeAvg, stats.homeAvgPct)
@@ -402,6 +418,13 @@ export default function NeighbourhoodPanel({
          Documented Rule 6 exception for data counters per design system §05. */
     }
   )
+  /* WCAG: aria-hidden for 550ms (> 500ms counter) so AT reads final value only. */
+  const [detailRateDone, setDetailRateDone] = useState(false)
+  useEffect(() => {
+    setDetailRateDone(false)
+    const t = setTimeout(() => setDetailRateDone(true), 550)
+    return () => clearTimeout(t)
+  }, [detailReport?.rate_change_pct])
 
   // ── Peek / full snap state (mobile only) ─────────────────────────────────────
   const [snapPoint, setSnapPoint] = useState<'peek' | 'full'>('peek')
@@ -526,8 +549,7 @@ export default function NeighbourhoodPanel({
           className={styles.mapHitArea}
           data-snap={snapPoint}
           onClick={onClose}
-          role="button"
-          aria-label="Close panel and return to map"
+          aria-hidden="true"
           tabIndex={-1}
         />
       )}
@@ -709,7 +731,7 @@ export default function NeighbourhoodPanel({
                   className={styles.detailRateVal}
                   style={{ color: tierColor(detailReport.rate_change_pct) }}
                   aria-label={rateAriaLabel(detailReport.rate_change_pct)}
-                  aria-hidden={displayedDetailRate === null}
+                  aria-hidden={!detailRateDone || displayedDetailRate === null}
                 >
                   {displayedDetailRate !== null
                     ? formatDisplayed(displayedDetailRate, detailReport.rate_change_pct)

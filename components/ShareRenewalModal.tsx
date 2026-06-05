@@ -2123,7 +2123,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                               {n === 3 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Neutral face</title><circle cx="17" cy="17" r="15" fill={TOKENS.colors.cau400}/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 22L22 22" stroke="white" strokeWidth="2.2" strokeLinecap="round"/></svg>}
                               {n === 4 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Sad face</title><circle cx="17" cy="17" r="15" fill="var(--neg-200)"/><circle cx="12" cy="14" r="2" fill="white"/><circle cx="22" cy="14" r="2" fill="white"/><path d="M12 24Q17 20 22 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
                               {n === 5 && <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><title>Very sad face</title><circle cx="17" cy="17" r="15" fill={TOKENS.colors.neg400}/><circle cx="12" cy="13" r="2" fill="white"/><circle cx="22" cy="13" r="2" fill="white"/><path d="M10 24Q17 19 24 24" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>}
-                              <span aria-hidden="true" style={{ fontSize: 11, color: 'var(--n-400)', textAlign: 'center', lineHeight: 1.3 }}>
+                              <span aria-hidden="true" style={{ fontSize: 11, color: 'var(--n-400)', textAlign: 'center', lineHeight: 1.5 /* WCAG 1.4.12: ≥1.5× font-size ✓ */ }}>
                                 {n === 1 ? <>Very<br/>fair</> : n === 5 ? <>Very<br/>unfair</> : SENT_LABELS[n]}
                               </span>
                             </button>
@@ -2353,7 +2353,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                                   : `${cntYou >= 50 ? '50+' : cntYou}%`)
                               : `${sign === 'dec' ? '−' : '+'}$${rval.toLocaleString()}`}
                           </div>
-                          <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 4, lineHeight: 1.4 }}>your renewal</div>
+                          <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 4, lineHeight: 1.5 /* WCAG 1.4.12: ≥1.5× font-size ✓ */ }}>your renewal</div>
                         </div>
                         {/* Area column */}
                         <div style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid var(--n-100)' }}>
@@ -2378,7 +2378,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                           >
                             {compLoading ? '–' : hasAreaData ? `${cntNbr}%` : hasLimitedData ? `${Math.round(areaMed!)}%*` : '–'}
                           </div>
-                          <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 4, lineHeight: 1.4 }}>
+                          <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 4, lineHeight: 1.5 /* WCAG 1.4.12: ≥1.5× font-size ✓ */ }}>
                             {compLoading ? 'loading…' : hasAreaData ? 'average increase' : hasLimitedData ? 'limited data' : 'no area data yet'}
                           </div>
                         </div>
@@ -2405,7 +2405,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                           >
                             {compLoading ? '–' : ontMed !== null ? `${cntOnt}%` : '–'}
                           </div>
-                          <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 4, lineHeight: 1.4 }}>province-wide</div>
+                          <div style={{ fontSize: 11, color: 'var(--n-400)', marginTop: 4, lineHeight: 1.5 /* WCAG 1.4.12: ≥1.5× font-size ✓ */ }}>province-wide</div>
                         </div>
                       </div>
                       {/* Insight line */}
@@ -2652,13 +2652,17 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                               alignItems:     'center',
                               gap:            4,
                               marginTop:      8,
+                              minHeight:      44,    /* WCAG 2.5.5: 44px minimum tap target ✓ */
+                              paddingTop:     12,    /* sp-3 top + sp-3 bottom centres text in 44px area ✓ */
+                              paddingBottom:  12,
+                              paddingLeft:    0,
+                              paddingRight:   0,
                               fontSize:       12,
                               fontWeight:     500,
                               color:          TOKENS.colors.p600,
                               background:     'none',
                               border:         'none',
                               cursor:         'pointer',
-                              padding:        0,
                               fontFamily:     TOKENS.font,
                             }}
                             onMouseEnter={e => (e.currentTarget.style.color = TOKENS.colors.p700)}

@@ -246,7 +246,7 @@ function HoverPreview({
   return (
     <motion.div
       className={styles.preview}
-      role="tooltip"
+      aria-hidden="true"
       style={{
         position:        'fixed',
         left:            x,
@@ -270,7 +270,6 @@ function HoverPreview({
       onAnimationComplete={() => { if (isFirst) onFirstShown() }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      onClick={onNavigate}
     >
       {/* Main content row */}
       <div style={{ display: 'flex', alignItems: 'center' }}>
