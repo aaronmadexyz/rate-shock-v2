@@ -299,9 +299,24 @@ export default function Page() {
         />
       )}
 
-      {/* Map attribution bar */}
+      {/* Map attribution — full-width footer bar, OSM + CARTO credit */}
       <div className={mcStyles.attributionBar}>
-        {'© Rate-Shock 2026'}
+        {'© '}
+        <a
+          href="https://www.openstreetmap.org/copyright"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          OpenStreetMap
+        </a>
+        {' contributors © '}
+        <a
+          href="https://carto.com/attributions"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          CARTO
+        </a>
       </div>
     </div>
   )
