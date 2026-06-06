@@ -1587,7 +1587,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                             className={prefersReduced ? undefined : 'fsa-hint-resolving'}
                             style={{
                               fontSize: 12, color: fsaHintColor, fontWeight: 500, margin: 0,
-                              lineHeight: 1.4, overflow: 'hidden',
+                              lineHeight: 1.5 /* WCAG 1.4.12: ≥1.5× font-size ✓ */, overflow: 'hidden',
                               display: '-webkit-box', WebkitLineClamp: 2,
                               WebkitBoxOrient: 'vertical',
                             }}
@@ -2049,7 +2049,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                               <span style={{
                                 fontFamily: TOKENS.font, fontSize: 11,
                                 color: sign === 'dec' ? 'var(--pos-500)' : 'var(--p-500)',
-                                lineHeight: 1.45,
+                                lineHeight: 1.5 /* WCAG 1.4.12: ≥1.5× font-size ✓ */,
                               }}>
                                 your post will be fully comparable with neighbours
                               </span>
@@ -2062,7 +2062,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                               role="alert"
                               style={{
                                 fontSize: 11, color: 'var(--neg-500)',
-                                marginTop: 8, lineHeight: 1.4,
+                                marginTop: 8, lineHeight: 1.5 /* WCAG 1.4.12: ≥1.5× font-size ✓ */,
                                 fontFamily: TOKENS.font,
                               }}
                             >
@@ -2551,7 +2551,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                               {patchError && (
                                 <p role="alert" aria-live="assertive" style={{
                                   fontSize: 11, color: 'var(--neg-500)',
-                                  marginTop: 8, lineHeight: 1.4,
+                                  marginTop: 8, lineHeight: 1.5 /* WCAG 1.4.12: ≥1.5× font-size ✓ */,
                                   fontFamily: TOKENS.font,
                                 }}>
                                   {patchError}
