@@ -629,6 +629,24 @@ input[type="checkbox"]:focus + div {
   border-radius: 50%;
 }
 
+/* FRB close button: 26×26px visual → ≥44px tap target */
+.frb-close-btn {
+  position: relative;
+}
+.frb-close-btn::before {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  /* 26px + 18px = 44px ✓ WCAG 2.5.5: 44×44px minimum ✓ */
+  border-radius: 50%;
+}
+.frb-close-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-500);
+  /* DS double-ring focus spec ✓ p-500 (#4A50B0) on n-0 ✓ */
+  border-radius: 50%;
+}
+
 /* Stepper buttons: 34–40px visual → ≥44px tap target */
 .srm-stepper-btn {
   position: relative;

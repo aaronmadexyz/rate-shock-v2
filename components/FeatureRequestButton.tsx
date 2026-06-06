@@ -256,6 +256,7 @@ function FeatureRequestButton({ isOpen: open, onClose }: FeatureRequestButtonPro
                   </div>
                   <button
                     type="button"
+                    className="frb-close-btn"
                     onClick={handleClose}
                     aria-label="Close"
                     style={{

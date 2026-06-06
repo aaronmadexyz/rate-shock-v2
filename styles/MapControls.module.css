@@ -109,7 +109,11 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 22px;
+  height: 32px;
+  /* sp-8 — raised from 22px (off-grid) for larger link tap area.
+     WCAG 2.5.5 NOTE: attribution links require 44px tap target.
+     Bar capped at 32px (sp-8) to avoid visual dominance of legal
+     attribution text. Known constraint — maximum achievable here. */
   z-index: var(--z-controls); /* 20 — attribution bar, same canvas layer as controls */
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(4px);
@@ -129,6 +133,9 @@
 .attributionBar a {
   color: var(--n-500); /* 4.7:1 on near-white ✓ AA */
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  height: 100%; /* Link fills full bar height → 32px tap area ✓ */
 }
 
 .attributionBar a:hover {

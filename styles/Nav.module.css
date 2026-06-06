@@ -8,8 +8,12 @@
   left: 0;
   right: 0;
   z-index: calc(var(--z-nav) + 1); /* 101 — strip sits above main bar */
-  height: 28px;
+  height: calc(28px + env(safe-area-inset-top));
+  /* WCAG 11: expand strip height to clear Dynamic Island / notch.
+     env() = 0 on devices without notch — no visual change there. ✓ */
   padding: 4px 16px; /* sp-1 sp-4 — compact strip ✓ */
+  padding-top: calc(4px + env(safe-area-inset-top));
+  /* Pushes strip content below the notch while preserving sp-1 above it. ✓ */
   background: var(--n-800);
   display: flex;
   align-items: center;
@@ -117,7 +121,8 @@
 
 .bar {
   position: fixed;
-  top: 28px;
+  top: calc(28px + env(safe-area-inset-top));
+  /* Sits directly below the expanded strip. ✓ */
   left: 0;
   right: 0;
   z-index: var(--z-nav);
@@ -575,12 +580,16 @@
 
 @media (max-width: 680px) {
   .strip {
-    height: 24px; /* sp-6 — on 4px grid ✓ (was 22px off-grid) */
+    height: calc(24px + env(safe-area-inset-top));
+    /* sp-6 base (on 4px grid ✓) + safe area. Was 24px. */
+    padding-top: calc(4px + env(safe-area-inset-top));
+    /* Preserves sp-1 above content; adds env() offset below notch. ✓ */
     gap: 8px; /* sp-2 — was 16px, caused overflow at 390px screen width ✓ */
   }
 
   .bar {
-    top: 24px; /* sp-6 — matches mobile strip height ✓ */
+    top: calc(24px + env(safe-area-inset-top));
+    /* sp-6 strip base + safe area. Was top: 24px. ✓ */
     height: auto; /* padding-driven: 12 + 44 + 12 = 68px ✓ */
   }
 
@@ -634,7 +643,8 @@
   }
 
   .drawerWrap {
-    top: 92px; /* 24px strip + 68px auto bar ✓ */
+    top: calc(92px + env(safe-area-inset-top));
+    /* 24px strip + 68px bar + safe area. Was 92px. ✓ */
   }
 }
 
