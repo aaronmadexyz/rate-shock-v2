@@ -251,10 +251,12 @@
 
 .searchStatus {
   position: absolute;
-  bottom: calc(100% + var(--sp-2));
+  top: calc(100% + var(--sp-2));
+  /* was bottom: — message appeared above input, behind strip (z-index 101).
+     top: positions it below the input on the map, always visible. */
   left: 0;
   white-space: nowrap;
-  z-index: var(--z-markers); /* 10 — above map, inside nav stacking context */
+  z-index: var(--z-markers); /* 10 — inside nav stacking context (z:100), above map ✓ */
   pointer-events: none;
 }
 
@@ -451,8 +453,8 @@
 .burger {
   position: relative; /* required for ::before tap-target expander */
   display: none;
-  width: 36px;
-  height: 36px;
+  width: 44px;  /* raised from 36px — matches search input min-height (44px) ✓ */
+  height: 44px; /* WCAG 2.5.5: 44×44 ✓ (was 36px + ::before extension) */
   gap: var(--sp-1);
   border: 1px solid var(--n-200);
   background: var(--n-0);
@@ -467,11 +469,11 @@
   transition: background .15s;
 }
 
-/* Tap target expander: 36px + 8px = 44px ✓ minimum touch target */
+/* Tap target: button is now 44×44 ✓ — inset: 0, no extension needed */
 .burger::before {
   content: '';
   position: absolute;
-  inset: -4px;
+  inset: 0;
   border-radius: var(--r-sm);
 }
 
@@ -582,7 +584,7 @@
 @media (max-width: 680px) {
   .strip {
     height: 24px; /* sp-6 — on 4px grid ✓ (was 22px off-grid) */
-    gap: 16px;
+    gap: 8px; /* sp-2 — was 16px, caused overflow at 390px screen width ✓ */
   }
 
   .bar {
