@@ -250,13 +250,16 @@
 }
 
 .searchStatus {
-  position: absolute;
-  top: calc(100% + var(--sp-2));
-  /* was bottom: — message appeared above input, behind strip (z-index 101).
-     top: positions it below the input on the map, always visible. */
+  position: fixed;
+  top: calc(var(--nav-height, 92px) + var(--sp-2));
+  /* var(--nav-height) set by Nav useEffect (strip + bar bottom).
+     sp-2 (8px) gap below nav bar per DS spacing token ✓ */
   left: 0;
-  white-space: nowrap;
-  z-index: var(--z-markers); /* 10 — inside nav stacking context (z:100), above map ✓ */
+  right: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--sp-4); /* 16px side gutters ✓ */
+  z-index: var(--z-panel); /* 200 — above nav/strip (100/101), below modal (500) ✓ */
   pointer-events: none;
 }
 
