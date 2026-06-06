@@ -612,7 +612,7 @@
   .searchInput {
     height: auto;
     min-height: 44px; /* WCAG 2.5.5 ✓ — was 30px */
-    font-size: 11px;
+    font-size: 16px; /* iOS Safari: inputs with font-size < 16px trigger automatic viewport zoom on focus ✓ */
   }
 
   .iconBtn {
@@ -642,6 +642,10 @@
   }
 
   /* ── Desktop nav spacing ── */
+
+  .strip {
+    padding: 4px 32px; /* sp-1 sp-8 ✓ */
+  }
 
   /* Remove fixed height so bar grows from CTA button natural height:
      padding(12) + min-height(44) + padding(12) = 68px ✓ */
