@@ -86,7 +86,19 @@
 
 @media (max-width: 680px) {
   .bottomBar {
-    padding: 0 16px max(24px, calc(16px + env(safe-area-inset-bottom))); /* sp-6 min — on 4px grid ✓ */
+    padding: 0 16px
+      max(32px,
+        calc(24px + env(safe-area-inset-bottom)));
+    /* sp-8 minimum bottom clearance.
+       32px = sp-8 on 4px grid ✓
+       (raised from sp-6 24px — screenshot
+       confirms controls sit too close to
+       attribution bar).
+       env(safe-area-inset-bottom) adds
+       iOS home indicator height on top
+       of the 24px base.
+       On iPhone 14 Pro with home bar:
+         24px + 34px = 58px total ✓ */
   }
 }
 

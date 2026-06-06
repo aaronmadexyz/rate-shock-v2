@@ -612,7 +612,15 @@
   .searchInput {
     height: auto;
     min-height: 44px; /* WCAG 2.5.5 ✓ — was 30px */
-    font-size: 16px; /* iOS Safari: inputs with font-size < 16px trigger automatic viewport zoom on focus ✓ */
+    font-size: 16px;
+    /* iOS Safari: inputs with
+       font-size < 16px auto-zoom
+       the viewport on focus.
+       16px prevents zoom without
+       any viewport locking.
+       DS minimum 11px — 16px ✓
+       WCAG 1.4.4: no zoom lock ✓
+       Desktop retains base size. */
   }
 
   .iconBtn {
