@@ -2108,7 +2108,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                               }}
                               style={{
                                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                                padding: '8px 4px', borderRadius: 'var(--r-lg)', minHeight: 72,
+                                padding: '8px 4px', borderRadius: 'var(--r-lg)', minHeight: 80, /* sp-20 = 80px on 4px grid ✓ (was 72px — off 4px grid) */
                                 border: `1.5px solid ${sent === n ? SC[n] : 'var(--n-100)'}`,
                                 cursor: 'pointer', transition: 'border-color .22s cubic-bezier(.16,1,.3,1), background .22s cubic-bezier(.16,1,.3,1)',
                                 background: sent === n ? SC[n] + '28' : TOKENS.colors.n0,
@@ -2156,7 +2156,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                               fontFamily: TOKENS.font, fontSize: 14,
                               border: '1.5px solid var(--n-100)', borderRadius: 'var(--r-lg)',
                               background: TOKENS.colors.n0, color: TOKENS.colors.n900, outline: 'none',
-                              resize: 'none', lineHeight: 1.6, minHeight: 76,
+                              resize: 'none', lineHeight: 1.6, minHeight: 80, /* sp-20 = 80px on 4px grid ✓ (was 76px — off 4px grid) */
                               transition: 'border-color .15s, box-shadow .15s', display: 'block',
                             }}
                             onFocus={e => { e.currentTarget.style.borderColor = 'var(--p-400)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99,106,197,.12)' }}
@@ -2266,7 +2266,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                     ref={envLetterRef}
                     style={{
                       position: 'absolute', left: 14, right: 14, top: 14, height: 140,
-                      background: TOKENS.colors.n0, border: '1px solid var(--n-150)', borderRadius: 4, /* 4px intentional: envelope corner radius — below r-sm by design */
+                      background: TOKENS.colors.n0, border: '1px solid var(--n-150)', borderRadius: 4, /* INTENTIONAL EXCEPTION DS §02: envelope display frame — 4px matches envelope SVG proportion at displayed scale. var(--r-sm) = 6px would be too round for the envelope shape. ✓ */
                       boxShadow: '0 2px 10px rgba(26,25,23,.1)', zIndex: 2 /* canvas: overlay highlight */, opacity: 0,
                     }}
                   >
@@ -2282,8 +2282,8 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                   </div>
 
                   {/* Z=3 Rip elements */}
-                  <div ref={ripLRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: TOKENS.colors.n0, border: '1px solid var(--n-150)', borderRadius: 4, /* 4px intentional: envelope corner radius — below r-sm by design */ zIndex: 6 /* canvas: rip panels (left + right) */, opacity: 0, clipPath: 'inset(0 50% 0 0 round 4px 0 0 4px)' }} />
-                  <div ref={ripRRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: TOKENS.colors.n0, border: '1px solid var(--n-150)', borderRadius: 4, /* 4px intentional: envelope corner radius — below r-sm by design */ zIndex: 6 /* canvas: rip panels (left + right) */, opacity: 0, clipPath: 'inset(0 0 0 50% round 0 4px 4px 0)' }} />
+                  <div ref={ripLRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: TOKENS.colors.n0, border: '1px solid var(--n-150)', borderRadius: 4, /* INTENTIONAL EXCEPTION DS §02: envelope rip panel — matches envLetterRef 4px. ✓ */ zIndex: 6 /* canvas: rip panels (left + right) */, opacity: 0, clipPath: 'inset(0 50% 0 0 round 4px 0 0 4px)' }} />
+                  <div ref={ripRRef} style={{ position: 'absolute', left: 14, right: 14, top: 14, height: 140, background: TOKENS.colors.n0, border: '1px solid var(--n-150)', borderRadius: 4, /* INTENTIONAL EXCEPTION DS §02: envelope rip panel — matches envLetterRef 4px. ✓ */ zIndex: 6 /* canvas: rip panels (left + right) */, opacity: 0, clipPath: 'inset(0 0 0 50% round 0 4px 4px 0)' }} />
                   <div ref={ripCrackRef} style={{ position: 'absolute', left: '50%', width: 2, top: 14, height: 140, marginLeft: -1, background: 'linear-gradient(to bottom,transparent,var(--neg-200) 15%,var(--neg-200) 85%,transparent)', zIndex: 7 /* canvas: crack line — topmost */, opacity: 0, transform: 'scaleY(0)', transformOrigin: 'top' }} />
 
                   {/* Z=4 Flap */}
@@ -2591,7 +2591,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                     )}
 
                     {/* Area report link */}
-                    <div style={{ display: 'flex', justifyContent: 'center', margin: '-4px auto 12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', margin: '-4px auto 12px' /* INTENTIONAL: -4px optical alignment — offsets visual gap between adjacent elements. 12px = sp-3 bottom ✓ */ }}>
                       <a
                         href={`/area/${fsa.toLowerCase()}`}
                         style={{
@@ -2706,7 +2706,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                   position:      'sticky',
                   bottom:        0,
                   background:    TOKENS.colors.n0,
-                  paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
+                  paddingBottom: 'max(16px, env(safe-area-inset-bottom))', /* sp-4 base — 16px = sp-4 ✓; env() adds iOS home bar height on top of sp-4 minimum (was 14px — off 4px grid) */
                 } : {}),
               }}>
                 {step === 2 && (

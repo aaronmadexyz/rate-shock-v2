@@ -174,7 +174,7 @@ const FILTER_CSS = `
     transition: border-color .15s, transform .1s;
   }
   .fs-rh::-webkit-slider-thumb:hover { border-color: var(--n-400); }
-  .fs-rh:active::-webkit-slider-thumb { transform: scale(1.18); }
+  .fs-rh:active::-webkit-slider-thumb { transform: scale(1.18); /* INTENTIONAL EXCEPTION Rule 1: range slider thumb expands on :active to signal grip/grab. OS-native range slider pattern — not a button press-down. ✓ */ }
   .fs-rh::-moz-range-thumb {
     width: 20px; height: 20px; border-radius: 50%;
     background: var(--n-0);
