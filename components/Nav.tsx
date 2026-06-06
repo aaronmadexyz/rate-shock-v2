@@ -563,21 +563,33 @@ export default function Nav({
               className={styles.burger}
               whileTap={tapTransition}
             >
-              <span
-                className={styles.burgerBar}
-                style={{ transform: drawerOpen ? 'translateY(6.5px) rotate(45deg)' : undefined }}
-              />
-              <span
-                className={styles.burgerBar}
-                style={{
-                  transform: drawerOpen ? 'scaleX(0)' : undefined,
-                  opacity:   drawerOpen ? 0 : undefined,
-                }}
-              />
-              <span
-                className={styles.burgerBar}
-                style={{ transform: drawerOpen ? 'translateY(-6.5px) rotate(-45deg)' : undefined }}
-              />
+              <AnimatePresence mode="wait" initial={false}>
+                {drawerOpen ? (
+                  <motion.span
+                    key="close"
+                    initial={blurEnter}
+                    animate={blurShow}
+                    exit={blurExit}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                      <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="menu"
+                    initial={blurEnter}
+                    animate={blurShow}
+                    exit={blurExit}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <svg width="18" height="12" viewBox="0 0 18 12" fill="none" aria-hidden="true">
+                      <path d="M1 1h16M1 6h16M1 11h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </motion.button>
 
           </div>

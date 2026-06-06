@@ -455,14 +455,12 @@
   display: none;
   width: 44px;  /* raised from 36px — matches search input min-height (44px) ✓ */
   height: 44px; /* WCAG 2.5.5: 44×44 ✓ (was 36px + ::before extension) */
-  gap: var(--sp-1);
   border: 1px solid var(--n-200);
   background: var(--n-0);
   cursor: pointer;
   border-radius: var(--r-full);
   align-items: center;
   justify-content: center;
-  flex-direction: column;
   flex-shrink: 0;
   box-shadow: 0 1px 2px rgba(26, 25, 23, .04);
   padding: 0;
@@ -481,15 +479,6 @@
   background: var(--n-25);
 }
 
-.burgerBar {
-  display: block;
-  width: 14px;
-  height: 1.5px;
-  background: var(--n-900);
-  border-radius: 2px;
-  transform-origin: center;
-  transition: transform .25s cubic-bezier(.16, 1, .3, 1), opacity .2s cubic-bezier(.25,0,.3,1); /* Rule 4: DS colour/opacity curve ✓ */
-}
 
 /* ══════════════════════════════════════════
    MOBILE DRAWER
@@ -688,7 +677,4 @@
     animation-play-state: paused;
   }
 
-  .burgerBar {
-    transition: none;
-  }
 }
