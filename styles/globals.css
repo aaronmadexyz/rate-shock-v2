@@ -154,7 +154,13 @@
 
   /* ── Panel height constraints (mobile bottom sheet).
      Panel never overlaps the nav. 24px = sp-6 clearance below nav bottom. */
-  --panel-max-height:  calc(100dvh - var(--nav-height) - 24px);
+  --panel-max-height:  calc(100dvh - env(safe-area-inset-top, 0px) - var(--nav-height) - 24px);
+  /* env() separates notch height from nav measurement.
+     --nav-height = getBoundingClientRect().bottom on .bar, which starts
+     BELOW the notch — it does not include safe-area-inset-top.
+     env(safe-area-inset-top, 0px) accounts for the notch independently.
+     Non-notch devices: env() = 0px, formula identical to before. ✓
+     24px = sp-6 clearance below nav bottom ✓ */
   --panel-peek-height: calc(var(--panel-max-height) * 0.65);
 }
 
