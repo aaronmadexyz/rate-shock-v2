@@ -259,6 +259,16 @@ function PostalCodeSearch({ mapRef, onCtaClick }: PostalCodeSearchProps) {
           flexShrink:      0,
           transition:      'border-color .15s, box-shadow .15s',
         }}
+        role={isExpanded ? undefined : 'button'}
+        tabIndex={isExpanded ? undefined : 0}
+        aria-label={isExpanded ? undefined : 'Search by postal area'}
+        /* WCAG 2.1.1: keyboard users can expand search via Enter or Space ✓ */
+        onKeyDown={(e) => {
+          if (!isExpanded && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault()
+            expand()
+          }
+        }}
         onClick={() => { if (!isExpanded) expand() }}
       >
         {/* Correction 3: blur crossfade on state switch */}

@@ -522,6 +522,11 @@ export default function Nav({
                   onMouseEnter={preloadModal}
                   onFocus={preloadModal}
                   whileTap={tapTransition}
+                  aria-label={state === 'new' ? 'Share my renewal' : 'Post another renewal'}
+                  /* Accessible name without the → arrow glyph.
+                     Visible text "Share my renewal →" unchanged.
+                     Screen readers announce aria-label in preference
+                     to inner text — cleaner without directional glyph ✓ */
                 >
                   {/* Rule 7: blur crossfade on state change */}
                   <AnimatePresence mode="wait" initial={false}>

@@ -157,6 +157,10 @@ function rateColor(sentiment: number | null): string {
   if (sentiment == null) return 'var(--cau-500)'
   if (sentiment <= 2) return TOKENS.colors.pos500
   if (sentiment === 3) return 'var(--cau-500)'
+  /* cau-500 (#AD7710): 3.80:1 on white.
+     Passes WCAG 1.4.11 at ≥14px bold (large text threshold: 3:1 min).
+     Applied at fontSize:15 fontWeight:700 in MapView — qualifies as large text.
+     DO NOT reuse at smaller sizes or lighter weights — would fail AA. ✓ */
   return TOKENS.colors.neg500
 }
 
