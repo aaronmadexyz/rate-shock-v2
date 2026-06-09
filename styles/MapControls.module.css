@@ -1,6 +1,6 @@
 .bottomBar {
   position: fixed;
-  bottom: 0;
+  bottom: var(--sp-3); /* 12px */
   left: 0;
   right: 0;
   z-index: var(--z-controls); /* 20 — canvas-attached controls, above tiles and markers */
