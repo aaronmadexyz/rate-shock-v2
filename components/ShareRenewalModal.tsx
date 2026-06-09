@@ -370,12 +370,6 @@ function Stepper({
             aria-label={`More information about ${label}`}
             onMouseEnter={() => tipBtnRef.current && onTipShow(tipBtnRef.current, tipText)}
             onMouseLeave={onTipHide}
-            onPointerDown={e => {
-              if (e.pointerType === 'touch') {
-                e.preventDefault()
-                tipBtnRef.current && onTipShow(tipBtnRef.current, tipText)
-              }
-            }}
             onClick={() => tipBtnRef.current && onTipShow(tipBtnRef.current, tipText)}
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
@@ -412,7 +406,8 @@ function Stepper({
               max={max}
               aria-label={`Enter ${label} value`}
               style={{
-                minWidth: 40, width: 48, textAlign: 'center', fontSize: 14, fontWeight: 500,
+                minWidth: 40, width: 48, textAlign: 'center', fontSize: 16, fontWeight: 500,
+                /* iOS Safari: inputs < 16px auto-zoom viewport on focus. 16px prevents zoom. WCAG 1.4.4 ✓ DS min 11px ✓ */
                 color: TOKENS.colors.n900, lineHeight: '40px',
                 background: TOKENS.colors.n0, border: 'none', outline: 'none',
                 padding: 0, display: 'block',
@@ -446,7 +441,10 @@ function Stepper({
                 minWidth: 40, width: 48, textAlign: 'center', fontSize: 14, fontWeight: 500,
                 color: TOKENS.colors.n900, lineHeight: '40px', fontFamily: 'inherit',
                 background: TOKENS.colors.n0, display: 'block', animation: anim,
-                border: 'none', cursor: onSet ? 'text' : 'default', padding: 0,
+                border: 'none', cursor: 'pointer', padding: 0,
+                userSelect: 'none', WebkitUserSelect: 'none',
+                /* cursor:pointer — signals tappable; prevents iOS text-selection handles on first tap.
+                   userSelect:none — suppresses selection gesture so first tap fires onClick cleanly. ✓ */
               }}
             >{displayVal}</button>
           )}
