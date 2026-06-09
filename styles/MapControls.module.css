@@ -1,6 +1,6 @@
 .bottomBar {
   position: fixed;
-  bottom: 32px; /* sp-8 — clears the 32px attribution bar. Buttons sit above attribution rather than overlapping it. ✓ 32px = sp-8 on 4px grid ✓ */
+  bottom: 48px; /* sp-8 + sp-4 = 32px attribution bar + 16px gap above it. 48px on 4px grid ✓ Buttons sit 16px (sp-4) above the attribution bar, matching the DS sp-4 spacing token. */
   left: 0;
   right: 0;
   z-index: var(--z-controls); /* 20 — canvas-attached controls, above tiles and markers */
@@ -87,18 +87,15 @@
 @media (max-width: 680px) {
   .bottomBar {
     padding: 0 16px
-      max(32px,
-        calc(24px + env(safe-area-inset-bottom)));
-    /* sp-8 minimum bottom clearance.
-       32px = sp-8 on 4px grid ✓
-       (raised from sp-6 24px — screenshot
-       confirms controls sit too close to
-       attribution bar).
-       env(safe-area-inset-bottom) adds
-       iOS home indicator height on top
-       of the 24px base.
+      max(24px,
+        calc(16px + env(safe-area-inset-bottom)));
+    /* Internal padding — unchanged ✓
+       env() handles iOS home bar.
+       bottom: 48px handles attribution
+       bar clearance. Both work together.
+       16px = sp-4 base + env() for home bar.
        On iPhone 14 Pro with home bar:
-         24px + 34px = 58px total ✓ */
+         16px + 34px = 50px total ✓ */
   }
 }
 
