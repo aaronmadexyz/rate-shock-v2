@@ -333,7 +333,7 @@ interface ShareRenewalModalProps {
 // ─── Stepper component ────────────────────────────────────────────────────────
 
 function Stepper({
-  s, min, max, label, onAdj, inputId, decreaseLabel, increaseLabel,
+  s, min, max, label, onAdj, onSet, inputId, decreaseLabel, increaseLabel,
   tipText, onTipShow, onTipHide,
 }: {
   s: StepperVal
@@ -341,6 +341,7 @@ function Stepper({
   max: number
   label: string
   onAdj: (d: 1 | -1) => void
+  onSet?: (v: number) => void
   inputId?: string
   decreaseLabel?: string
   increaseLabel?: string
@@ -349,6 +350,9 @@ function Stepper({
   onTipHide?: () => void
 }) {
   const tipBtnRef  = useRef<HTMLButtonElement>(null)
+  const inputRef   = useRef<HTMLInputElement>(null)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft]     = useState('')
   const displayVal = `${s.v}${s.v === max ? '+' : ''}`
   const anim       = s.k > 0
     ? `${s.dir === 'up' ? 'snUp' : 'snDown'} 180ms cubic-bezier(0.16, 1, 0.3, 1) both`
@@ -363,9 +367,15 @@ function Stepper({
             type="button"
             ref={tipBtnRef}
             className="tip-btn"
-            aria-label={`More info about ${label.toLowerCase()}`}
+            aria-label={`More information about ${label}`}
             onMouseEnter={() => tipBtnRef.current && onTipShow(tipBtnRef.current, tipText)}
             onMouseLeave={onTipHide}
+            onPointerDown={e => {
+              if (e.pointerType === 'touch') {
+                e.preventDefault()
+                tipBtnRef.current && onTipShow(tipBtnRef.current, tipText)
+              }
+            }}
             onClick={() => tipBtnRef.current && onTipShow(tipBtnRef.current, tipText)}
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
@@ -389,16 +399,57 @@ function Stepper({
           style={{ ...SB_STYLE, opacity: s.v <= min ? 0.4 : 1 }}
         >−</button>
         <div aria-live="polite" aria-atomic="true" style={{ borderLeft: '1px solid var(--n-100)', borderRight: '1px solid var(--n-100)' }}>
-          <span
-            id={inputId}
-            key={s.k}
-            style={{
-              minWidth: 40, textAlign: 'center', fontSize: 14, fontWeight: 500,
-              color: TOKENS.colors.n900, lineHeight: '40px',
-              background: TOKENS.colors.n0, display: 'block',
-              animation: anim,
-            }}
-          >{displayVal}</span>
+          {editing ? (
+            <input
+              ref={inputRef}
+              id={inputId}
+              className="srm-stepper-edit"
+              type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={draft}
+              min={min}
+              max={max}
+              aria-label={`Enter ${label} value`}
+              style={{
+                minWidth: 40, width: 48, textAlign: 'center', fontSize: 14, fontWeight: 500,
+                color: TOKENS.colors.n900, lineHeight: '40px',
+                background: TOKENS.colors.n0, border: 'none', outline: 'none',
+                padding: 0, display: 'block',
+              }}
+              onChange={e => setDraft(e.target.value)}
+              onBlur={() => {
+                const parsed  = parseInt(draft, 10)
+                const clamped = isNaN(parsed) ? s.v : Math.min(Math.max(parsed, min), max)
+                if (onSet) onSet(clamped)
+                setEditing(false)
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter')  e.currentTarget.blur()
+                if (e.key === 'Escape') setEditing(false)
+              }}
+            />
+          ) : (
+            <button
+              id={inputId}
+              type="button"
+              key={s.k}
+              className="srm-stepper-val"
+              onClick={() => {
+                if (!onSet) return
+                setDraft(String(s.v))
+                setEditing(true)
+                setTimeout(() => { inputRef.current?.focus(); inputRef.current?.select() }, 0)
+              }}
+              aria-label={`${label}: ${s.v}. Tap to edit`}
+              style={{
+                minWidth: 40, width: 48, textAlign: 'center', fontSize: 14, fontWeight: 500,
+                color: TOKENS.colors.n900, lineHeight: '40px', fontFamily: 'inherit',
+                background: TOKENS.colors.n0, display: 'block', animation: anim,
+                border: 'none', cursor: onSet ? 'text' : 'default', padding: 0,
+              }}
+            >{displayVal}</button>
+          )}
         </div>
         <button
           type="button"
@@ -750,6 +801,15 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
       const newV = Math.max(min, Math.min(max, cur.v + d))
       if (newV === cur.v) return prev
       return { ...prev, [f]: { v: newV, k: cur.k + 1, dir: d > 0 ? 'up' : 'down' } }
+    })
+  }
+  function setVal(f: keyof StepperState, v: number) {
+    setSteppers(prev => {
+      const cur = prev[f]; const cfgEntry = cfg[f]; if (!cfgEntry) return prev
+      const { min, max } = cfgEntry
+      const clamped = Math.max(min, Math.min(max, v))
+      if (clamped === cur.v) return prev
+      return { ...prev, [f]: { v: clamped, k: cur.k + 1, dir: clamped > cur.v ? 'up' : 'down' } }
     })
   }
 
@@ -1667,11 +1727,11 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                     }}>
                       <div style={{ paddingTop: 16, borderTop: '1px solid var(--n-100)' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                          <Stepper s={steppers.yrs} min={0} max={30} label="Years licensed"   onAdj={d => adj('yrs', d)} inputId="yrsv" decreaseLabel="Decrease years licensed"   increaseLabel="Increase years licensed" tipText={TIP_YRS}   onTipShow={showTip} onTipHide={hideTipDelayed} />
-                          <Stepper s={steppers.cl}  min={0} max={5}  label="At-fault claims" onAdj={d => adj('cl', d)}  inputId="clv"  decreaseLabel="Decrease at-fault claims"  increaseLabel="Increase at-fault claims" tipText={TIP_CLAIMS} onTipShow={showTip} onTipHide={hideTipDelayed} />
+                          <Stepper s={steppers.yrs} min={0} max={30} label="Years licensed"   onAdj={d => adj('yrs', d)} onSet={v => setVal('yrs', v)} inputId="yrsv" decreaseLabel="Decrease years licensed"   increaseLabel="Increase years licensed" tipText={TIP_YRS}   onTipShow={showTip} onTipHide={hideTipDelayed} />
+                          <Stepper s={steppers.cl}  min={0} max={5}  label="At-fault claims" onAdj={d => adj('cl', d)}  onSet={v => setVal('cl', v)}  inputId="clv"  decreaseLabel="Decrease at-fault claims"  increaseLabel="Increase at-fault claims" tipText={TIP_CLAIMS} onTipShow={showTip} onTipHide={hideTipDelayed} />
                         </div>
                         <div style={{ marginBottom: 4 }}>
-                          <Stepper s={steppers.cv} min={0} max={3} label="Convictions" onAdj={d => adj('cv', d)} inputId="cvv" decreaseLabel="Decrease convictions" increaseLabel="Increase convictions" tipText={TIP_CV} onTipShow={showTip} onTipHide={hideTipDelayed} />
+                          <Stepper s={steppers.cv} min={0} max={3} label="Convictions" onAdj={d => adj('cv', d)} onSet={v => setVal('cv', v)} inputId="cvv" decreaseLabel="Decrease convictions" increaseLabel="Increase convictions" tipText={TIP_CV} onTipShow={showTip} onTipHide={hideTipDelayed} />
                         </div>
                       </div>
                     </div>
@@ -1683,7 +1743,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                       transition: 'max-height .28s cubic-bezier(.16,1,.3,1), opacity .2s cubic-bezier(.16,1,.3,1)', /* Rule 6: under 300ms ✓ — section expand, not a modal or page-level transition */
                     }}>
                       <div style={{ paddingTop: 16, borderTop: '1px solid var(--n-100)', paddingBottom: 4 }}>
-                        <Stepper s={steppers.hcl} min={0} max={5} label="Number of claims" onAdj={d => adj('hcl', d)} inputId="hclv" decreaseLabel="Decrease number of claims" increaseLabel="Increase number of claims" />
+                        <Stepper s={steppers.hcl} min={0} max={5} label="Number of claims" onAdj={d => adj('hcl', d)} onSet={v => setVal('hcl', v)} inputId="hclv" decreaseLabel="Decrease number of claims" increaseLabel="Increase number of claims" />
                       </div>
                     </div>
 

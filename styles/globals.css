@@ -663,6 +663,16 @@ input[type="checkbox"]:focus + div {
   inset: -5px;
 }
 
+/* Stepper inline edit: hide number spinners */
+.srm-stepper-edit::-webkit-inner-spin-button,
+.srm-stepper-edit::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.srm-stepper-edit {
+  -moz-appearance: textfield;
+}
+
 /* Mode toggle buttons: slim pill → ≥44px tap target */
 .srm-mode-btn {
   position: relative;
