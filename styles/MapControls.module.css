@@ -1,6 +1,6 @@
 .bottomBar {
   position: fixed;
-  bottom: 0;
+  bottom: 32px; /* sp-8 — clears the 32px attribution bar. Buttons sit above attribution rather than overlapping it. ✓ 32px = sp-8 on 4px grid ✓ */
   left: 0;
   right: 0;
   z-index: var(--z-controls); /* 20 — canvas-attached controls, above tiles and markers */
