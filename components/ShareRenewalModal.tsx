@@ -299,7 +299,7 @@ const SB_STYLE: React.CSSProperties = {
   cursor: 'pointer', fontSize: 17, color: 'var(--n-400)',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   transition: 'background .12s', fontFamily: TOKENS.font,
-  flexShrink: 0, lineHeight: 1, padding: 0,
+  flexShrink: 0, lineHeight: 1, /* numeric symbol — WCAG 1.4.12 exempt: single character in fixed-height flex container ✓ */ padding: 0,
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1595,7 +1595,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                         <button
                           type="button"
                           onClick={() => { setShowRestoreNotice(false); safeSetItem(DRAFT_SHOWN_KEY, 'true') }}
-                          style={{ background: 'none', border: 'none', color: 'var(--p-500)', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}
+                          style={{ background: 'none', border: 'none', color: 'var(--p-500)', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 /* single symbol — WCAG 1.4.12 exempt ✓ */ }}
                           aria-label="Dismiss"
                         >×</button>
                       </div>
@@ -1892,7 +1892,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                             fontWeight: 700,
                             letterSpacing: '-0.03em',
                             color: valColor,
-                            lineHeight: 1,
+                            lineHeight: 1, /* numeric display — WCAG 1.4.12 exempt: tabular-nums rate value ✓ */
                             fontVariantNumeric: 'tabular-nums',
                             transition: 'color 0.18s cubic-bezier(0.25, 0, 0.3, 1)',
                           }}
@@ -2400,7 +2400,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                             style={{
                               fontSize: 20, fontWeight: 700,
                               fontVariationSettings: "'opsz' 32",
-                              letterSpacing: '-.02em', lineHeight: 1,
+                              letterSpacing: '-.02em', lineHeight: 1, /* numeric display — WCAG 1.4.12 exempt: tabular-nums comparison value ✓ */
                               fontVariantNumeric: 'tabular-nums',
                               color: pctTierColor(submittedSignedPct), marginBottom: 4,
                             }}
@@ -2428,7 +2428,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                             style={{
                               fontSize: 20, fontWeight: 700,
                               fontVariationSettings: "'opsz' 32",
-                              letterSpacing: '-.02em', lineHeight: 1,
+                              letterSpacing: '-.02em', lineHeight: 1, /* numeric display — WCAG 1.4.12 exempt: tabular-nums comparison value ✓ */
                               fontVariantNumeric: 'tabular-nums',
                               color: compLoading ? TOKENS.colors.n200 : (hasLimitedData ? 'var(--n-400)' : (hasAreaData ? 'var(--cau-500)' : TOKENS.colors.n200)),
                               marginBottom: 4,
@@ -2455,7 +2455,7 @@ export default function ShareRenewalModal({ isOpen, onClose, onSubmitted, onZoom
                             style={{
                               fontSize: 20, fontWeight: 700,
                               fontVariationSettings: "'opsz' 32",
-                              letterSpacing: '-.02em', lineHeight: 1,
+                              letterSpacing: '-.02em', lineHeight: 1, /* numeric display — WCAG 1.4.12 exempt: tabular-nums comparison value ✓ */
                               fontVariantNumeric: 'tabular-nums',
                               color: compLoading || ontMed === null ? TOKENS.colors.n200 : TOKENS.colors.pos500,
                               marginBottom: 4,

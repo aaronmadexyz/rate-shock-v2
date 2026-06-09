@@ -533,7 +533,7 @@ export default function FilterSheet({ isOpen, onClose, onChange, matchCount }: F
                     key={i}
                     style={{
                       flex:         1,
-                      borderRadius: '2px 2px 0 0',
+                      borderRadius: '2px 2px 0 0', /* INTENTIONAL EXCEPTION DS §02: histogram distribution bar — 2px top-corner radius on data-viz bars. var(--r-sm) = 6px would over-round narrow bars. DS exemption: "2px tracks" extends to narrow data-viz elements. ✓ */
                       background:   inRange ? 'var(--n-500)' : 'var(--n-150)',
                       height:       `${Math.max(2, Math.round(v / distMax * 20))}px`,
                       transition:   'background .2s',

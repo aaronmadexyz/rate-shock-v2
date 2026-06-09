@@ -232,7 +232,7 @@
   background: var(--n-50);
   border: 1px solid var(--n-100);
   border-radius: var(--r-full);
-  padding: 8px 14px 8px 34px; /* sp-2 top/bottom ✓ */
+  padding: 8px 12px 8px 32px; /* sp-2 sp-3 sp-2 sp-8 ✓ (was 14px/34px off-grid; 32px preserves icon clearance: 16px icon + 8px gap + 8px inner = 32px ✓) */
   outline: none;
   color: var(--n-900);
   -webkit-appearance: none;

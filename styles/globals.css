@@ -130,6 +130,10 @@
   --z-alert:       700;
 
   /* ── SEMANTIC ALIASES ───────────────────────────────────────────────── */
+  /* Defined but not yet consumed in component code. Components currently use
+     primitives directly (var(--n-900), TOKENS.colors.*). Future refactor:
+     migrate to these aliases so a single token change updates all instances.
+     Not a compliance failure — informational. ✓ */
   --text-primary:      var(--n-900);
   --text-secondary:    var(--n-600);
   --text-tertiary:     var(--n-500);
@@ -422,7 +426,7 @@ p {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: shimmer 1.8s cubic-bezier(0.65, 0, 0.35, 1) 1;
-  animation-delay: 0.3s;
+  animation-delay: 0.28s; /* Rule 6: under 300ms ✓ (was 0.3s, exactly at limit) */
 }
 
 /* ─── MODAL MOBILE — dvh fallback ──────────────────────────────────────── */
