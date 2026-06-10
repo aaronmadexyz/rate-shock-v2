@@ -145,7 +145,16 @@ export const FSA_CENTROIDS: Record<string, [number, number]> = {
   L1T: [43.8650, -79.0500],
   L1V: [43.8350, -79.1000],
   L1W: [43.8200, -79.0800],
-  L1X: [43.9300, -78.7800],
+  L1X: [43.8354, -79.0892],
+  /* Pickering — Central / Bay Ridges
+     Confirmed: Canada Post FSA list ✓
+     Wikipedia Pickering coords:
+     43°50′22″N 79°04′53″W ✓
+     ~30km west of Courtice (L1E/L1C)
+     where the envelope was incorrectly
+     rendering. getCentroid('L1X') was
+     returning undefined — map was
+     falling back to a stale position. */
   L1Z: [43.8450, -79.0350],
 
   // York Region / Peel — L3
