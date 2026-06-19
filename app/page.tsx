@@ -258,7 +258,7 @@ export default function Page() {
             transition={prefersReduced ? { duration: 0 } : { type: 'spring', stiffness: 240, damping: 24, mass: 1 }}
             style={{
               position:      'fixed',
-              top:           88,
+              top:           'calc(var(--nav-height, 72px) + var(--sp-2))',
               left:          '50%',
               zIndex:        TOKENS.zIndex.zControls, // --z-controls: 20 — decorative hint, pointer-events none
               pointerEvents: 'none',
