@@ -19,6 +19,7 @@ import NeighbourhoodPanel from '@/components/NeighbourhoodPanel'
 import { matchCohort } from '@/lib/cohortMatch'
 import type { CohortResult } from '@/lib/cohortMatch'
 import styles from '@/styles/MarkerTooltip.module.css'
+import { springs } from '@/lib/springs'
 
 // ─── Leaflet default-icon fix ─────────────────────────────────────────────────
 import _iconUrl       from 'leaflet/dist/images/marker-icon.png'
@@ -97,11 +98,75 @@ function makeIcon(s: Submission, duration: number, delay: number): L.DivIcon {
 
 const SKELETON_ICON = buildIcon('#EEEDEA', '#D4D3CE', 1.0) // aria-hidden — no semantic content
 
+// ─── Cluster icon (representative envelope + count badge) ─────────────────────
+function buildClusterIcon(rep: Submission, count: number, duration = 0, delay = 0): L.DivIcon {
+  const W = 40, H = 28
+  const scale      = markerScale(rep.rate_change_pct)
+  const fill       = TOKENS.colors.paperBody
+  const seal       = sealColor(rep.sentiment)
+  const trackColor = TOKENS.colors.n200
+  const paperColor = TOKENS.colors.n150
+  const bobStyle   = duration > 0
+    ? `animation:envelopeBob ${duration}ms ease-in-out infinite;animation-delay:${delay}ms;`
+    : ''
+  const neighbourhood = getAreaLabel(rep.fsa)
+  const ariaLabel  = count > 1
+    ? `${count} renewals in ${neighbourhood}, tap to expand`
+    : markerAriaLabel(rep)
+  const expandedAttr = count > 1 ? ' aria-expanded="false"' : ''
+
+  const badge = count > 1
+    ? `<div aria-hidden="true" style="position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;border-radius:9999px;` +
+      `background:${TOKENS.colors.n900};color:${TOKENS.colors.n0};font-size:10px;font-weight:600;` +
+      `font-family:var(--font);display:flex;align-items:center;justify-content:center;` +
+      `border:1.5px solid white;padding:0 3px;box-sizing:border-box;pointer-events:none;letter-spacing:-0.01em">${count}</div>`
+    : ''
+
+  const html =
+    `<div class="env-hover-wrap" role="button" tabindex="0" aria-label="${ariaLabel}"${expandedAttr} ` +
+    `style="position:relative;display:inline-block;transform-origin:bottom center;cursor:pointer">` +
+    `<div style="width:${W}px;height:${H}px;transform:scale(${scale.toFixed(3)});transform-origin:bottom center;overflow:visible">` +
+    `<div class="envelope-marker" style="will-change:transform;${bobStyle}">` +
+    `<svg width="${W}" height="${H}" viewBox="0 0 40 28" fill="none" aria-hidden="true" style="display:block;overflow:visible">` +
+    `<rect x="0.5" y="0.5" width="39" height="27" rx="2.5" fill="${fill}" stroke="${trackColor}" stroke-width="0.8"/>` +
+    `<polygon points="0,0 40,0 20,15" fill="${paperColor}" opacity="0.8"/>` +
+    `<circle cx="20" cy="6.5" r="4" fill="${seal}"/>` +
+    `</svg></div></div>${badge}</div>`
+
+  return L.divIcon({
+    html,
+    className:  '',
+    iconSize:   [W * scale, H * scale],
+    iconAnchor: [(W * scale) / 2, H * scale],
+  })
+}
+
 // ─── Skeleton coordinates ─────────────────────────────────────────────────────
 const SKELETON_COORDS: Array<[number, number]> = [
   [43.651, -79.383], [43.660, -79.395], [43.642, -79.371], [43.670, -79.410],
   [43.633, -79.420], [43.680, -79.355], [43.645, -79.440], [43.655, -79.365],
 ]
+
+// ─── Envelope SVG (React) — same shape as buildIcon, used in BloomOverlay ────
+function EnvelopeSVG({ fill, seal }: { fill: string; seal: string }) {
+  return (
+    <svg width="40" height="28" viewBox="0 0 40 28" fill="none" aria-hidden="true"
+      style={{ display: 'block', overflow: 'visible' }}>
+      <rect x="0.5" y="0.5" width="39" height="27" rx="2.5"
+        fill={fill} stroke={TOKENS.colors.n200} strokeWidth="0.8" />
+      <polygon points="0,0 40,0 20,15" fill={TOKENS.colors.n150} opacity={0.8} />
+      <circle cx="20" cy="6.5" r="4" fill={seal} />
+    </svg>
+  )
+}
+
+// Distribute `count` points evenly around a circle of `radius` px, starting at top
+function radialPositions(count: number, radius: number): Array<{ x: number; y: number }> {
+  return Array.from({ length: count }, (_, i) => {
+    const angle = (2 * Math.PI * i) / count - Math.PI / 2
+    return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius }
+  })
+}
 
 // ─── Filter matching ──────────────────────────────────────────────────────────
 // UNCHANGED
@@ -417,6 +482,238 @@ function MapMarker({
   )
 }
 
+// ─── FsaClusterMarker ─────────────────────────────────────────────────────────
+// One marker per FSA. count===1 → hover preview + direct panel open.
+// count>1 → bloom on tap, no hover preview.
+
+interface FsaClusterMarkerProps {
+  fsa:            string
+  submissions:    Submission[]
+  isExpanded:     boolean
+  mapRef:         React.MutableRefObject<L.Map | null>
+  filters:        FilterState
+  likeMeMode:     boolean
+  cohortResult:   CohortResult | null
+  onBloom:        (fsa: string, px: { x: number; y: number }) => void
+  onMarkerEnter?: (sub: Submission, x: number, y: number) => void
+  onMarkerLeave?: () => void
+  onSingleClick:  (sub: Submission) => void
+}
+
+function FsaClusterMarker({
+  fsa, submissions, isExpanded, mapRef, filters, likeMeMode, cohortResult,
+  onBloom, onMarkerEnter, onMarkerLeave, onSingleClick,
+}: FsaClusterMarkerProps) {
+  const markerRef    = useRef<L.Marker>(null)
+  const prevMatchRef = useRef<boolean | null>(null)
+  const pos          = getCentroid(fsa)! as [number, number]
+  const count        = submissions.length
+
+  // Stable random bob timings for single-submission markers (re-initialized only when FSA mounts)
+  const timingsRef = useRef({
+    duration: Math.round(3000 + Math.random() * 2000),
+    delay:    Math.round(Math.random() * 2500),
+  })
+
+  // Representative: submission with largest |rate_change_pct|
+  const rep = useMemo(() =>
+    submissions.reduce((best, s) =>
+      Math.abs(s.rate_change_pct ?? 25) > Math.abs(best.rate_change_pct ?? 25) ? s : best,
+    ),
+  [submissions])
+
+  const icon = useMemo(() => {
+    const { duration, delay } = count === 1 ? timingsRef.current : { duration: 0, delay: 0 }
+    return buildClusterIcon(rep, count, duration, delay)
+  }, [rep, count])
+
+  const isMatch = useMemo(() =>
+    submissions.some(s =>
+      likeMeMode && cohortResult
+        ? cohortResult.ids.has(s.id)
+        : getMarkerMatchState(s, filters),
+    ),
+  [submissions, likeMeMode, cohortResult, filters])
+
+  // Filter dim/match visual state (mirrors MapMarker logic)
+  useEffect(() => {
+    const el   = markerRef.current?.getElement()
+    const wrap = el?.querySelector<HTMLElement>('.env-hover-wrap')
+    if (!el || !wrap) return
+    const wasMatch = prevMatchRef.current
+    prevMatchRef.current = isMatch
+    if (isMatch) {
+      el.style.pointerEvents = ''
+      wrap.classList.remove('marker-dim')
+      wrap.classList.add('marker-match')
+      if (wasMatch === false) {
+        wrap.classList.remove('marker-pulse')
+        void wrap.offsetWidth
+        wrap.classList.add('marker-pulse')
+        const t = setTimeout(() => wrap.classList.remove('marker-pulse'), 350)
+        return () => clearTimeout(t)
+      }
+    } else {
+      el.style.pointerEvents = 'none'
+      wrap.classList.remove('marker-match', 'marker-pulse')
+      wrap.classList.add('marker-dim')
+    }
+  }, [isMatch])
+
+  // aria-expanded + expanded visual cue (DOM update — divIcon is static HTML)
+  useEffect(() => {
+    const wrap = markerRef.current?.getElement()?.querySelector<HTMLElement>('.env-hover-wrap')
+    if (!wrap || count <= 1) return
+    wrap.setAttribute('aria-expanded', String(isExpanded))
+    wrap.style.filter = isExpanded
+      ? `drop-shadow(0 6px 20px rgba(26,25,23,.28))`
+      : ''
+  }, [isExpanded, count])
+
+  const getScreenCoords = () => {
+    const map = mapRef.current
+    if (!map) return null
+    const pt   = map.latLngToContainerPoint(pos)
+    const rect = map.getContainer().getBoundingClientRect()
+    return { x: rect.left + pt.x, y: rect.top + pt.y }
+  }
+
+  const handleClick = useCallback(() => {
+    const coords = getScreenCoords()
+    if (!coords) return
+    if (count === 1 && submissions[0]) onSingleClick(submissions[0])
+    else                               onBloom(fsa, coords)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [count, fsa, submissions, onBloom, onSingleClick])
+
+  // Keyboard: Enter / Space to activate
+  useEffect(() => {
+    const wrap = markerRef.current?.getElement()?.querySelector<HTMLElement>('.env-hover-wrap')
+    if (!wrap) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return
+      e.preventDefault()
+      handleClick()
+    }
+    wrap.addEventListener('keydown', handler)
+    return () => wrap.removeEventListener('keydown', handler)
+  }, [handleClick])
+
+  return (
+    <Marker
+      ref={markerRef as React.Ref<L.Marker>}
+      position={pos}
+      icon={icon}
+      eventHandlers={{
+        mouseover: () => {
+          if (count === 1 && onMarkerEnter && submissions[0]) {
+            const coords = getScreenCoords()
+            if (coords) onMarkerEnter(submissions[0], coords.x, coords.y)
+          }
+        },
+        mouseout:  () => { if (count === 1 && onMarkerLeave) onMarkerLeave() },
+        click:     handleClick,
+      }}
+    />
+  )
+}
+
+// ─── BloomOverlay ─────────────────────────────────────────────────────────────
+// Rendered outside MapContainer (position:fixed). Fans individual envelopes
+// radially from the FSA centroid pixel position using Framer Motion springs.
+
+interface BloomOverlayProps {
+  fsa:            string
+  submissions:    Submission[]
+  centerPx:       { x: number; y: number }
+  prefersReduced: boolean
+  onItemClick:    (sub: Submission) => void
+  onDismiss:      () => void
+}
+
+function BloomOverlay({
+  fsa, submissions, centerPx, prefersReduced, onItemClick, onDismiss,
+}: BloomOverlayProps) {
+  const count     = submissions.length
+  const radius    = Math.max(64, count * 9) // scales with density; min 64px
+  const positions = radialPositions(count, radius)
+  const label     = getAreaLabel(fsa)
+
+  // Escape key to dismiss
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onDismiss() }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onDismiss])
+
+  // Anchor point: layout-center of the 40×28 envelope (+ 8px padding on each side)
+  // left/top place the center of the padding box at centerPx; x/y offsets handle bloom spread
+  const cx = centerPx.x - TOKENS.spacing.sp2 - 20 // 8px padding + half envelope width
+  const cy = centerPx.y - TOKENS.spacing.sp2 - 14  // 8px padding + half envelope height
+
+  return (
+    <div
+      role="group"
+      aria-label={`${count} renewals in ${label}`}
+      aria-live="polite"
+      style={{ position: 'fixed', inset: 0, zIndex: TOKENS.zIndex.zControls + 1, pointerEvents: 'none' }}
+    >
+      {submissions.map((s, i) => {
+        const pos_i = positions[i] ?? { x: 0, y: 0 }
+        const { x: ox, y: oy } = pos_i
+        const scale = markerScale(s.rate_change_pct)
+
+        return (
+          <motion.div
+            key={s.id}
+            className="bloom-item"
+            role="button"
+            tabIndex={0}
+            aria-label={markerAriaLabel(s)}
+            onClick={() => { onItemClick(s); onDismiss() }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onItemClick(s); onDismiss() }
+              if (e.key === 'Escape') onDismiss()
+            }}
+            initial={prefersReduced
+              ? { opacity: 0 }
+              : { opacity: 0, x: 0, y: 0, scale: 0.5 }}
+            animate={prefersReduced
+              ? { opacity: 1 }
+              : { opacity: 1, x: ox, y: oy, scale: 1 }}
+            exit={prefersReduced
+              ? { opacity: 0, transition: { duration: 0.12 } }
+              : { opacity: 0, x: 0, y: 0, scale: 0.5,
+                  transition: { duration: 0.12, ease: [0.4, 0, 1, 1] as [number, number, number, number] } }}
+            transition={prefersReduced
+              ? { duration: 0.15 }
+              : { type: 'spring', ...springs.snappy, delay: i * 0.03 }}
+            whileHover={prefersReduced ? undefined : { scale: 1.08 }}
+            whileTap={{ scale: 0.97 }}
+            style={{
+              position:      'fixed',
+              left:          cx,
+              top:           cy,
+              padding:       TOKENS.spacing.sp2,         // 8px — extends tap target to 56×44px ✓ WCAG 2.5.5
+              pointerEvents: 'all',
+              cursor:        'pointer',
+              borderRadius:  TOKENS.radius.rMd,
+            }}
+          >
+            <div style={{
+              transform:       `scale(${scale})`,
+              transformOrigin: 'center',
+              filter:          `drop-shadow(0 4px 10px rgba(26,25,23,.14))`,
+            }}>
+              <EnvelopeSVG fill={TOKENS.colors.paperBody} seal={sealColor(s.sentiment)} />
+            </div>
+          </motion.div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── MapViewProps ─────────────────────────────────────────────────────────────
 
 interface MapViewProps {
@@ -460,6 +757,10 @@ export default function MapView({
 
   // Single state drives all tooltip rendering
   const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip | null>(null)
+
+  // Bloom state — which FSA is expanded and its screen-space centroid
+  const [bloomedFsa, setBloomedFsa] = useState<string | null>(null)
+  const [bloomPx,    setBloomPx]    = useState<{ x: number; y: number } | null>(null)
   const tooltipRef = useRef<ActiveTooltip | null>(null)
   tooltipRef.current = activeTooltip
 
@@ -506,6 +807,8 @@ export default function MapView({
   const dismissAll = useCallback(() => {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
     setActiveTooltip(null)
+    setBloomedFsa(null)
+    setBloomPx(null)
   }, [])
 
   const cancelHideTimer = useCallback(() => {
@@ -681,6 +984,41 @@ export default function MapView({
     onCohortResult?.(cohortResult)
   }, [cohortResult, onCohortResult])
 
+  // Group submissions by 3-char FSA for cluster markers
+  const fsaGroups = useMemo(() => {
+    const groups = new Map<string, Submission[]>()
+    for (const s of allWithCentroid) {
+      const key = s.fsa.toUpperCase().slice(0, 3)
+      const arr = groups.get(key)
+      if (arr) arr.push(s)
+      else groups.set(key, [s])
+    }
+    return groups
+  }, [allWithCentroid])
+
+  // Toggle bloom: same FSA tap closes; different FSA opens
+  const handleBloom = useCallback((fsa: string, px: { x: number; y: number }) => {
+    if (bloomedFsa === fsa) {
+      setBloomedFsa(null)
+      setBloomPx(null)
+    } else {
+      setBloomedFsa(fsa)
+      setBloomPx(px)
+    }
+  }, [bloomedFsa])
+
+  // Bloom item click → open neighbourhood panel for that FSA
+  const handleBloomItemClick = useCallback((sub: Submission) => {
+    handleEnvelopeClick(sub.fsa)
+  }, [handleEnvelopeClick])
+
+  // Single-submission cluster click (same as old onMarkerClick)
+  const handleSingleClick = useCallback((sub: Submission) => {
+    cancelHideTimer()
+    setActiveTooltip(null)
+    handleEnvelopeClick(sub.fsa)
+  }, [cancelHideTimer, handleEnvelopeClick])
+
   const at = activeTooltip
 
   return (
@@ -714,26 +1052,22 @@ export default function MapView({
           <Marker key={`sk-${i}`} position={pos} icon={SKELETON_ICON} interactive={false} />
         ))}
 
-        {!isLoading && allWithCentroid.map((s, idx) => {
-          const pos     = getCentroid(s.fsa)! as [number, number]
-          const isMatch = (likeMeMode && cohortResult)
-            ? cohortResult.ids.has(s.id)
-            : getMarkerMatchState(s, filters)
-          return (
-            <MapMarker
-              key={s.id}
-              s={s}
-              icon={getCachedIcon(s)}
-              pos={pos}
-              isMatch={isMatch}
-              staggerDelay={Math.min(idx * 8, 200)}
-              mapRef={localMapRef}
-              onMarkerEnter={onMarkerEnter}
-              onMarkerLeave={onMarkerLeave}
-              onMarkerClick={onMarkerClick}
-            />
-          )
-        })}
+        {!isLoading && Array.from(fsaGroups.entries()).map(([fsa, subs]) => (
+          <FsaClusterMarker
+            key={fsa}
+            fsa={fsa}
+            submissions={subs}
+            isExpanded={bloomedFsa === fsa}
+            mapRef={localMapRef}
+            filters={filters}
+            likeMeMode={likeMeMode}
+            cohortResult={cohortResult}
+            onBloom={handleBloom}
+            onMarkerEnter={onMarkerEnter}
+            onMarkerLeave={onMarkerLeave}
+            onSingleClick={handleSingleClick}
+          />
+        ))}
       </MapContainer>
 
       {/* Mode 1 — hover preview (desktop only, auto-dismisses) */}
@@ -754,6 +1088,21 @@ export default function MapView({
               setActiveTooltip(null)
               handleEnvelopeClick(at.sub.fsa)
             }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Bloom overlay — individual envelopes fanned from FSA centroid */}
+      <AnimatePresence>
+        {bloomedFsa && bloomPx && fsaGroups.has(bloomedFsa) && (
+          <BloomOverlay
+            key={`bloom-${bloomedFsa}`}
+            fsa={bloomedFsa}
+            submissions={fsaGroups.get(bloomedFsa)!}
+            centerPx={bloomPx}
+            prefersReduced={prefersReduced}
+            onItemClick={handleBloomItemClick}
+            onDismiss={dismissAll}
           />
         )}
       </AnimatePresence>
