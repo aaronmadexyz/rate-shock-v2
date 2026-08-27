@@ -41,7 +41,10 @@ create table if not exists submissions (
   comment_tone        text,
 
   -- moderation
-  verified boolean not null default false
+  verified boolean not null default false,
+
+  -- renewal year the submission refers to (nullable — older rows predate the field)
+  renewal_year integer
 );
 
 -- ─── ROW LEVEL SECURITY ──────────────────────────────────────────────────────

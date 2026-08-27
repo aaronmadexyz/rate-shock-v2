@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
+import { TileLayer, Marker, useMap } from 'react-leaflet'
+import { SafeMapContainer as MapContainer } from '@/components/SafeMapContainer'
 import { AnimatePresence, motion } from 'framer-motion'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -1036,10 +1037,10 @@ export default function MapView({
         style={{ position: 'fixed', inset: 0, zIndex: TOKENS.zIndex.zMap, /* --z-map: 0 ✓ */ width: '100vw', height: '100dvh', touchAction: 'none' }}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_29x4_1_f97fa366ea9566ee9c4e555c"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           subdomains="abcd"
-          maxZoom={19}
+          maxZoom={20}
         />
 
         <MapSetup
